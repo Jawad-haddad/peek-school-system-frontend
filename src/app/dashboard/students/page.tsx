@@ -34,8 +34,18 @@ export default function SelectClassPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-800">Select a Class</h1>
-      <p className="mt-2 text-gray-600">Choose a class to manage its students.</p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Select a Class</h1>
+          <p className="mt-2 text-gray-600">Choose a class to manage its students.</p>
+        </div>
+        <Link
+          href="/dashboard/students/add"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-medium shadow-sm"
+        >
+          + Add Student
+        </Link>
+      </div>
 
       {loading ? (
         <p className="mt-8">Loading classes...</p>

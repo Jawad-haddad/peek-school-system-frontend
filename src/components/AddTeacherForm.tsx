@@ -1,93 +1,141 @@
-// src/components/AddTeacherForm.tsx
 'use client';
+
 import { useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api'; // Use centralized api
 
 type AddTeacherFormProps = {
-  onClose: () => void;
-  onSuccess: () => void; // "دق الجرس" لتحديث القائمة
+    onClose: () => void;
+    onSuccess: () => void;
 };
 
-export default function AddTeacherForm({ onClose, onSuccess }: AddTeacherFormProps) {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormProps) { // Renamed to "AddTeacherPage" to match user request artifact even though it's a modal form
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError('');
-    setIsSubmitting(true);
-    const token = localStorage.getItem('authToken');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    try {
-      await axios.post(
-        'http://localhost:3000/api/schools/teachers',
-        {
-          fullName,
-          email,
-          password,
-          phoneNumber: phoneNumber || null,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      onSuccess(); // دق الجرس (تحديث القائمة)
-      onClose();   // إغلاق المودال
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setError('');
+        setIsSubmitting(true);
 
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add teacher. Please check the data.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+        try {
+            await api.post('/schools/teachers', {
+                fullName,
+                email,
+                password, // Ensure backend handles hashing
+                phoneNumber: phoneNumber || null,
+            }
+            );
 
-  return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-lg rounded-lg bg-white p-8 shadow-2xl">
-        <h2 className="text-2xl font-bold text-gray-800">Add New Teacher</h2>
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          
-          {/* Full Name */}
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">Full Name</label>
-            <input type="text" id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
+            onSuccess();
+            onClose();
 
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
-            <input type="email" id="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
+        } catch (err: any) {
+            console.error("Add teacher error:", err);
+            setError(err.response?.data?.message || 'Failed to add teacher.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Initial Password</label>
-            <input type="password" id="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+            <div className="w-full max-w-2xl mx-4 bg-white p-8 rounded-xl shadow-2xl transform transition-all"> {/* Updated styling: max-w-2xl, p-8, rounded-xl */}
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800">Add New Teacher</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+                </div>
 
-          {/* Phone Number */}
-          <div>
-            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">Phone Number (Optional)</label>
-            <input type="text" id="phoneNumber" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
+                <form className="space-y-6" onSubmit={handleSubmit}>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Full Name */}
+                        <div>
+                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input
+                                type="text"
+                                id="fullName"
+                                required
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                placeholder="John Doe"
+                            />
+                        </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 pt-4">
-            <button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300">
-              Cancel
-            </button>
-            <button type="submit" disabled={isSubmitting} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-              {isSubmitting ? 'Adding...' : 'Add Teacher'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+                        {/* Email */}
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input
+                                type="email"
+                                id="email"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                placeholder="teacher@school.com"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Password */}
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Initial Password</label>
+                            <input
+                                type="password"
+                                id="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            />
+                        </div>
+
+                        {/* Phone Number */}
+                        <div>
+                            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
+                            <input
+                                type="text"
+                                id="phoneNumber"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                                placeholder="+1 234 567 890"
+                            />
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-4 pt-4 border-t border-gray-100">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
+                        >
+                            {isSubmitting ? 'Adding...' : 'Add Teacher'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
 }

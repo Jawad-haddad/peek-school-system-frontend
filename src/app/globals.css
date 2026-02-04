@@ -1,7 +1,78 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+:root {
+  --primary: #6a1b9a;
+  /* Viola Purple */
+  --secondary: #ffb300;
+  /* Playful Yellow */
+  --accent: #00bcd4;
+  /* Cyan */
+  --light: #f3e5f5;
+  /* Light Purple BG */
+  --dark: #333;
+  --grey: #f4f4f4;
+  --gradient-header: linear-gradient(135deg, #2c3e50, #34495e);
+}
 
 body {
-  background-color: #f3f4f6; /* Or any other background color from your design */
+  background-color: var(--grey);
+  color: var(--dark);
+}
+
+/* VIOLA COMPONENT CLASSES */
+.dashboard-header {
+  background: var(--gradient-header);
+  color: white;
+  padding: 40px 0 80px;
+  /* Large padding for overlap effect */
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: -50px;
+  /* Overlap offset */
+}
+
+.card-menu {
+  background: white;
+  border: none;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.card-menu:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.icon-box {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+/* Utility Colors for Icons */
+.bg-light-primary {
+  background: rgba(67, 97, 238, 0.1);
+  color: var(--primary);
+}
+
+.bg-light-warning {
+  background: rgba(241, 196, 15, 0.1);
+  color: var(--secondary);
+}
+
+.bg-light-info {
+  background: rgba(0, 188, 212, 0.1);
+  color: var(--accent);
 }
