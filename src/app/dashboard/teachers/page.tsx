@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import AddTeacherModal from '@/components/dashboard/AddTeacherModal';
 
 type Teacher = {
     id: string;
@@ -11,11 +12,7 @@ type Teacher = {
     phone?: string;
     specialization?: string; // "Subject"
     classId?: string; // Assigned class
-};
-
-type ClassOption = {
-    id: string;
-    name: string;
+    classes?: string[]; // Array of class names
 };
 
 export default function TeachersPage() {
@@ -27,18 +24,6 @@ export default function TeachersPage() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
-
-    // Form State
-    const [formData, setFormData] = useState({
-        fullName: '',
-        email: '',
-        password: '',
-        phone: '',
-        classId: '',
-    });
-    const [classes, setClasses] = useState<ClassOption[]>([]);
-    const [submitting, setSubmitting] = useState(false);
-
 
     const fetchTeachers = async () => {
         setLoading(true);
@@ -58,18 +43,8 @@ export default function TeachersPage() {
         }
     };
 
-    const fetchClasses = async () => {
-        try {
-            const res = await api.get('/school/classes');
-            setClasses(Array.isArray(res.data) ? res.data : res.data.data || []);
-        } catch (err) {
-            console.error("Failed to fetch classes", err);
-        }
-    };
-
     useEffect(() => {
         fetchTeachers();
-        fetchClasses();
     }, []);
 
     const handleDelete = async (id: string) => {
@@ -85,188 +60,101 @@ export default function TeachersPage() {
     };
 
     const handleOpenModal = (teacher?: Teacher) => {
-        if (teacher) {
-            setEditingTeacher(teacher);
-            setFormData({
-                fullName: teacher.fullName,
-                email: teacher.email,
-                password: '', // Leave empty if not changing
-                phone: teacher.phone || '',
-                classId: teacher.classId || '',
-            });
-        } else {
-            setEditingTeacher(null);
-            setFormData({ fullName: '', email: '', password: '', phone: '', classId: '' });
-        }
+        setEditingTeacher(teacher || null);
         setIsModalOpen(true);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSubmitting(true);
-
-        try {
-            if (editingTeacher) {
-                // Edit Logic
-                const payload: any = { ...formData };
-                if (!payload.password) delete payload.password; // Don't send empty password
-
-                await api.put(`/school/teachers/${editingTeacher.id}`, payload);
-                alert("Teacher updated!");
-            } else {
-                // Add Logic
-                await api.post('/school/teachers', formData);
-                alert("Teacher added!");
-            }
-            setIsModalOpen(false);
-            fetchTeachers();
-        } catch (err: any) {
-            console.error("Teacher form error:", err);
-            alert(err.response?.data?.message || "Operation failed.");
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Manage Teachers</h1>
+        <div className="p-4 md:p-8 space-y-8">
+            <div className="glass-panel p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-black text-gray-800 tracking-tight">Manage Teachers</h1>
+                    <p className="text-gray-500 font-medium">Faculty and staff directory</p>
+                </div>
                 <button
                     onClick={() => handleOpenModal()}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-colors flex items-center gap-2"
+                    className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-6 py-3 rounded-2xl hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-0.5 transition-all flex items-center gap-2 font-bold"
                 >
-                    <span>+</span> Add Teacher
+                    <span className="text-xl">+</span> Add Teacher
                 </button>
             </div>
 
             {loading ? (
-                <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                <div className="text-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-violet-600 mx-auto mb-4"></div>
+                    <p className="text-violet-500 font-bold animate-pulse">Loading teachers...</p>
+                </div>
+            ) : teachers.length === 0 ? (
+                <div className="glass-card text-center py-20 rounded-3xl">
+                    <div className="text-6xl mb-6">👨‍🏫</div>
+                    <p className="text-gray-400 font-medium text-xl">No teachers found.</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {teachers.map((teacher) => (
-                                    <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold mr-3">
-                                                    {(teacher.fullName || 'T').charAt(0)}
-                                                </div>
-                                                <div className="text-sm font-medium text-gray-900">{teacher.fullName}</div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.email}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {/* Find class name from ID if we had the list, or just ID for now since API might not populate name here */}
-                                            {teacher.classId ? (classes.find(c => c.id === teacher.classId)?.name || 'Linked to Class') : '-'}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button onClick={() => handleOpenModal(teacher)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-                                            <button onClick={() => handleDelete(teacher.id)} className="text-red-600 hover:text-red-900">Delete</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                <div className="space-y-4">
+                    {/* Header Row */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        <div className="col-span-4">Teacher</div>
+                        <div className="col-span-4">Contact</div>
+                        <div className="col-span-3">Classes</div>
+                        <div className="col-span-1 text-right">Actions</div>
                     </div>
+
+                    {/* Teacher Rows */}
+                    {teachers.map((teacher) => (
+                        <div key={teacher.id} className="glass-card group p-4 rounded-2xl grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:border-violet-300/50 transition-all hover:shadow-lg hover:-translate-y-1">
+                            <div className="col-span-4 flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center text-indigo-700 font-black text-lg shadow-sm">
+                                    {(teacher.fullName || 'T').charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-800 group-hover:text-violet-700 transition-colors">{teacher.fullName}</h3>
+                                    <span className="text-xs text-violet-500 font-bold bg-violet-50 px-2 py-0.5 rounded-md border border-violet-100">Faculty</span>
+                                </div>
+                            </div>
+
+                            <div className="col-span-4 text-sm text-gray-500 font-medium break-all">
+                                {teacher.email}
+                            </div>
+
+                            <div className="col-span-3">
+                                {teacher.classes && teacher.classes.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                        {teacher.classes.map((c, i) => (
+                                            <span key={i} className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-md">{c}</span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <span className="text-xs text-gray-400 italic">No classes assigned</span>
+                                )}
+                            </div>
+
+                            <div className="col-span-1 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => handleOpenModal(teacher)}
+                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    title="Edit"
+                                >
+                                    ✏️
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(teacher.id)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Delete"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* Teacher Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4">
-                            {editingTeacher ? 'Edit Teacher' : 'Add New Teacher'}
-                        </h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.fullName}
-                                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                                    className="w-full border rounded-lg p-2 mt-1"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Email</label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    className="w-full border rounded-lg p-2 mt-1"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Password {editingTeacher && '(Leave blank to keep current)'}
-                                </label>
-                                <input
-                                    type="password"
-                                    required={!editingTeacher}
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                    className="w-full border rounded-lg p-2 mt-1"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                                <input
-                                    type="text"
-                                    value={formData.phone}
-                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                    className="w-full border rounded-lg p-2 mt-1"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Assign Class</label>
-                                <select
-                                    value={formData.classId}
-                                    onChange={e => setFormData({ ...formData, classId: e.target.value })}
-                                    className="w-full border rounded-lg p-2 mt-1 bg-white"
-                                >
-                                    <option value="">Select Class</option>
-                                    {classes.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                                >
-                                    {submitting ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <AddTeacherModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchTeachers}
+                teacherToEdit={editingTeacher}
+            />
         </div>
     );
 }

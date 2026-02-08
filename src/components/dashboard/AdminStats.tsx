@@ -44,6 +44,8 @@ export default function AdminStats() {
                 totalStudents: 0,
                 classes: []
             });
+            // Don't mask the error with dummy data, but here we construct a safe empty state
+            // to avoid rendering crashes. The real fix is ensuring the API works.
             setLoading(false);
         }
     };
@@ -61,7 +63,7 @@ export default function AdminStats() {
     if (loading) return <div className="p-8 text-center text-gray-500">Loading stats...</div>;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8 p-4">
 
             {/* Navigation / Breadcrumb */}
             {view !== 'overview' && (
@@ -70,111 +72,123 @@ export default function AdminStats() {
                         if (view === 'students') setView('classes');
                         else setView('overview');
                     }}
-                    className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center mb-4 font-medium transition-colors"
+                    className="group flex items-center text-sm font-bold text-violet-600 hover:text-violet-800 transition-colors mb-6 bg-white/50 px-4 py-2 rounded-full w-fit backdrop-blur-sm shadow-sm"
                 >
-                    ← Back to {view === 'students' ? 'Classes' : 'Overview'}
+                    <span className="mr-2 transform group-hover:-translate-x-1 transition-transform">←</span>
+                    Back to {view === 'students' ? 'Classes' : 'Overview'}
                 </button>
             )}
 
             {view === 'overview' && stats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Fee Card - Viola Gradient */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* Fee Card - Premium Viola Gradient */}
                     <div
                         onClick={() => setView('classes')}
-                        className="bg-gradient-to-br from-red-50 to-white p-6 rounded-2xl shadow-sm border border-red-100 cursor-pointer hover:shadow-md transition-all group relative overflow-hidden"
+                        className="glass-card p-8 rounded-3xl cursor-pointer group relative overflow-hidden"
                     >
-                        <div className="relative z-10 flex justify-between items-start">
-                            <div>
-                                <h3 className="text-red-500 text-xs font-bold uppercase tracking-wider">Outstanding Fees</h3>
-                                <p className="text-4xl font-extrabold text-gray-900 mt-2">{stats.totalOutstanding?.toFixed(2) || '0.00'} <span className="text-lg text-gray-500 font-normal">JOD</span></p>
-                            </div>
-                            <div className="p-3 bg-white/80 rounded-xl shadow-sm text-xl backdrop-blur-sm">
-                                💰
-                            </div>
+                        <div className="absolute top-0 right-0 p-8 opacity-10 transform group-hover:scale-110 transition-transform">
+                            <span className="text-9xl">💰</span>
                         </div>
-                        <div className="mt-4 flex items-center text-red-600 text-xs font-medium">
-                            <span>View Breakdown</span>
-                            <span className="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                        <div className="relative z-10">
+                            <h3 className="text-violet-500 text-sm font-black uppercase tracking-widest mb-1">Outstanding Fees</h3>
+                            <div className="flex items-baseline space-x-1">
+                                <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600">
+                                    {stats.totalOutstanding?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                </span>
+                                <span className="text-xl font-bold text-gray-400">JOD</span>
+                            </div>
+                            <div className="mt-6 flex items-center text-violet-600 text-sm font-bold bg-violet-50 w-fit px-3 py-1 rounded-full group-hover:bg-violet-100 transition-colors">
+                                <span>View Breakdown</span>
+                                <span className="ml-2 transform group-hover:translate-x-1 transition-transform">→</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Students Card - Viola Style */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-indigo-500 text-xs font-bold uppercase tracking-wider">Total Students</h3>
-                                <p className="text-4xl font-extrabold text-gray-900 mt-2">{stats.totalStudents || 0}</p>
-                            </div>
-                            <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600 text-xl">
-                                👥
-                            </div>
+                    {/* Students Card - Premium Cyan Gradient */}
+                    <div className="glass-card p-8 rounded-3xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 opacity-10">
+                            <span className="text-9xl">👥</span>
                         </div>
-                        <div className="mt-4 text-xs text-gray-400">
-                            Active enrollments
+                        <div className="relative z-10">
+                            <h3 className="text-cyan-500 text-sm font-black uppercase tracking-widest mb-1">Total Students</h3>
+                            <div className="flex items-baseline space-x-1">
+                                <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
+                                    {stats.totalStudents || 0}
+                                </span>
+                            </div>
+                            <p className="mt-6 text-sm text-gray-500 font-medium">Active academic enrollments</p>
                         </div>
                     </div>
                 </div>
             )}
 
             {view === 'classes' && stats && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-                        <h2 className="text-lg font-bold text-gray-800">Fee Breakdown by Class</h2>
+                <div className="glass-panel rounded-3xl overflow-hidden">
+                    <div className="p-8 border-b border-white/30 bg-white/40">
+                        <h2 className="text-2xl font-black text-gray-800 flex items-center">
+                            <span className="mr-3 text-2xl">🏫</span> Fee Breakdown by Class
+                        </h2>
                     </div>
-                    <table className="min-w-full divide-y divide-gray-100">
-                        <thead className="bg-gray-50/50">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Class Name</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Outstanding Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
-                            {stats.classes.map((cls) => (
-                                <tr
-                                    key={cls.id}
-                                    onClick={() => {
-                                        setSelectedClass(cls);
-                                        fetchClassStudents(cls.id);
-                                        setView('students');
-                                    }}
-                                    className="hover:bg-indigo-50/50 cursor-pointer transition-colors group"
-                                >
-                                    <td className="px-6 py-4 text-sm font-semibold text-gray-700 group-hover:text-indigo-700">{cls.name}</td>
-                                    <td className="px-6 py-4 text-sm text-right text-red-600 font-bold">{cls.outstanding.toFixed(2)} JOD</td>
+                    <div className="p-4">
+                        <table className="min-w-full">
+                            <thead>
+                                <tr className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-4">Class Name</th>
+                                    <th className="px-6 py-4 text-right">Outstanding Amount</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100/50">
+                                {stats.classes.map((cls) => (
+                                    <tr
+                                        key={cls.id}
+                                        onClick={() => {
+                                            setSelectedClass(cls);
+                                            fetchClassStudents(cls.id);
+                                            setView('students');
+                                        }}
+                                        className="hover:bg-violet-50/50 cursor-pointer transition-all hover:scale-[1.01] rounded-lg group"
+                                    >
+                                        <td className="px-6 py-5 text-lg font-bold text-gray-700 group-hover:text-violet-700 transition-colors">{cls.name}</td>
+                                        <td className="px-6 py-5 text-lg text-right font-black text-red-500 bg-red-50/0 group-hover:bg-red-50/30 rounded-r-lg transition-colors">
+                                            {cls.outstanding.toFixed(2)} <span className="text-xs text-red-300">JOD</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
             {view === 'students' && selectedClass && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-gray-800">Outstanding: {selectedClass.name}</h2>
-                        <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-bold">Unpaid List</span>
+                <div className="glass-panel rounded-3xl overflow-hidden">
+                    <div className="p-8 border-b border-white/30 bg-white/40 flex justify-between items-center">
+                        <h2 className="text-2xl font-black text-gray-800">Outstanding: {selectedClass.name}</h2>
+                        <span className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-inner">Unpaid List</span>
                     </div>
-                    <table className="min-w-full divide-y divide-gray-100">
-                        <thead className="bg-gray-50/50">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student Name</th>
-                                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Amount Due</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
-                            {classStudents.map((student) => (
-                                <tr key={student.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.name}</td>
-                                    <td className="px-6 py-4 text-sm text-right text-red-600 font-bold">{student.outstanding.toFixed(2)} JOD</td>
+                    <div className="p-4">
+                        <table className="min-w-full">
+                            <thead>
+                                <tr className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-4">Student Name</th>
+                                    <th className="px-6 py-4 text-right">Amount Due</th>
                                 </tr>
-                            ))}
-                            {classStudents.length === 0 && (
-                                <tr>
-                                    <td colSpan={2} className="px-6 py-8 text-center text-gray-500">No students found.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100/50">
+                                {classStudents.map((student) => (
+                                    <tr key={student.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-6 py-5 font-bold text-gray-800">{student.name}</td>
+                                        <td className="px-6 py-5 text-right font-bold text-red-500">{student.outstanding.toFixed(2)} JOD</td>
+                                    </tr>
+                                ))}
+                                {classStudents.length === 0 && (
+                                    <tr>
+                                        <td colSpan={2} className="px-6 py-12 text-center text-gray-400 font-medium">No students found with outstanding fees.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 

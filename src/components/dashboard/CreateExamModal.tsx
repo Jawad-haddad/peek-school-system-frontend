@@ -68,6 +68,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
         }
 
         try {
+            // Payload: Sending separate date, startTime, and endTime
             await api.post('/exams', {
                 name,
                 date,
@@ -93,7 +94,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
     const inputClasses = "w-full px-4 py-2 border border-gray-300 bg-gray-50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:bg-white focus:border-transparent outline-none transition-all";
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 blur-sm backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h2 className="text-xl font-bold text-gray-800">Create New Exam</h2>
@@ -109,8 +110,8 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
                         </div>
                     )}
 
-                    {/* Exam Name */}
-                    <div>
+                    {/* Row 1: Exam Name */}
+                    <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Exam Name</label>
                         <input
                             type="text"
@@ -122,8 +123,8 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
                         />
                     </div>
 
-                    {/* Date and Time Grid */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Row 2: Grid for Date, Start Time, End Time */}
+                    <div className="grid grid-cols-3 gap-4">
                         {/* Date */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
@@ -136,31 +137,33 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
                             />
                         </div>
 
-                        {/* Time Range */}
+                        {/* Start Time */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Time Range</label>
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    type="time"
-                                    required
-                                    value={startTime}
-                                    onChange={(e) => setStartTime(e.target.value)}
-                                    className={`${inputClasses} px-2`} // Slightly tighter padding
-                                />
-                                <span className="text-gray-400 font-medium">to</span>
-                                <input
-                                    type="time"
-                                    required
-                                    value={endTime}
-                                    onChange={(e) => setEndTime(e.target.value)}
-                                    className={`${inputClasses} px-2`}
-                                />
-                            </div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                            <input
+                                type="time"
+                                required
+                                value={startTime}
+                                onChange={(e) => setStartTime(e.target.value)}
+                                className={inputClasses}
+                            />
+                        </div>
+
+                        {/* End Time */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                            <input
+                                type="time"
+                                required
+                                value={endTime}
+                                onChange={(e) => setEndTime(e.target.value)}
+                                className={inputClasses}
+                            />
                         </div>
                     </div>
 
-                    {/* Academic Year */}
-                    <div>
+                    {/* Row 3: Academic Year */}
+                    <div className="w-full">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
                         <select
                             required

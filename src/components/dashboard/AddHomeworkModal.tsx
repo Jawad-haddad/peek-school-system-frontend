@@ -39,8 +39,11 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
         setLoadingClasses(true);
         try {
             const response = await api.get('/school/classes');
-            const data = Array.isArray(response.data) ? response.data : response.data.data || [];
-            setClasses(data);
+            console.log("AddHomeworkModal: Fetched Classes", response.data); // Debug log (Busy Teacher Persona)
+
+            // Handle both array and { data: [...] } structure
+            const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
+            setClasses(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error("Failed to fetch classes", err);
         } finally {

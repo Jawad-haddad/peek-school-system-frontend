@@ -20,19 +20,16 @@ export default function SettingsPage() {
         setLoading(true);
         setMessage('');
 
-        // Hardcoding typical academic year dates (Sep 1st to Jun 30th)
-        const startDate = `${startYear}-09-01`;
-        const endDate = `${endYear}-06-30`;
+        // Payload logic: Only startYear and endYear
+        const payload = {
+            startYear: startYear,
+            endYear: endYear
+        };
 
-        console.log("Submitting Academic Year:", { name: yearName, startDate, endDate });
+        console.log("Submitting Academic Year:", payload);
 
         try {
-            await api.post('/academic-years', {
-                name: yearName,
-                startDate: new Date(startDate).toISOString(),
-                endDate: new Date(endDate).toISOString(),
-                current: true
-            });
+            await api.post('/academic-years', payload);
             setMessage('Academic Year created successfully!');
         } catch (error: any) {
             console.error("Create Academic Year Error:", error);

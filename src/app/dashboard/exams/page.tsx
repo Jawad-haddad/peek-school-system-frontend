@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link'; 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import AddExamForm from '../../../components/AddExamForm';
 import EditExamForm from '../../../components/EditExamForm';
 
@@ -22,12 +22,8 @@ export default function ExamsPage() {
 
   useEffect(() => {
     const fetchExams = async () => {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
       try {
-        const res = await axios.get('http://localhost:3000/api/schools/exams', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get('/school/exams');
         setExams(res.data);
       } catch (err) { console.error(err); }
     };
@@ -36,11 +32,8 @@ export default function ExamsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this exam?')) return;
-    const token = localStorage.getItem('authToken');
     try {
-      await axios.delete(`http://localhost:3000/api/schools/exams/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/school/exams/${id}`);
       setRefresh(p => p + 1);
     } catch (err) { alert('Failed to delete'); }
   };
@@ -49,7 +42,7 @@ export default function ExamsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Manage Exams</h1>
-        <button onClick={() => setIsAddOpen(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">+ Add Exam</button>
+        <button onClick={() => setIsAddOpen(true)} className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">+ Add Exam</button>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -66,7 +59,7 @@ export default function ExamsPage() {
             {exams.map(exam => (
               <tr key={exam.id}>
                 <td className="px-6 py-4">
-                  <Link href={`/dashboard/exams/${exam.id}`} className="text-indigo-600 hover:text-indigo-900 font-semibold">
+                  <Link href={`/dashboard/exams/${exam.id}`} className="text-purple-600 hover:text-purple-900 font-semibold">
                     {exam.name}
                   </Link>
                 </td>
@@ -76,7 +69,7 @@ export default function ExamsPage() {
                   <Link href={`/dashboard/exams/${exam.id}`} className="text-gray-600 hover:text-gray-900 mr-4 text-sm font-medium">
                     Schedule
                   </Link>
-                  <button onClick={() => setEditExam(exam)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+                  <button onClick={() => setEditExam(exam)} className="text-purple-600 hover:text-purple-900 mr-4">Edit</button>
                   <button onClick={() => handleDelete(exam.id)} className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>

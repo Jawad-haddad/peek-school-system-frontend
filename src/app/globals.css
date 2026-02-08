@@ -1,78 +1,103 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #6a1b9a;
-  /* Viola Purple */
-  --secondary: #ffb300;
-  /* Playful Yellow */
-  --accent: #00bcd4;
-  /* Cyan */
-  --light: #f3e5f5;
-  /* Light Purple BG */
-  --dark: #333;
-  --grey: #f4f4f4;
-  --gradient-header: linear-gradient(135deg, #2c3e50, #34495e);
+  /* Viola Theme Palette */
+  --viola-primary: #7c3aed;
+  /* Purple 600 */
+  --viola-secondary: #8b5cf6;
+  /* Purple 500 */
+  --viola-accent: #c4b5fd;
+  /* Purple 300 */
+  --viola-bg: #f5f3ff;
+  /* Purple 50 */
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
 }
 
 body {
-  background-color: var(--grey);
-  color: var(--dark);
+  background-color: var(--viola-bg);
+  color: #1f2937;
+  /* Mesh Gradient Background */
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+  background-attachment: fixed;
+  background-size: cover;
 }
 
-/* VIOLA COMPONENT CLASSES */
-.dashboard-header {
-  background: var(--gradient-header);
-  color: white;
-  padding: 40px 0 80px;
-  /* Large padding for overlap effect */
-  border-radius: 0 0 30px 30px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: -50px;
-  /* Overlap offset */
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
-.card-menu {
-  background: white;
-  border: none;
-  border-radius: 15px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s, box-shadow 0.3s;
-  height: 100%;
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
-.card-menu:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: var(--viola-accent);
 }
 
-.icon-box {
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 1.2rem;
-  margin-bottom: 15px;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* Utility Colors for Icons */
-.bg-light-primary {
-  background: rgba(67, 97, 238, 0.1);
-  color: var(--primary);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.bg-light-warning {
-  background: rgba(241, 196, 15, 0.1);
-  color: var(--secondary);
+::-webkit-scrollbar-thumb {
+  background: #ddd6fe;
+  border-radius: 4px;
 }
 
-.bg-light-info {
-  background: rgba(0, 188, 212, 0.1);
-  color: var(--accent);
+::-webkit-scrollbar-thumb:hover {
+  background: #c4b5fd;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+/* Glass Button Hover Glow */
+.glass-btn-glow:hover {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
 }

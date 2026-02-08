@@ -48,34 +48,36 @@ export default function TeacherDashboard() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">My Classes</h2>
-                <span className="text-sm text-gray-500">{new Date().toLocaleDateString()}</span>
+        <div className="space-y-8 p-4">
+            <div className="glass-panel p-6 rounded-3xl flex items-center justify-between">
+                <h2 className="text-3xl font-black text-gray-800 tracking-tight">My Classes</h2>
+                <div className="bg-white/50 px-4 py-2 rounded-xl backdrop-blur-sm text-sm font-bold text-gray-500 border border-white/40 shadow-sm">
+                    {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
             </div>
 
             {classes.length === 0 ? (
-                <div className="text-center py-10 bg-white rounded-xl border border-gray-100">
-                    <p className="text-gray-500">You have no classes assigned yet.</p>
+                <div className="glass-card text-center py-20 rounded-3xl">
+                    <p className="text-gray-400 font-medium text-lg">You have no classes assigned yet.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                     {classes.map((cls) => (
-                        <div key={cls.id} className="flex flex-col rounded-xl bg-white p-6 shadow-sm border border-gray-100 transition-shadow hover:shadow-md">
-                            <div className="mb-4 flex items-start justify-between">
+                        <div key={cls.id} className="glass-card flex flex-col rounded-3xl p-6 group hover:border-violet-300/50">
+                            <div className="mb-6 flex items-start justify-between">
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{cls.name}</h3>
-                                    <p className="text-sm text-indigo-600 font-medium">{cls.subject}</p>
+                                    <h3 className="text-2xl font-black text-gray-800 group-hover:text-violet-700 transition-colors">{cls.name}</h3>
+                                    <p className="text-sm text-violet-500 font-bold uppercase tracking-wider">{cls.subject}</p>
                                 </div>
-                                <div className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">
+                                <div className="rounded-xl bg-violet-50 px-3 py-1 text-xs font-black text-violet-600 border border-violet-100">
                                     {cls.studentCount} Students
                                 </div>
                             </div>
 
-                            <div className="mt-auto pt-4 border-t border-gray-50">
+                            <div className="mt-auto pt-6 border-t border-gray-100/50">
                                 <Link
                                     href={`/dashboard/classes/${cls.id}`}
-                                    className="block w-full text-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    className="block w-full text-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-200 hover:shadow-xl hover:shadow-violet-300 hover:-translate-y-1 transition-all"
                                 >
                                     Take Attendance / View
                                 </Link>

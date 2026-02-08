@@ -15,7 +15,7 @@ export default function DashboardLayout({
 
   return (
     <AuthGuard>
-      <div className="flex bg-gray-100 min-h-screen flex-col md:flex-row">
+      <div className="flex min-h-screen flex-col md:flex-row relative">
         <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
 
         <Sidebar
@@ -23,8 +23,11 @@ export default function DashboardLayout({
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        <main className="flex-1 p-0 md:p-0 overflow-y-auto h-[calc(100vh-64px)] md:h-screen">
-          {children}
+        {/* Main Content Area - Taking remaining space */}
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto h-[calc(100vh-64px)] md:h-screen transition-all">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {children}
+          </div>
         </main>
       </div>
     </AuthGuard>

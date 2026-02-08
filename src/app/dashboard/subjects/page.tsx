@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import AddSubjectModal from '@/components/dashboard/AddSubjectModal';
+import EditSubjectModal from '@/components/dashboard/EditSubjectModal';
 
 type Subject = {
     id: string;
@@ -15,6 +16,7 @@ export default function SubjectsPage() {
     const [error, setError] = useState('');
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
     const fetchSubjects = async () => {
         setLoading(true);
@@ -50,7 +52,7 @@ export default function SubjectsPage() {
                 <h1 className="text-3xl font-bold text-gray-800">Manage Subjects</h1>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition"
+                    className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-purple-700 transition"
                 >
                     + Add Subject
                 </button>
@@ -74,10 +76,18 @@ export default function SubjectsPage() {
                                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{subject.name}</td>
                                     <td className="px-6 py-4 text-right text-sm font-medium">
                                         <button
-                                            onClick={() => handleDelete(subject.id)}
-                                            className="text-red-600 hover:text-red-900 ml-4"
+                                            onClick={() => setEditingSubject(subject)}
+                                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                                            title="Edit"
                                         >
-                                            Delete
+                                            ✏️ Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(subject.id)}
+                                            className="text-red-600 hover:text-red-900"
+                                            title="Delete"
+                                        >
+                                            🗑️ Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -99,6 +109,15 @@ export default function SubjectsPage() {
                 onClose={() => setIsAddModalOpen(false)}
                 onSuccess={fetchSubjects}
             />
+
+            {editingSubject && (
+                <EditSubjectModal
+                    isOpen={true}
+                    onClose={() => setEditingSubject(null)}
+                    onSuccess={fetchSubjects}
+                    subject={editingSubject}
+                />
+            )}
         </div>
     );
 }

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 const ALL_MENU_ITEMS = [
   { name: 'Dashboard', href: '/dashboard', icon: '🏠', roles: ['ADMIN', 'TEACHER', 'PARENT'] },
   { name: 'Chat', href: '/dashboard/chat', icon: '💬', roles: ['ADMIN', 'PARENT', 'TEACHER'] }, // Assuming chat is for everyone
-  { name: 'Students', href: '/dashboard/students', icon: '🎓', roles: ['ADMIN'] },
+  { name: 'Students', href: '/dashboard/classes', icon: '🎓', roles: ['ADMIN'] },
   { name: 'Teachers', href: '/dashboard/teachers', icon: '👨‍🏫', roles: ['ADMIN'] },
   { name: 'Classes', href: '/dashboard/classes', icon: '🏫', roles: ['ADMIN'] },
   { name: 'Subjects', href: '/dashboard/subjects', icon: '📚', roles: ['ADMIN'] },
@@ -70,35 +70,35 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col bg-gray-800 text-white transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 flex h-[calc(100vh-2rem)] w-64 flex-col glass-panel text-gray-800 transition-transform duration-300 md:relative md:translate-x-0 m-4 rounded-3xl ${isOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
-        <div className="border-b border-gray-700 p-4 text-center">
-          <h2 className="text-2xl font-bold">Peek System</h2>
-          {role && <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">{role}</p>}
+        <div className="p-6 text-center border-b border-white/20">
+          <h2 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">Peek</h2>
+          {role && <span className="inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-100 text-violet-600 tracking-wider shadow-sm border border-violet-200">{role}</span>}
         </div>
 
-        <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
+        <nav className="flex-1 space-y-3 p-4 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
               onClick={() => onClose()}
-              className="flex items-center rounded-md px-3 py-2 text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+              className="group flex items-center rounded-xl px-4 py-3 text-gray-600 transition-all hover:bg-white/60 hover:shadow-md hover:text-violet-700 hover:scale-105 active:scale-95"
             >
-              <span className="mr-3 text-lg">{item.icon}</span>
-              <span>{item.name}</span>
+              <span className="mr-4 text-xl group-hover:animate-bounce shadow-sm p-2 bg-white rounded-lg">{item.icon}</span>
+              <span className="font-medium">{item.name}</span>
             </Link>
           ))}
         </nav>
 
-        <div className="border-t border-gray-700 p-4">
+        <div className="p-4 mt-auto border-t border-white/20">
           <button
             onClick={handleLogout}
-            className="flex w-full items-center rounded-md px-3 py-2 text-left text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+            className="group flex w-full items-center justify-center rounded-xl px-4 py-3 text-white bg-gradient-to-r from-red-400 to-red-500 shadow-lg hover:shadow-xl hover:from-red-500 hover:to-red-600 transition-all transform hover:-translate-y-1"
           >
-            <span className="mr-3 text-lg">🚪</span>
-            <span>Logout</span>
+            <span className="mr-2 text-lg">🚪</span>
+            <span className="font-bold">Logout</span>
           </button>
         </div>
       </aside>
