@@ -68,14 +68,18 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
         }
 
         try {
-            // Payload: Sending separate date, startTime, and endTime
-            await api.post('/exams', {
+            // Payload: Sending separate date, startTime, and endTime as strings
+            const payload = {
                 name,
-                date,
-                startTime,
-                endTime,
+                date: String(date),
+                startTime: String(startTime),
+                endTime: String(endTime),
                 academicYearId
-            });
+            };
+
+            console.log("Creating Exam Payload:", payload);
+
+            await api.post('/school/exams', payload);
 
             onSuccess();
             setName('');

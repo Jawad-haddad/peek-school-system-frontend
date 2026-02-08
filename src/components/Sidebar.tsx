@@ -15,6 +15,7 @@ const ALL_MENU_ITEMS = [
   { name: 'Timetable', href: '/dashboard/timetable', icon: '🗓️', roles: ['ADMIN'] },
   { name: 'Exams', href: '/dashboard/exams', icon: '📝', roles: ['ADMIN'] },
   { name: 'Reports', href: '/dashboard/reports', icon: '📊', roles: ['ADMIN'] },
+  { name: 'Broadcast', href: '/dashboard/broadcast', icon: '📢', roles: ['ADMIN'] },
   { name: 'Settings', href: '/dashboard/settings', icon: '⚙️', roles: ['ADMIN'] },
 
   // Teacher Specific

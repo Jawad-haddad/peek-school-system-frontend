@@ -91,9 +91,10 @@ export default function ChatPage() {
         try {
             const res = await api.get('/chat/contacts');
             setContacts(res.data);
-            setLoadingContacts(false);
         } catch (error) {
-            console.error("Error fetching contacts", error);
+            console.warn("Contacts fetch failed (likely 403/404), defaulting to empty.", error);
+            setContacts([]);
+        } finally {
             setLoadingContacts(false);
         }
     };
@@ -168,12 +169,16 @@ export default function ChatPage() {
                     {loadingContacts ? (
                         <div className="p-8 text-center text-gray-400 font-medium animate-pulse">Loading contacts...</div>
                     ) : contacts.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-48 text-gray-400">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-2xl mb-3">
+                        <div className="flex flex-col items-center justify-center h-64 text-gray-400 px-6 text-center">
+                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-gray-100">
                                 📭
                             </div>
-                            <p className="font-bold">No contacts found</p>
-                            <p className="text-xs opacity-60">Parents/Teachers will appear here</p>
+                            <p className="font-bold text-gray-600 text-lg mb-1">No contacts yet</p>
+                            <p className="text-xs text-gray-400 max-w-[200px] leading-relaxed">
+                                {userRole === 'PARENT'
+                                    ? "No teachers found. Your child might not be enrolled in any classes yet."
+                                    : "Once you are assigned to a class, people will appear here."}
+                            </p>
                         </div>
                     ) : (
                         Object.entries(groupedContacts).map(([role, list]) => (
@@ -206,6 +211,13 @@ export default function ChatPage() {
                                                     {contact.lastMessageTime && new Date(contact.lastMessageTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
+                                            {contact.studentName && (
+                                                <div className="mb-1">
+                                                    <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">
+                                                        For: {contact.studentName}
+                                                    </span>
+                                                </div>
+                                            )}
                                             <p className={`text-xs truncate ${selectedContact?.id === contact.id ? 'text-violet-600 font-bold' : 'text-gray-500 font-medium'}`}>
                                                 {contact.lastMessage || 'Start a conversation'}
                                             </p>

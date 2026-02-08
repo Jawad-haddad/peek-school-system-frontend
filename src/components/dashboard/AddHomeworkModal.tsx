@@ -25,6 +25,7 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
 
     const [classes, setClasses] = useState<ClassOption[]>([]);
     const [loadingClasses, setLoadingClasses] = useState(false);
+    const [noClassesFound, setNoClassesFound] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -37,15 +38,23 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
 
     const fetchClasses = async () => {
         setLoadingClasses(true);
+        setNoClassesFound(false);
         try {
             const response = await api.get('/school/classes');
-            console.log("AddHomeworkModal: Fetched Classes", response.data); // Debug log (Busy Teacher Persona)
+            console.log("AddHomeworkModal: Fetched Classes", response.data); // Debug log
 
             // Handle both array and { data: [...] } structure
             const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
-            setClasses(Array.isArray(data) ? data : []);
+            const classList = Array.isArray(data) ? data : [];
+
+            setClasses(classList);
+
+            if (classList.length === 0) {
+                setNoClassesFound(true);
+            }
         } catch (err) {
             console.error("Failed to fetch classes", err);
+            // Treat error as no classes found for safety, or just show empty
         } finally {
             setLoadingClasses(false);
         }
@@ -90,7 +99,6 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
     const inputClasses = "w-full px-4 py-2 border border-gray-300 bg-gray-50 rounded-lg focus:ring-2 focus:ring-purple-500 focus:bg-white outline-none transition-all";
 
     return (
-        // Fix: backdrop-blur-sm on the FIXED container, z-50 for modal content
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all relative z-50">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
@@ -133,17 +141,27 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-                            <select
-                                required
-                                value={classId}
-                                onChange={(e) => setClassId(e.target.value)}
-                                className={inputClasses}
-                                disabled={loadingClasses}
-                            >
-                                {loadingClasses ? <option>Loading...</option> : <option value="">Select Class</option>}
-                                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Class
+                                {loadingClasses && <span className="ml-2 text-xs text-purple-500">Loading...</span>}
+                            </label>
+
+                            {noClassesFound ? (
+                                <div className="px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-xs font-bold text-red-600 flex items-center gap-1">
+                                    ⚠️ No classes assigned. Contact Admin.
+                                </div>
+                            ) : (
+                                <select
+                                    required
+                                    value={classId}
+                                    onChange={(e) => setClassId(e.target.value)}
+                                    className={`${inputClasses} ${loadingClasses ? 'opacity-50 cursor-wait' : ''}`}
+                                    disabled={loadingClasses}
+                                >
+                                    <option value="">Select Class</option>
+                                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            )}
                         </div>
                     </div>
 
@@ -180,8 +198,8 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
                         </button>
                         <button
                             type="submit"
-                            disabled={loading}
-                            className={`px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md font-bold ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            disabled={loading || noClassesFound || !classId}
+                            className={`px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md font-bold ${loading || noClassesFound || !classId ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             {loading ? 'Assigning...' : 'Create Assignment'}
                         </button>

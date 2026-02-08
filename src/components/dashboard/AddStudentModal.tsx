@@ -7,7 +7,7 @@ type AddStudentModalProps = {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    classId?: string; // Made optional
+    classId?: string;
 };
 
 type ClassOption = {
@@ -16,9 +16,9 @@ type ClassOption = {
 };
 
 export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: preSelectedClassId }: AddStudentModalProps) {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [parentEmail, setParentEmail] = useState('');
+    const [parentPhone, setParentPhone] = useState('');
     const [gender, setGender] = useState('MALE');
     const [dob, setDob] = useState('');
     const [selectedClassId, setSelectedClassId] = useState(preSelectedClassId || '');
@@ -38,8 +38,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
             } else {
                 setSelectedClassId(preSelectedClassId);
             }
-            // Auto-generate password on open
-            generatePassword();
         }
     }, [isOpen, preSelectedClassId]);
 
@@ -57,15 +55,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
         }
     };
 
-    const generatePassword = () => {
-        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
-        let newPass = "";
-        for (let i = 0; i < 10; i++) {
-            newPass += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        setPassword(newPass);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -79,19 +68,21 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
 
         try {
             await api.post('/school/students', {
-                name,
-                email, // Parent Email
-                password,
+                fullName,
                 classId: selectedClassId,
                 gender,
-                dob
+                dob,
+                parentEmail,
+                parentPhone
             });
             onSuccess();
             onClose();
             // Reset Form via unmount/remount usually, but here manually:
-            setName('');
-            setEmail('');
+            setFullName('');
+            setParentEmail('');
+            setParentPhone('');
             setDob('');
+            setGender('MALE');
         } catch (err: any) {
             console.error("Failed to add student", err);
             setError(err.response?.data?.message || 'Failed to add student.');
@@ -126,20 +117,22 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="col-span-1 md:col-span-2">
-                            <label className={labelClasses}>Full Name</label>
+                    <div className="space-y-5">
+                        {/* Input 1: Full Name */}
+                        <div>
+                            <label className={labelClasses}>Full 4-Part Name</label>
                             <input
                                 type="text"
                                 required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
                                 className={inputClasses}
-                                placeholder="e.g. Leo Messi"
+                                placeholder="e.g. Leo Andres Messi Cuccittini"
                             />
                         </div>
 
-                        <div className="col-span-1 md:col-span-2">
+                        {/* Input 2: Class Dropdown */}
+                        <div>
                             <label className={labelClasses}>Class Assignment</label>
                             {preSelectedClassId ? (
                                 <div className="px-4 py-3 bg-violet-50 text-violet-700 font-bold rounded-xl border border-violet-100 flex items-center gap-2">
@@ -160,66 +153,58 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             )}
                         </div>
 
-                        <div>
-                            <label className={labelClasses}>Gender</label>
-                            <select
-                                value={gender}
-                                onChange={(e) => setGender(e.target.value)}
-                                className={inputClasses}
-                            >
-                                <option value="MALE">Male</option>
-                                <option value="FEMALE">Female</option>
-                            </select>
+                        {/* Input 3: Gender & DOB */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClasses}>Gender</label>
+                                <select
+                                    value={gender}
+                                    onChange={(e) => setGender(e.target.value)}
+                                    className={inputClasses}
+                                >
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className={labelClasses}>Date of Birth</label>
+                                <input
+                                    type="date"
+                                    required
+                                    value={dob}
+                                    onChange={(e) => setDob(e.target.value)}
+                                    className={inputClasses}
+                                />
+                            </div>
                         </div>
+
+                        {/* Input 4: Parent Email */}
                         <div>
-                            <label className={labelClasses}>Date of Birth</label>
+                            <label className={labelClasses}>Parent's Email (for Login)</label>
                             <input
-                                type="date"
+                                type="email"
                                 required
-                                value={dob}
-                                onChange={(e) => setDob(e.target.value)}
+                                value={parentEmail}
+                                onChange={(e) => setParentEmail(e.target.value)}
                                 className={inputClasses}
+                                placeholder="parent@example.com"
+                            />
+                        </div>
+
+                        {/* Input 5: Parent Phone */}
+                        <div>
+                            <label className={labelClasses}>Parent Phone (Optional)</label>
+                            <input
+                                type="tel"
+                                value={parentPhone}
+                                onChange={(e) => setParentPhone(e.target.value)}
+                                className={inputClasses}
+                                placeholder="+1 234 567 890"
                             />
                         </div>
                     </div>
 
-                    <div className="pt-2 border-t border-gray-100">
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 mt-2">Parent Access</p>
-                        <div className="grid grid-cols-1 gap-4">
-                            <div>
-                                <label className={labelClasses}>Parent Email</label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className={inputClasses}
-                                    placeholder="parent@example.com"
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClasses}>Auto-Generated Password</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={password}
-                                        className={`${inputClasses} bg-gray-100 text-gray-500 font-mono tracking-wider`}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={generatePassword}
-                                        className="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors"
-                                        title="Regenerate"
-                                    >
-                                        🔄
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                         <button
                             type="button"
                             onClick={onClose}

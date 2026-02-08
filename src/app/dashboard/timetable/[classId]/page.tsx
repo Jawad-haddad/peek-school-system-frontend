@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api'; // Fixed import
 import TimetableEntryModal from '../../../../components/TimetableEntryModal';
 
 // 1. تعريف Type لبيانات الجدول القادمة من الـ API
@@ -29,7 +29,7 @@ const PERIODS = [1, 2, 3, 4, 5, 6]; // (عدد الحصص)
 export default function TimetableGridPage() {
   const params = useParams();
   const classId = params.classId as string;
-  
+
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,13 +42,8 @@ export default function TimetableGridPage() {
   // وظيفة جلب بيانات الجدول
   const fetchTimetable = async () => {
     setLoading(true);
-    const token = localStorage.getItem('authToken');
-    if (!token) return;
-
     try {
-      const response = await axios.get(`http://localhost:3000/api/schools/classes/${classId}/timetable`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get(`/school/classes/${classId}/timetable`);
       setTimetable(response.data);
     } catch (error) {
       setError("Failed to fetch timetable.");
@@ -121,8 +116,8 @@ export default function TimetableGridPage() {
                   {PERIODS.map(period => {
                     const entry = getEntry(day, period);
                     return (
-                      <td 
-                        key={period} 
+                      <td
+                        key={period}
                         className="cursor-pointer border-l px-4 py-4 text-center hover:bg-gray-50"
                         onClick={() => handleSlotClick(day, period)}
                       >
