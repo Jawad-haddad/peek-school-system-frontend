@@ -2,33 +2,76 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import WalletHistoryList from './WalletHistoryList';
+import TopUpModal from './TopUpModal'; // NEW
+import api, { academicApi, schoolApi } from '@/lib/api';
 
-// Mock user type
 type User = {
     name: string;
     role: string;
+    studentId?: string; // Added studentId to User type
 };
 
 export default function ParentDashboard() {
     const [user, setUser] = useState<User | null>(null);
 
+
+    const [subjects, setSubjects] = useState<any[]>([]);
+    const [isTopUpOpen, setIsTopUpOpen] = useState(false); // NEW
+
     useEffect(() => {
-        // Fetch user from localStorage or API
-        const storedUser = localStorage.getItem('user'); // Assuming you might have a user object
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                // Fallback if parsing fails
-                const role = localStorage.getItem('role') || 'Parent';
-                setUser({ name: 'Guardian', role: role });
+        const fetchDashboardData = async () => {
+            // 1. Get User/Student
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const parsedUser = JSON.parse(storedUser);
+                setUser(parsedUser);
+
+                // If user has a studentId (Parent/Student login), fetch their class teachers
+                if (parsedUser.studentId) {
+                    try {
+                        // Fetch the student profile to get classId for loading teachers
+                        const studentRes = await api.get(`/student/${parsedUser.studentId}/profile`);
+                        const classId = studentRes.data?.classId;
+                        if (classId) {
+                            const teachersRes = await api.get(`/academics/classes/${classId}/teachers`);
+                            // Teachers data can be used to display class teachers
+                        }
+                    } catch (err) {
+                        // Non-critical — dashboard still usable without teacher list
+                    }
+                }
             }
-        } else {
-            // Default Fallback
-            const role = localStorage.getItem('role') || 'Parent';
-            setUser({ name: 'Guardian', role: role });
-        }
+        };
+        fetchDashboardData();
     }, []);
+
+    // NEW EFFECT for Teacher Fetching
+    // NEW EFFECT for Teacher Fetching
+    useEffect(() => {
+        if (!user || (!user.studentId && user.role !== 'Student')) return;
+
+        const loadTeachers = async () => {
+            // Determine Student ID to use
+            const targetStudentId = user.studentId || (user.role === 'Student' ? (user as any).id : null);
+            if (!targetStudentId) return;
+
+            try {
+                // 1. Fetch Student Profile to get Class ID
+                const studentRes = await schoolApi.fetchStudent(targetStudentId);
+                const studentData = studentRes.data.student || studentRes.data;
+
+                if (studentData && studentData.classId) {
+                    // 2. Fetch Subjects for that Class (which contain teacher info)
+                    const subjectsRes = await academicApi.fetchClassSubjects(studentData.classId);
+                    setSubjects(subjectsRes.data.subjects || subjectsRes.data || []);
+                }
+            } catch (e) {
+                console.error("Failed to load subjects", e);
+            }
+        };
+        loadTeachers();
+    }, [user]);
 
     return (
         <div className="min-h-screen">
@@ -115,6 +158,63 @@ export default function ParentDashboard() {
                 </Link>
 
             </div>
-        </div>
+
+
+
+            {/* 2.5 MY TEACHERS (via Subjects) SECTION */}
+            {
+                subjects.length > 0 && (
+                    <div className="mb-8">
+                        <h3 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+                            <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg text-xl">👨‍🏫</span>
+                            My Teachers & Subjects
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {subjects.map((sub: any) => (
+                                <div key={sub.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+                                    <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-lg">
+                                        {sub.name?.charAt(0) || 'S'}
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-800">{sub.name}</h4>
+                                        <p className="text-xs text-gray-500 font-medium">
+                                            {sub.teacher ? sub.teacher.fullName || sub.teacher.name : 'No Teacher Assigned'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* 3. WALLET HISTORY SECTION */}
+            <div className="mb-12">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                        <span className="bg-green-100 text-green-600 p-1.5 rounded-lg text-xl">💳</span>
+                        Wallet History
+                    </h3>
+                    <button
+                        onClick={() => setIsTopUpOpen(true)}
+                        className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-gray-200 hover:scale-105 transition-transform flex items-center gap-2"
+                    >
+                        <span>+</span> Top Up
+                    </button>
+                </div>
+                <WalletHistoryList studentId={user?.studentId || ''} />
+            </div>
+
+            <TopUpModal
+                isOpen={isTopUpOpen}
+                onClose={() => setIsTopUpOpen(false)}
+                studentId={user?.studentId || ''}
+                onSuccess={() => {
+                    // Start a refresh or just close
+                    // Ideally we refresh the balance in the header if we had one
+                    window.location.reload(); // Simple refresh to update balance everywhere
+                }}
+            />
+        </div >
     );
 }

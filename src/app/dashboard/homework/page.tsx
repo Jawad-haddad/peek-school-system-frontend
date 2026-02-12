@@ -22,9 +22,11 @@ export default function HomeworkPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [role, setRole] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const fetchHomework = async () => {
         setLoading(true);
+        setError(null);
         try {
             // Fetch homework
             const response = await api.get('/academics/homework');
@@ -39,9 +41,10 @@ export default function HomeworkPage() {
             );
 
             setHomeworkList(sortedData);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch homework:', error);
-            // setHomeworkList([]); // Keep empty on error
+            setError(error.response?.data?.message || 'Failed to load assignments');
+            if (error.response?.status === 403) setError('Access denied to homework.');
         } finally {
             setLoading(false);
         }
@@ -88,6 +91,12 @@ export default function HomeworkPage() {
                     </button>
                 )}
             </div>
+
+            {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+                    <span className="font-bold">Error:</span> {error}
+                </div>
+            )}
 
             {loading ? (
                 <div className="text-center py-12">

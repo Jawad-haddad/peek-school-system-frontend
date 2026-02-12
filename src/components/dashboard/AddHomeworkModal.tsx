@@ -41,7 +41,7 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
         setNoClassesFound(false);
         try {
             const response = await api.get('/school/classes');
-            console.log("AddHomeworkModal: Fetched Classes", response.data); // Debug log
+
 
             // Handle both array and { data: [...] } structure
             const data = Array.isArray(response.data) ? response.data : (response.data.data || []);
@@ -52,9 +52,9 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
             if (classList.length === 0) {
                 setNoClassesFound(true);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to fetch classes", err);
-            // Treat error as no classes found for safety, or just show empty
+            setError(err.response?.data?.message || 'Failed to load classes');
         } finally {
             setLoadingClasses(false);
         }
@@ -88,9 +88,10 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
             setDueDate('');
             setDescription('');
             onClose();
-        } catch (err) {
-            console.error('Failed to create homework:', err);
-            setError('Failed to create assignment. Please try again.');
+        } catch (err: any) {
+
+            setError(err.response?.data?.message || 'Failed to create assignment. Please try again.');
+            if (err.response?.status === 403) setError('You do not have permission to create homework.');
         } finally {
             setLoading(false);
         }

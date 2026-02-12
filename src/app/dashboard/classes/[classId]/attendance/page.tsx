@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
+import { toast } from '@/lib/toast-events';
 
 type Student = {
     id: string;
@@ -10,11 +11,6 @@ type Student = {
 };
 
 type AttendanceStatus = 'present' | 'absent' | 'late';
-
-type AttendanceRecord = {
-    studentId: string;
-    status: AttendanceStatus;
-};
 
 export default function ClassAttendancePage() {
     const params = useParams();
@@ -26,19 +22,15 @@ export default function ClassAttendancePage() {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [className, setClassName] = useState('My Class'); // In a real app, fetch class details too
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStudents = async () => {
-            const token = localStorage.getItem('authToken');
-            if (!token) return;
+            setLoading(true);
+            setError(null);
             try {
-                // Reuse existing API to get students
-                const res = await axios.get(`http://localhost:3000/api/schools/classes/${classId}/students`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                const studentList = res.data;
+                const res = await api.get(`/academics/classes/${classId}/students`);
+                const studentList = Array.isArray(res.data) ? res.data : (res.data?.data || []);
                 setStudents(studentList);
 
                 // Initialize attendance to 'present' for everyone by default
@@ -48,11 +40,9 @@ export default function ClassAttendancePage() {
                 });
                 setAttendance(initialAttendance);
 
-                // TODO: Here we would also fetch existing attendance for this date if it exists
-                // and update the state accordingly.
-
-            } catch (err) {
-                console.error('Failed to load students', err);
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Failed to load students.';
+                setError(message);
             } finally {
                 setLoading(false);
             }
@@ -72,9 +62,7 @@ export default function ClassAttendancePage() {
 
     const handleSave = async () => {
         setSubmitting(true);
-        const token = localStorage.getItem('authToken');
 
-        // Convert state to array for API
         const records = Object.entries(attendance).map(([studentId, status]) => ({
             studentId,
             status,
@@ -82,15 +70,12 @@ export default function ClassAttendancePage() {
         }));
 
         try {
-            // Fake API call
-            console.log('Saving attendance:', records);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            alert('Attendance saved successfully!');
-            router.push('/dashboard'); // Go back to dashboard or stay here
-        } catch (error) {
-            console.error('Failed to save attendance', error);
-            alert('Failed to save attendance.');
+            await api.post(`/academics/classes/${classId}/attendance`, { records });
+            toast.success('Attendance saved successfully!');
+            router.push('/dashboard');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to save attendance.';
+            toast.error(message);
         } finally {
             setSubmitting(false);
         }
@@ -98,17 +83,34 @@ export default function ClassAttendancePage() {
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading students...</div>;
 
+    if (error) {
+        return (
+            <div className="p-8 text-center">
+                <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 inline-block">
+                    <p className="font-bold">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="pb-24 p-4 md:p-8 max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Take Attendance</h1>
-                    <p className="text-gray-500">Class: {classId} {/* Ideally fetch class name */}</p>
+                    <p className="text-gray-500">Class: {classId}</p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <label htmlFor="attendance-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                     <input
+                        id="attendance-date"
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
@@ -134,8 +136,8 @@ export default function ClassAttendancePage() {
                             <button
                                 onClick={() => handleStatusChange(student.id, 'present')}
                                 className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${attendance[student.id] === 'present'
-                                        ? 'bg-green-500 text-white shadow-sm'
-                                        : 'text-gray-500 hover:bg-gray-200'
+                                    ? 'bg-green-500 text-white shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-200'
                                     }`}
                             >
                                 Present
@@ -143,8 +145,8 @@ export default function ClassAttendancePage() {
                             <button
                                 onClick={() => handleStatusChange(student.id, 'late')}
                                 className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${attendance[student.id] === 'late'
-                                        ? 'bg-yellow-500 text-white shadow-sm'
-                                        : 'text-gray-500 hover:bg-gray-200'
+                                    ? 'bg-yellow-500 text-white shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-200'
                                     }`}
                             >
                                 Late
@@ -152,8 +154,8 @@ export default function ClassAttendancePage() {
                             <button
                                 onClick={() => handleStatusChange(student.id, 'absent')}
                                 className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${attendance[student.id] === 'absent'
-                                        ? 'bg-red-500 text-white shadow-sm'
-                                        : 'text-gray-500 hover:bg-gray-200'
+                                    ? 'bg-red-500 text-white shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-200'
                                     }`}
                             >
                                 Absent
@@ -173,7 +175,7 @@ export default function ClassAttendancePage() {
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-up md:static md:bg-transparent md:border-0 md:shadow-none md:p-0 md:mt-8 flex justify-end">
                 <button
                     onClick={handleSave}
-                    disabled={submitting}
+                    disabled={submitting || students.length === 0}
                     className="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {submitting ? 'Saving...' : '💾 Save Attendance'}

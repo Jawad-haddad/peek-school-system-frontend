@@ -1,17 +1,14 @@
-import React from 'react';
-import { Clock, MapPin, DollarSign, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+'use client';
 
-/* 
- * Mock Interface matching what we'd expect from src/lib/api
- */
+import { useState, useEffect } from 'react';
+import { financeApi } from '@/lib/api';
+
 interface Transaction {
     id: string;
-    type: 'CANTEEN_PURCHASE' | 'TUITION_PAYMENT' | 'TOP_UP';
     amount: number;
-    currency: string;
-    location: string; // e.g., "Main Canteen", "Admin Office"
-    status: 'COMPLETED' | 'PENDING' | 'FAILED';
-    createdAt: string;
+    type: 'TOPUP' | 'PURCHASE';
+    description: string;
+    date: string; // ISO string
 }
 
 interface WalletHistoryListProps {
@@ -19,122 +16,95 @@ interface WalletHistoryListProps {
 }
 
 export default function WalletHistoryList({ studentId }: WalletHistoryListProps) {
-    // Mock Data Generator
-    const transactions: Transaction[] = [
-        {
-            id: 'tx-1',
-            type: 'CANTEEN_PURCHASE',
-            amount: -2.50,
-            currency: 'JOD',
-            location: 'Main Canteen',
-            status: 'COMPLETED',
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-        },
-        {
-            id: 'tx-2',
-            type: 'CANTEEN_PURCHASE',
-            amount: -1.75,
-            currency: 'JOD',
-            location: 'Sports Hall Kiosk',
-            status: 'COMPLETED',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), // 4 hours ago
-        },
-        {
-            id: 'tx-3',
-            type: 'TOP_UP',
-            amount: 20.00,
-            currency: 'JOD',
-            location: 'Parent App',
-            status: 'COMPLETED',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-        },
-        {
-            id: 'tx-4',
-            type: 'CANTEEN_PURCHASE',
-            amount: -3.00,
-            currency: 'JOD',
-            location: 'Main Canteen',
-            status: 'COMPLETED',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 25).toISOString(), // 1 day 1 hour ago
-        },
-        {
-            id: 'tx-5',
-            type: 'TUITION_PAYMENT',
-            amount: -150.00,
-            currency: 'JOD',
-            location: 'Admin Office',
-            status: 'COMPLETED',
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-        },
-    ];
+    const [history, setHistory] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(date);
-    };
+    useEffect(() => {
+        if (!studentId) {
+            setLoading(false);
+            return;
+        }
+
+        const fetchHistory = async () => {
+            setLoading(true);
+            try {
+                const response = await financeApi.fetchWalletHistory(studentId);
+                // Assuming the API returns { history: [...] } or just [...]
+                const data = response.data.history || response.data || [];
+                setHistory(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error("Failed to fetch wallet history", error);
+                // Error toast already handled in api.ts
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistory();
+    }, [studentId]);
+
+    if (!studentId) {
+        return (
+            <div className="p-4 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                Select a student to view wallet history.
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="p-8 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
+
+    if (history.length === 0) {
+        return (
+            <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="font-medium">No transactions found.</p>
+                <p className="text-sm text-gray-400 mt-1">Recent wallet activity will appear here.</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="space-y-4">
-            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                <Clock size={18} className="text-violet-500" />
-                Recent History
-            </h3>
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                <h3 className="font-bold text-gray-800 text-lg">Wallet History</h3>
+                <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">{history.length} Transactions</span>
+            </div>
 
-            {/* Mobile / Card View (Visible on small screens) */}
-            <div className="block md:hidden space-y-3">
-                {transactions.map((tx) => (
-                    <div key={tx.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${tx.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                                {tx.amount > 0 ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+            <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto custom-scrollbar">
+                {history.map((tx) => (
+                    <div key={tx.id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors group">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-sm ${tx.type === 'TOPUP'
+                                    ? 'bg-green-100/50 text-green-600'
+                                    : 'bg-rose-100/50 text-rose-600'
+                                }`}>
+                                {tx.type === 'TOPUP' ? '💰' : '🛒'}
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-gray-800">{tx.location}</p>
-                                <p className="text-xs text-gray-400">{formatDate(tx.createdAt)}</p>
+                                <p className="font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                                    {tx.description || (tx.type === 'TOPUP' ? 'Wallet Top-up' : 'Canteen Purchase')}
+                                </p>
+                                <p className="text-xs font-medium text-gray-400">
+                                    {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    {' • '}
+                                    {new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
                             </div>
                         </div>
-                        <div className="text-right">
-                            <span className={`font-black text-sm block ${tx.amount > 0 ? 'text-green-600' : 'text-gray-800'}`}>
-                                {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} {tx.currency}
-                            </span>
-                            <span className="text-[10px] text-gray-400 uppercase tracking-wide">{tx.type.replace('_', ' ')}</span>
+                        <div className={`font-black text-right ${tx.type === 'TOPUP'
+                                ? 'text-green-600'
+                                : 'text-gray-800'
+                            }`}>
+                            <span className="text-xs opacity-50 mr-1">{tx.type === 'TOPUP' ? '+' : '-'}</span>
+                            ${Math.abs(tx.amount).toFixed(2)}
                         </div>
                     </div>
                 ))}
-            </div>
-
-            {/* Desktop / Table View (Hidden on small screens) */}
-            <div className="hidden md:block overflow-hidden rounded-xl border border-gray-100 shadow-sm">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-gray-500 font-medium">
-                        <tr>
-                            <th className="px-4 py-3">Date</th>
-                            <th className="px-4 py-3">Location</th>
-                            <th className="px-4 py-3">Type</th>
-                            <th className="px-4 py-3 text-right">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                        {transactions.map((tx) => (
-                            <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-4 py-3 text-gray-600">{formatDate(tx.createdAt)}</td>
-                                <td className="px-4 py-3 font-medium text-gray-800 flex items-center gap-2">
-                                    <MapPin size={14} className="text-gray-400" />
-                                    {tx.location}
-                                </td>
-                                <td className="px-4 py-3 text-xs text-gray-400 uppercase tracking-wider">{tx.type.replace('_', ' ')}</td>
-                                <td className={`px-4 py-3 text-right font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-gray-800'}`}>
-                                    {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} <span className="text-xs font-normal text-gray-400">{tx.currency}</span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
             </div>
         </div>
     );

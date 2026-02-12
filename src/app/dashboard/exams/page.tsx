@@ -20,15 +20,29 @@ export default function ExamsPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editExam, setEditExam] = useState<Exam | null>(null);
   const [refresh, setRefresh] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchExams = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const res = await api.get('/school/exams');
-        // Ensure we handle array or wrapped { data: [...] } response
-        const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+        // Proper defensive check for response data
+        const data = Array.isArray(res.data)
+          ? res.data
+          : (res.data?.data && Array.isArray(res.data.data))
+            ? res.data.data
+            : [];
         setExams(data);
-      } catch (err) { console.error(err); }
+      } catch (err: any) {
+        console.error(err);
+        setError(err.response?.data?.message || err.message || 'Failed to load exams');
+        if (err.response?.status === 403) setError('Access denied to exams.');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchExams();
   }, [refresh]);
@@ -40,6 +54,31 @@ export default function ExamsPage() {
       setRefresh(p => p + 1);
     } catch (err) { alert('Failed to delete'); }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+          <h3 className="text-red-800 font-semibold mb-2">Error</h3>
+          <p className="text-red-600">{error}</p>
+          <button
+            onClick={() => setRefresh(p => p + 1)}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -64,7 +103,7 @@ export default function ExamsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {exams.map(exam => {
             const startDate = new Date(exam.date);
-            const endDate = exam.endDate ? new Date(exam.endDate) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Mock 1 week if no end date
+            const endDate = exam.endDate ? new Date(exam.endDate) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Default to 1 week if no end date
             const today = new Date();
 
             let status = 'Upcoming';
@@ -94,7 +133,7 @@ export default function ExamsPage() {
                   <div className="flex items-center gap-2 text-sm font-bold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
                     🗓️ {startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </div>
-                  <p className="text-xs text-purple-600 font-bold mt-3 uppercase tracking-wider">Year: {exam.academicYear.name}</p>
+                  <p className="text-xs text-purple-600 font-bold mt-3 uppercase tracking-wider">Year: {exam.academicYear?.name || 'N/A'}</p>
                 </div>
 
                 <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">

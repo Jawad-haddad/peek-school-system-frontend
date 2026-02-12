@@ -7,10 +7,11 @@ import { useRouter } from 'next/navigation';
 // Define all possible menu items
 const ALL_MENU_ITEMS = [
   { name: 'Dashboard', href: '/dashboard', icon: '🏠', roles: ['ADMIN', 'TEACHER', 'PARENT'] },
-  { name: 'Chat', href: '/dashboard/chat', icon: '💬', roles: ['ADMIN', 'PARENT', 'TEACHER'] }, // Assuming chat is for everyone
-  { name: 'Students', href: '/dashboard/classes', icon: '🎓', roles: ['ADMIN'] },
-  { name: 'Teachers', href: '/dashboard/teachers', icon: '👨‍🏫', roles: ['ADMIN'] },
+  { name: 'Chat', href: '/dashboard/chat', icon: '💬', roles: ['ADMIN', 'PARENT', 'TEACHER'] },
+
+  // Admin
   { name: 'Classes', href: '/dashboard/classes', icon: '🏫', roles: ['ADMIN'] },
+  { name: 'Teachers', href: '/dashboard/teachers', icon: '👨‍🏫', roles: ['ADMIN'] },
   { name: 'Subjects', href: '/dashboard/subjects', icon: '📚', roles: ['ADMIN'] },
   { name: 'Timetable', href: '/dashboard/timetable', icon: '🗓️', roles: ['ADMIN'] },
   { name: 'Exams', href: '/dashboard/exams', icon: '📝', roles: ['ADMIN'] },
@@ -18,14 +19,14 @@ const ALL_MENU_ITEMS = [
   { name: 'Broadcast', href: '/dashboard/broadcast', icon: '📢', roles: ['ADMIN'] },
   { name: 'Settings', href: '/dashboard/settings', icon: '⚙️', roles: ['ADMIN'] },
 
-  // Teacher Specific
-  // Note: If teacher dashboard is separate, these might link to subsections or just be part of the main dash
+  // Teacher
   { name: 'My Schedule', href: '/dashboard/schedule', icon: '📅', roles: ['TEACHER'] },
   { name: 'Attendance', href: '/dashboard/attendance', icon: '✅', roles: ['TEACHER'] },
-  { name: 'Homework', href: '/dashboard/homework', icon: '📚', roles: ['TEACHER', 'PARENT'] }, // Parent view vs Teacher manage
-  { name: 'Gradebook', href: '/dashboard/gradebook', icon: '💯', roles: ['TEACHER'] },
+  { name: 'Homework', href: '/dashboard/homework', icon: '📚', roles: ['TEACHER', 'PARENT'] },
+  { name: 'Gradebook', href: '/dashboard/exams/gradebook', icon: '💯', roles: ['TEACHER'] },
 
-  // Parent Specific (Some overlap with features, but explicit links)
+  // Parent
+  { name: 'Results', href: '/dashboard/results', icon: '📊', roles: ['PARENT'] },
   { name: 'Shop', href: '/dashboard/shop', icon: '🛒', roles: ['PARENT'] },
 ];
 

@@ -43,7 +43,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                 try {
                     const res = await api.get('/school/classes');
                     const classesData = Array.isArray(res.data) ? res.data : res.data.data || [];
-                    console.log("Classes Fetched:", classesData); // Debug log as requested
+
                     setClasses(classesData);
                 } catch (err) {
                     console.error("Failed to fetch classes", err);

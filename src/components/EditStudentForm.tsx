@@ -40,7 +40,7 @@ export default function EditStudentForm({ student, onClose, onSuccess }: EditStu
         try {
             // Use the PUT method to update the student
             await axios.put(
-                `http://localhost:3000/api/schools/students/${student.id}`,
+                `/api/schools/students/${student.id}`,
                 {
                     fullName,
                     nfc_card_id: nfcId || null,

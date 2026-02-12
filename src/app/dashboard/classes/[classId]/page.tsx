@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import api, { schoolApi } from '@/lib/api';
 import { useParams } from 'next/navigation';
 import AddStudentModal from '@/components/dashboard/AddStudentModal';
 import EditStudentModal from '@/components/dashboard/EditStudentModal';
@@ -46,8 +46,8 @@ export default function ClassDetailsPage() {
     const fetchStudents = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/school/students?classId=${classId}`);
-            const data = Array.isArray(response.data) ? response.data : response.data.data || [];
+            const response = await schoolApi.fetchStudents(classId);
+            const data = response.data.students || response.data || [];
             setStudents(data);
         } catch (err) {
             console.error("Failed to fetch students", err);

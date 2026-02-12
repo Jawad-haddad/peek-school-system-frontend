@@ -26,6 +26,7 @@ export default function AdminStats() {
     const [stats, setStats] = useState<FeeStats | null>(null);
     const [classStudents, setClassStudents] = useState<StudentFee[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchStats();
@@ -33,34 +34,47 @@ export default function AdminStats() {
 
     const fetchStats = async () => {
         try {
+            setLoading(true);
+            setError(null);
             const res = await api.get('/stats/fees');
             setStats(res.data);
-            setLoading(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to fetch admin stats", error);
-            // Fallback for demo if API fails with empty state to avoid broken UI
-            setStats({
-                totalOutstanding: 0,
-                totalStudents: 0,
-                classes: []
-            });
-            // Don't mask the error with dummy data, but here we construct a safe empty state
-            // to avoid rendering crashes. The real fix is ensuring the API works.
+            setError(error.response?.data?.message || error.message || 'Failed to load stats');
+
+            if (error.response?.status === 403) {
+                setError('You do not have permission to view stats.');
+            }
+        } finally {
             setLoading(false);
         }
     };
 
     const fetchClassStudents = async (classId: string) => {
         try {
-            // Placeholder: Connect to real endpoint when available
-            // const res = await api.get(`/stats/fees/class/${classId}`);
-            setClassStudents([]);
+            const res = await api.get(`/stats/fees/class/${classId}`);
+            setClassStudents(res.data?.students || res.data || []);
         } catch (error) {
-            console.error("Failed to fetch class details", error);
+            setClassStudents([]);
         }
     };
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading stats...</div>;
+
+    if (error) {
+        return (
+            <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+                <h3 className="text-red-800 font-semibold mb-2">Error Loading Stats</h3>
+                <p className="text-red-600">{error}</p>
+                <button
+                    onClick={() => fetchStats()}
+                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 p-4">
@@ -138,22 +152,28 @@ export default function AdminStats() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100/50">
-                                {stats.classes.map((cls) => (
-                                    <tr
-                                        key={cls.id}
-                                        onClick={() => {
-                                            setSelectedClass(cls);
-                                            fetchClassStudents(cls.id);
-                                            setView('students');
-                                        }}
-                                        className="hover:bg-violet-50/50 cursor-pointer transition-all hover:scale-[1.01] rounded-lg group"
-                                    >
-                                        <td className="px-6 py-5 text-lg font-bold text-gray-700 group-hover:text-violet-700 transition-colors">{cls.name}</td>
-                                        <td className="px-6 py-5 text-lg text-right font-black text-red-500 bg-red-50/0 group-hover:bg-red-50/30 rounded-r-lg transition-colors">
-                                            {cls.outstanding.toFixed(2)} <span className="text-xs text-red-300">JOD</span>
-                                        </td>
+                                {stats.classes?.length > 0 ? (
+                                    stats.classes.map((cls) => (
+                                        <tr
+                                            key={cls.id}
+                                            onClick={() => {
+                                                setSelectedClass(cls);
+                                                fetchClassStudents(cls.id);
+                                                setView('students');
+                                            }}
+                                            className="hover:bg-violet-50/50 cursor-pointer transition-all hover:scale-[1.01] rounded-lg group"
+                                        >
+                                            <td className="px-6 py-5 text-lg font-bold text-gray-700 group-hover:text-violet-700 transition-colors">{cls.name}</td>
+                                            <td className="px-6 py-5 text-lg text-right font-black text-red-500 bg-red-50/0 group-hover:bg-red-50/30 rounded-r-lg transition-colors">
+                                                {cls.outstanding.toFixed(2)} <span className="text-xs text-red-300">JOD</span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={2} className="px-6 py-8 text-center text-gray-400 font-medium">No class data available.</td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
                     </div>

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,50 +18,20 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // DEMO LOGIN BYPASS (Optional - kept for convenience if API is down)
-      if (password === 'demo123') {
-        let role = 'ADMIN';
-        if (email.includes('teacher')) role = 'TEACHER';
-        if (email.includes('parent')) role = 'PARENT';
+      const response = await api.post('/auth/login', { email, password });
+      const data = response.data;
 
-        console.log(`Demo login: ${role}`);
-        localStorage.setItem('token', 'demo-token-' + role.toLowerCase());
-        localStorage.setItem('role', role);
-        localStorage.setItem('user', JSON.stringify({ name: 'Demo User', role }));
+      // Store auth tokens
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.user.role);
+      localStorage.setItem('user', JSON.stringify(data.user));
 
-        router.push('/dashboard');
-        return;
-      }
-
-      // 1. API Request
-      // Use full URL or setup a proxy in next.config.mjs to avoid CORS if backend is on different port
-      // But assuming localhost:3000/api is correct for Next.js API routes or proxied backend
-      const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-      console.log("Login Response:", data);
-
-      if (response.ok) {
-        // 2. Success Logic
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.user.role);
-        localStorage.setItem('user', JSON.stringify(data.user));
-
-        // 3. Redirect
-        router.push('/dashboard');
-      } else {
-        // 4. Failure Logic
-        alert("Login Failed: " + (data.message || 'Unknown error'));
-        setError(data.message || 'Login failed');
-      }
+      // Redirect to dashboard
+      router.push('/dashboard');
 
     } catch (err: any) {
-      console.error('Login Error:', err);
-      setError('An unexpected error occurred. Please try again.');
+      const message = err.response?.data?.message || err.message || 'Login failed. Please try again.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

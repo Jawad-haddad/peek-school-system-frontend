@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Phone, User, CreditCard, Calendar, GraduationCap, ShieldCheck, ShieldAlert, AlertTriangle, History } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
 import WalletHistoryList from './WalletHistoryList';
+import api from '@/lib/api';
 
 type Student = {
     id: string;
@@ -53,10 +54,14 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
     const isDebt = balance < 0;
     const dailyLimit = student.dailySpendingLimit || 0;
 
-    const handleNfcToggle = (checked: boolean) => {
+    const handleNfcToggle = async (checked: boolean) => {
         setIsNfcEnabled(checked);
-        // TODO: Call backend to update status
-        console.log(`NFC Status for ${student.id}: ${checked ? 'Active' : 'Frozen'}`);
+        try {
+            await api.patch(`/students/${student.id}/nfc-status`, { active: checked });
+        } catch {
+            // Revert on failure
+            setIsNfcEnabled(!checked);
+        }
     };
 
     return (

@@ -77,7 +77,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
                 academicYearId
             };
 
-            console.log("Creating Exam Payload:", payload);
+
 
             await api.post('/school/exams', payload);
 
@@ -88,7 +88,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
             setEndTime('');
             onClose();
         } catch (err: any) {
-            console.error('Failed to create exam:', err);
+
             setError(err.response?.data?.message || 'Failed to create exam.');
         } finally {
             setLoading(false);

@@ -24,26 +24,26 @@ const calculateEndTime = (start: string, durationMinutes: number) => {
 
 // --- Component for adding a new schedule ---
 const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () => void }) => {
-  const [classes, setClasses] = useState<{id: string, name: string}[]>([]);
-  const [subjects, setSubjects] = useState<{id: string, name: string}[]>([]);
-  
+  const [classes, setClasses] = useState<{ id: string, name: string }[]>([]);
+  const [subjects, setSubjects] = useState<{ id: string, name: string }[]>([]);
+
   // Form state
   const [classId, setClassId] = useState('');
   const [subjectId, setSubjectId] = useState('');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [durationMinutes, setDurationMinutes] = useState('60'); // Default 60 mins
-  
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('authToken');
-      if(!token) return;
+      if (!token) return;
       try {
         const [cRes, sRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/schools/classes', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:3000/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get('/api/schools/classes', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } })
         ]);
         setClasses(cRes.data);
         setSubjects(sRes.data);
@@ -54,11 +54,11 @@ const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(!classId || !subjectId || !date) return;
+    if (!classId || !subjectId || !date) return;
 
     setLoading(true);
     const token = localStorage.getItem('authToken');
-    
+
     // Calculate end time on the client side to send it (although backend does it too now, it's safer)
     // But since we updated the backend to calculate it, we can just send the duration
     // OR send the calculated endTime if the backend expects it.
@@ -68,20 +68,20 @@ const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () 
     const endTime = calculateEndTime(startTime, parseInt(durationMinutes));
 
     try {
-      await axios.post('http://localhost:3000/api/schools/exam-schedules', {
-        examId, 
-        classId, 
-        subjectId, 
+      await axios.post('/api/schools/exam-schedules', {
+        examId,
+        classId,
+        subjectId,
         date,
         startTime,
         durationMinutes, // Backend uses this to calculate endTime
         endTime: endTime // Send this just in case the backend validator requires it directly
       }, { headers: { Authorization: `Bearer ${token}` } });
-      
+
       onSuccess();
       setSubjectId(''); // Reset subject for faster entry
-    } catch (err) { 
-      alert('Failed to add schedule. Check for conflicts.'); 
+    } catch (err) {
+      alert('Failed to add schedule. Check for conflicts.');
       console.error(err);
     } finally { setLoading(false); }
   };
@@ -108,7 +108,7 @@ const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () 
           <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
           <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm p-2 border" />
         </div>
-        
+
         <div className="lg:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
           <input type="time" required value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm p-2 border" />
@@ -141,7 +141,7 @@ export default function ExamDetailsPage() {
       const token = localStorage.getItem('authToken');
       if (!token) return;
       try {
-        const res = await axios.get(`http://localhost:3000/api/schools/exams/${examId}/schedules`, {
+        const res = await axios.get(`/api/schools/exams/${examId}/schedules`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSchedules(res.data);
@@ -151,21 +151,21 @@ export default function ExamDetailsPage() {
   }, [examId, refresh]);
 
   const handleDelete = async (id: string) => {
-    if(!confirm('Remove this entry from schedule?')) return;
+    if (!confirm('Remove this entry from schedule?')) return;
     const token = localStorage.getItem('authToken');
     try {
-        await axios.delete(`http://localhost:3000/api/schools/exam-schedules/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        setRefresh(r => r + 1);
-    } catch(e) { alert('Failed to delete'); }
+      await axios.delete(`/api/schools/exam-schedules/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRefresh(r => r + 1);
+    } catch (e) { alert('Failed to delete'); }
   };
 
   return (
     <div className="p-8">
       <div className="flex items-center mb-6">
         <button onClick={() => router.back()} className="mr-4 text-gray-500 hover:text-gray-900 flex items-center font-medium transition-colors">
-           <span className="text-xl mr-1">←</span> Back
+          <span className="text-xl mr-1">←</span> Back
         </button>
         <h1 className="text-3xl font-bold text-gray-800">Exam Schedule Management</h1>
       </div>
@@ -199,14 +199,14 @@ export default function ExamDetailsPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button 
-                    onClick={() => router.push(`/dashboard/exams/${examId}/grades/${sch.id}`)} 
+                  <button
+                    onClick={() => router.push(`/dashboard/exams/${examId}/grades/${sch.id}`)}
                     className="text-indigo-600 hover:text-indigo-900 mr-4 font-medium"
                   >
                     Enter Grades
                   </button>
-                  <button 
-                    onClick={() => handleDelete(sch.id)} 
+                  <button
+                    onClick={() => handleDelete(sch.id)}
                     className="text-red-600 hover:text-red-900 font-medium"
                   >
                     Remove

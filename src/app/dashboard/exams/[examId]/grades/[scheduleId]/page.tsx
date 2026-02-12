@@ -36,7 +36,7 @@ export default function EnterGradesPage() {
             try {
                 // 1. Get Exam Schedule Details (to know classId)
                 // We fetch all schedules for the exam and filter (simple way)
-                const schedulesRes = await axios.get(`http://localhost:3000/api/schools/exams/${examId}/schedules`, {
+                const schedulesRes = await axios.get(`/api/schools/exams/${examId}/schedules`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -45,7 +45,7 @@ export default function EnterGradesPage() {
                 setExamInfo(currentSchedule);
 
                 // 2. Get Students in that Class
-                const studentsRes = await axios.get(`http://localhost:3000/api/schools/classes/${currentSchedule.classId}/students`, {
+                const studentsRes = await axios.get(`/api/schools/classes/${currentSchedule.classId}/students`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -98,7 +98,7 @@ export default function EnterGradesPage() {
             }));
 
         try {
-            await axios.post(`http://localhost:3000/api/schools/exam-schedules/${scheduleId}/marks`, {
+            await axios.post(`/api/schools/exam-schedules/${scheduleId}/marks`, {
                 marks: payload
             }, { headers: { Authorization: `Bearer ${token}` } });
 

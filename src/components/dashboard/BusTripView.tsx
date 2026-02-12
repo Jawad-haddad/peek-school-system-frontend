@@ -52,7 +52,7 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
     const nextStatusMap: Record<BusTripEntryStatus, BusTripEntryStatus> = {
         'WAITING': 'BOARDED',
         'BOARDED': 'DROPPED_OFF',
-        'DROPPED_OFF': 'WAITING', // loop back enabled for correction/demo
+        'DROPPED_OFF': 'WAITING', // loop back enabled for corrections
         'ABSENT': 'WAITING'
     };
 

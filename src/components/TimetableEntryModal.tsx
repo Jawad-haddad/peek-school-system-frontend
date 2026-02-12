@@ -13,22 +13,19 @@ type Props = {
 };
 
 export default function TimetableEntryModal({ classId, day, period, currentSubjectId, currentTeacherId, onClose, onSuccess }: Props) {
-  const [subjects, setSubjects] = useState<{id:string, name:string}[]>([]);
-  const [teachers, setTeachers] = useState<{id:string, fullName:string}[]>([]);
-  
+  const [subjects, setSubjects] = useState<{ id: string, name: string }[]>([]);
+  const [teachers, setTeachers] = useState<{ id: string, fullName: string }[]>([]);
+
   const [subjectId, setSubjectId] = useState(currentSubjectId || '');
   const [teacherId, setTeacherId] = useState(currentTeacherId || '');
   const [loading, setLoading] = useState(false);
 
-  // دالة لحساب توقيت الحصة بناءً على رقمها (نظام 45 دقيقة للحصة)
   const getPeriodTime = (p: number) => {
-    // الحصة الأولى تبدأ الساعة 8:00 صباحاً
-    const startHour = 8 + (p - 1); 
-    
-    // تنسيق الوقت بصيغة HH:MM
+    const startHour = 8 + (p - 1);
+
     const startStr = `${String(startHour).padStart(2, '0')}:00`;
     const endStr = `${String(startHour).padStart(2, '0')}:45`;
-    
+
     return { start: startStr, end: endStr };
   };
 
@@ -38,8 +35,8 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
       if (!token) return;
       try {
         const [sRes, tRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:3000/api/schools/teachers', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get('/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('/api/schools/teachers', { headers: { Authorization: `Bearer ${token}` } })
         ]);
         setSubjects(sRes.data);
         setTeachers(tRes.data);
@@ -52,22 +49,22 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
     e.preventDefault();
     setLoading(true);
     const token = localStorage.getItem('authToken');
-    
+
     // حساب الوقت تلقائياً
     const { start, end } = getPeriodTime(period);
 
     try {
-      await axios.post(`http://localhost:3000/api/schools/classes/${classId}/timetable`, {
+      await axios.post(`/api/schools/classes/${classId}/timetable`, {
         dayOfWeek: day,   // e.g., "MONDAY"
         startTime: start, // "08:00"
         endTime: end,     // "08:45" (هذا كان ناقصاً ويسبب الخطأ 400)
         subjectId,
         teacherId
       }, { headers: { Authorization: `Bearer ${token}` } });
-      
+
       onSuccess();
-    } catch (err) { 
-      alert('Failed to save entry. Make sure all fields are selected.'); 
+    } catch (err) {
+      alert('Failed to save entry. Make sure all fields are selected.');
       console.error(err);
     } finally { setLoading(false); }
   };
@@ -81,7 +78,7 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
         <p className="text-sm text-gray-500 mb-4">
           Time: {getPeriodTime(period).start} - {getPeriodTime(period).end}
         </p>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Subject</label>
@@ -90,7 +87,7 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
               {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Teacher</label>
             <select required value={teacherId} onChange={e => setTeacherId(e.target.value)} className="w-full border p-2 rounded mt-1">

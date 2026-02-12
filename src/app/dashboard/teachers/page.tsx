@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import api, { academicApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import AddTeacherModal from '@/components/dashboard/AddTeacherModal';
 
@@ -28,16 +28,19 @@ export default function TeachersPage() {
     const fetchTeachers = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/school/teachers');
-            const data = Array.isArray(response.data) ? response.data : response.data.data || [];
+            const response = await academicApi.fetchTeachers();
+            const data = Array.isArray(response.data.teachers || response.data)
+                ? (response.data.teachers || response.data)
+                : [];
 
             setTeachers(data.map((t: any) => ({
                 ...t,
                 fullName: t.fullName || t.name || 'Unknown Teacher'
             })));
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to fetch teachers:", err);
-            setError("Failed to load teachers.");
+            setError(err.response?.data?.message || "Failed to load teachers.");
+            if (err.response?.status === 403) setError("Access denied to teachers list.");
         } finally {
             setLoading(false);
         }
@@ -53,9 +56,10 @@ export default function TeachersPage() {
         try {
             await api.delete(`/school/teachers/${id}`);
             setTeachers(prev => prev.filter(t => t.id !== id));
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to delete teacher:", err);
-            alert("Failed to delete teacher.");
+            setError(err.response?.data?.message || "Failed to delete teacher.");
+            if (err.response?.status === 403) setError("Access denied to delete teacher.");
         }
     };
 

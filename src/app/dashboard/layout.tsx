@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import MobileHeader from '@/components/MobileHeader';
 import AuthGuard from '@/components/auth/AuthGuard';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function DashboardLayout({
   children,
@@ -25,9 +26,11 @@ export default function DashboardLayout({
 
         {/* Main Content Area - Taking remaining space */}
         <main className="flex-1 p-4 md:p-6 overflow-y-auto h-[calc(100vh-64px)] md:h-screen transition-all">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {children}
-          </div>
+          <ErrorBoundary>
+            <div className="max-w-7xl mx-auto space-y-6">
+              {children}
+            </div>
+          </ErrorBoundary>
         </main>
       </div>
     </AuthGuard>

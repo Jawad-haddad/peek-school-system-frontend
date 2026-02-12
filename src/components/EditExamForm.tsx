@@ -14,8 +14,7 @@ export default function EditExamForm({ exam, onClose, onSuccess }: { exam: Exam,
     setLoading(true);
     const token = localStorage.getItem('authToken');
     try {
-      // نرسل الـ academicYearId القديم لأنه مطلوب في الباك إند
-      await axios.put(`http://localhost:3000/api/schools/exams/${exam.id}`, {
+      await axios.put(`/api/schools/exams/${exam.id}`, {
         name, date, academicYearId: exam.academicYearId
       }, { headers: { Authorization: `Bearer ${token}` } });
       onSuccess();

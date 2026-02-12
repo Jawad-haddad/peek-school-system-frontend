@@ -10,10 +10,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
-            console.log("No token found, redirecting to login...");
             router.push('/');
         } else {
-            console.log("Token found, authorizing...");
             setAuthorized(true);
         }
     }, [router]);

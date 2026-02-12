@@ -1,15 +1,82 @@
 'use client';
 
-import { Users, GraduationCap, DollarSign, TrendingUp, UserCheck, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, GraduationCap, DollarSign, TrendingUp, UserCheck, AlertCircle, Loader2 } from 'lucide-react';
+import api from '@/lib/api';
+
+type StatItem = {
+    title: string;
+    value: string;
+    change: string;
+    icon: typeof GraduationCap;
+    color: string;
+    bg: string;
+};
+
+type AlertItem = {
+    msg: string;
+    type: 'critical' | 'warning' | 'info';
+};
 
 export default function ReportsPage() {
-    // Mock Data for MVP - In a real app, these would come from an API
-    const stats = [
-        { title: 'Total Students', value: '1,240', change: '+12%', icon: GraduationCap, color: 'text-blue-600', bg: 'bg-blue-100' },
-        { title: 'Total Teachers', value: '48', change: '+4%', icon: Users, color: 'text-violet-600', bg: 'bg-violet-100' },
-        { title: 'Attendance Rate', value: '96.5%', change: '+1.2%', icon: UserCheck, color: 'text-green-600', bg: 'bg-green-100' },
-        { title: 'Fee Collection', value: '84%', change: '-2%', icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-100' },
-    ];
+    const [stats, setStats] = useState<StatItem[]>([]);
+    const [alerts, setAlerts] = useState<AlertItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const res = await api.get('/school/reports/overview');
+                const data = res.data;
+
+                // Map API data to display format
+                setStats([
+                    { title: 'Total Students', value: String(data.totalStudents ?? 0), change: data.studentChange ?? '—', icon: GraduationCap, color: 'text-blue-600', bg: 'bg-blue-100' },
+                    { title: 'Total Teachers', value: String(data.totalTeachers ?? 0), change: data.teacherChange ?? '—', icon: Users, color: 'text-violet-600', bg: 'bg-violet-100' },
+                    { title: 'Attendance Rate', value: data.attendanceRate ? `${data.attendanceRate}%` : '—', change: data.attendanceChange ?? '—', icon: UserCheck, color: 'text-green-600', bg: 'bg-green-100' },
+                    { title: 'Fee Collection', value: data.feeCollection ? `${data.feeCollection}%` : '—', change: data.feeChange ?? '—', icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-100' },
+                ]);
+
+                setAlerts(data.alerts ?? []);
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Failed to load report data.';
+                setError(message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReports();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64 text-gray-400">
+                <Loader2 className="animate-spin mr-2" size={20} />
+                Loading reports...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 text-center">
+                <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 inline-block">
+                    <AlertCircle size={24} className="mx-auto mb-2" />
+                    <p className="font-bold">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
@@ -26,9 +93,11 @@ export default function ReportsPage() {
                             <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
                                 <stat.icon size={24} />
                             </div>
-                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${stat.change.startsWith('+') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                                {stat.change}
-                            </span>
+                            {stat.change !== '—' && (
+                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${stat.change.startsWith('+') ? 'bg-green-50 text-green-600' : stat.change.startsWith('-') ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-500'}`}>
+                                    {stat.change}
+                                </span>
+                            )}
                         </div>
                         <h3 className="text-gray-500 font-bold text-sm uppercase tracking-wider">{stat.title}</h3>
                         <p className="text-3xl font-black text-gray-800 mt-1">{stat.value}</p>
@@ -36,7 +105,7 @@ export default function ReportsPage() {
                 ))}
             </div>
 
-            {/* Charts / Detailed Sections Placeholder */}
+            {/* Sections */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Financial Overview */}
                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
@@ -45,15 +114,11 @@ export default function ReportsPage() {
                             <TrendingUp className="text-gray-400" size={20} />
                             Financial Overview
                         </h2>
-                        <select className="bg-gray-50 border-none text-sm font-bold text-gray-600 rounded-lg py-1 px-3">
-                            <option>This Year</option>
-                            <option>Last Year</option>
-                        </select>
                     </div>
                     <div className="h-64 flex items-center justify-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                         <div className="text-center">
-                            <p className="text-gray-400 font-medium mb-2">Revenue Chart Visualization</p>
-                            <p className="text-xs text-gray-300">Requires Chart.js integration</p>
+                            <p className="text-gray-400 font-medium mb-2">Revenue data visualization</p>
+                            <p className="text-xs text-gray-300">Coming in next release</p>
                         </div>
                     </div>
                 </div>
@@ -65,16 +130,16 @@ export default function ReportsPage() {
                         Needs Attention
                     </h2>
                     <div className="space-y-4">
-                        {[
-                            { msg: '5 Students have outstanding fees > 500 JOD', type: 'critical' },
-                            { msg: 'Teacher "Sarah Ahmed" has incomplete gradebook', type: 'warning' },
-                            { msg: 'Bus Route #3 reported 15 min delay', type: 'info' }
-                        ].map((item, i) => (
-                            <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors">
-                                <div className={`w-2 h-2 rounded-full ${item.type === 'critical' ? 'bg-red-500' : item.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
-                                <p className="text-sm font-bold text-gray-700">{item.msg}</p>
-                            </div>
-                        ))}
+                        {alerts.length > 0 ? (
+                            alerts.map((item, i) => (
+                                <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors">
+                                    <div className={`w-2 h-2 rounded-full ${item.type === 'critical' ? 'bg-red-500' : item.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                                    <p className="text-sm font-bold text-gray-700">{item.msg}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-center text-gray-400 py-8">No alerts at this time.</p>
+                        )}
                     </div>
                 </div>
             </div>

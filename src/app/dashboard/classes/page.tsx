@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import api, { academicApi } from '@/lib/api';
 import AddClassModal from '@/components/dashboard/AddClassModal';
 import EditClassModal from '@/components/dashboard/EditClassModal';
 
@@ -26,19 +26,25 @@ export default function ClassesPage() {
     const fetchClasses = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/school/classes');
-            console.log("Classes Data:", response.data); // Debug log as requested
+            const response = await academicApi.fetchClasses();
+            console.log("Classes Data:", response.data);
 
-            const data = Array.isArray(response.data) ? response.data : response.data.data || [];
+            const data = Array.isArray(response.data.classes || response.data)
+                ? (response.data.classes || response.data)
+                : [];
 
             // Allow empty array without error
             setClasses(data);
             setError('');
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to fetch classes:", err);
-            // Don't show error UI for just empty list, but do for actual failures if critical
-            // Here we set error text to show user something went wrong
-            setError("Failed to load classes.");
+            setError(err.response?.data?.message || "Failed to load classes.");
+
+            if (err.response?.status === 403) {
+                setError("You do not have permission to view classes.");
+            } else if (err.response?.status === 404) {
+                setError("No classes resource found.");
+            }
         } finally {
             setLoading(false);
         }

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api',
+    baseURL: '/api',
     // You can add other default config here like timeout
 });
 
@@ -12,6 +12,21 @@ api.interceptors.request.use(
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
+
+            // Add schoolId if available
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user.schoolId) {
+                        config.headers['x-school-id'] = user.schoolId;
+                    }
+                } catch (e) {
+                    // ignore parse error
+                }
+            }
+
+
         }
         return config;
     },
@@ -106,6 +121,190 @@ export const busApi = {
             throw error;
         }
     },
+};
+
+export const examApi = {
+    fetchAllExams: async () => {
+        try {
+            return await api.get('/school/exams');
+        } catch (error: any) {
+            toast.error("Failed to fetch exams: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchExamSchedules: async (examId: string) => {
+        try {
+            return await api.get(`/exams/${examId}/schedules`);
+        } catch (error: any) {
+            toast.error("Failed to fetch schedules: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    submitBulkMarks: async (scheduleId: string, marks: { studentId: string; marks: number; comment?: string }[]) => {
+        try {
+            const res = await api.post(`/exams/schedules/${scheduleId}/marks`, { marks });
+            toast.success("Marks submitted successfully");
+            return res;
+        } catch (error: any) {
+            toast.error("Failed to submit marks: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    }
+};
+
+export const financeApi = {
+    topUpWallet: async (studentId: string, amount: number) => {
+        try {
+            const res = await api.post('/finance/wallet/topup', { studentId, amount });
+            toast.success("Wallet topped up successfully");
+            return res;
+        } catch (error: any) {
+            toast.error("Top-up failed: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchWalletHistory: async (studentId: string) => {
+        try {
+            return await api.get(`/finance/wallet/${studentId}/history`);
+        } catch (error: any) {
+            toast.error("Failed to fetch wallet history: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    }
+};
+
+export const schoolApi = {
+    fetchStudents: async (classId: string) => {
+        try {
+            // Adjusted path to align with academic controller context
+            return await api.get(`/academics/classes/${classId}/students`);
+        } catch (error: any) {
+            toast.error("Failed to fetch students: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchStudent: async (studentId: string) => {
+        try {
+            return await api.get(`/school/students/${studentId}`);
+        } catch (error: any) {
+            toast.error("Failed to fetch student: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    }
+};
+
+export const academicApi = {
+    fetchClasses: async () => {
+        try {
+            return await api.get('/academics/classes');
+        } catch (error: any) {
+            toast.error("Failed to fetch classes: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchSubjects: async () => {
+        try {
+            return await api.get('/academics/subjects');
+        } catch (error: any) {
+            toast.error("Failed to fetch subjects: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchClassSubjects: async (classId: string) => {
+        try {
+            return await api.get(`/academics/subjects?classId=${classId}`);
+        } catch (error: any) {
+            toast.error("Failed to fetch class subjects: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchTeachers: async () => {
+        try {
+            return await api.get('/academics/teachers');
+        } catch (error: any) {
+            toast.error("Failed to fetch teachers: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchClassTeachers: async (classId: string) => {
+        try {
+            return await api.get(`/academics/classes/${classId}/teachers`);
+        } catch (error: any) {
+            toast.error("Failed to fetch class teachers: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchTeacherClasses: async (teacherId: string) => {
+        try {
+            return await api.get(`/academics/teachers/${teacherId}/classes`);
+        } catch (error: any) {
+            toast.error("Failed to fetch teacher classes: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    }
+};
+
+export const posApi = {
+    fetchProducts: async () => {
+        try {
+            return await api.get('/pos/products');
+        } catch (error: any) {
+            toast.error("Failed to fetch products: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    createOrder: async (studentId: string, items: { productId: string; quantity: number }[]) => {
+        try {
+            const res = await api.post('/pos/orders', { studentId, items });
+            toast.success("Order processed successfully");
+            return res;
+        } catch (error: any) {
+            toast.error("Order failed: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    }
+};
+
+export const studentApi = {
+    fetchMyProfile: async () => {
+        try {
+            return await api.get('/student/profile');
+        } catch (error: any) {
+            toast.error("Failed to fetch profile: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    },
+    fetchStudentResults: async (studentId: string) => {
+        try {
+            return await api.get(`/student/${studentId}/results`);
+        } catch (error: any) {
+            toast.error("Failed to fetch results: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    }
+};
+
+export const systemApi = {
+    checkHealth: async () => {
+        try {
+            // /health is mounted at root, not under /api
+            return await axios.get('/health');
+        } catch (error) {
+            console.error("Health check failed", error);
+            throw error;
+        }
+    }
+};
+
+export const statsApi = {
+    fetchFeesStats: async () => {
+        try {
+            return await api.get('/school/stats/fees');
+        } catch (error: any) {
+            toast.error("Failed to load fee statistics: " + (error.response?.data?.message || error.message));
+            throw error;
+        }
+    }
 };
 
 export default api;

@@ -12,7 +12,7 @@ function ConnectivityDot() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        await axios.get('http://localhost:3000/api/health', { timeout: 2000 });
+        await axios.get('/health', { timeout: 2000 });
         setStatus('online');
       } catch (e) {
         setStatus('offline');

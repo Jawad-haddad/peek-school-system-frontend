@@ -24,7 +24,7 @@ export default function AddStudentForm({ classId, onClose, onSuccess }: AddStude
 
     try {
       await axios.post(
-        'http://localhost:3000/api/schools/students',
+        '/api/schools/students',
         {
           fullName,
           parentId,
@@ -33,7 +33,7 @@ export default function AddStudentForm({ classId, onClose, onSuccess }: AddStude
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       onSuccess();
       onClose();
 

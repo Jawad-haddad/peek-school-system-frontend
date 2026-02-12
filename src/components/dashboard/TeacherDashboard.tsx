@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import api from '@/lib/api';
+import { academicApi } from '@/lib/api';
 
 type ClassInfo = {
     id: string;
@@ -13,28 +13,37 @@ type ClassInfo = {
 export default function TeacherDashboard() {
     const [classes, setClasses] = useState<ClassInfo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchClasses = async () => {
-            try {
-                // Endpoint fetching classes assigned to the logged-in teacher
-                const res = await api.get('/school/classes');
-                // Adjust per API response structure. Assuming array of classes.
-                // If API returns all classes, might need to filter by teacher, but usually backend handles 'my-classes'
-                const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
+            const storedUser = localStorage.getItem('user');
+            if (!storedUser) return;
+            const user = JSON.parse(storedUser);
 
-                // If the API doesn't return studentCount, we might mock it or fetch it separately
-                // For now, mapping to ensure shape
+            const teacherId = user.teacherId || user.id;
+
+            if (!teacherId) {
+                console.error("No teacher ID found for logged in user");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const res = await academicApi.fetchTeacherClasses(teacherId);
+                const data = res.data.classes || res.data || [];
+
                 const formatted: ClassInfo[] = data.map((c: any) => ({
                     id: c.id,
                     name: c.name,
-                    subject: 'General', // Backend might not send subject with class if it's general
-                    studentCount: c._count?.students || 0 // Common Prisma pattern
+                    subject: c.subject?.name || 'General',
+                    studentCount: c._count?.students || 0
                 }));
 
                 setClasses(formatted);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to fetch teacher classes", error);
+                setError(error.response?.data?.message || 'Failed to load classes');
             } finally {
                 setLoading(false);
             }
@@ -45,6 +54,16 @@ export default function TeacherDashboard() {
 
     if (loading) {
         return <div className="p-6 text-center text-gray-500">Loading your schedule...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="p-6 text-center">
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 inline-block">
+                    <p className="font-bold">{error}</p>
+                </div>
+            </div>
+        );
     }
 
     return (

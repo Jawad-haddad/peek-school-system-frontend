@@ -13,9 +13,9 @@ type Props = {
 };
 
 export default function TimetableEntryModal({ classId, day, period, currentSubjectId, currentTeacherId, onClose, onSuccess }: Props) {
-  const [subjects, setSubjects] = useState<{id:string, name:string}[]>([]);
-  const [teachers, setTeachers] = useState<{id:string, fullName:string}[]>([]);
-  
+  const [subjects, setSubjects] = useState<{ id: string, name: string }[]>([]);
+  const [teachers, setTeachers] = useState<{ id: string, fullName: string }[]>([]);
+
   const [subjectId, setSubjectId] = useState(currentSubjectId || '');
   const [teacherId, setTeacherId] = useState(currentTeacherId || '');
   const [loading, setLoading] = useState(false);
@@ -34,8 +34,8 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
       const token = localStorage.getItem('authToken');
       try {
         const [sRes, tRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:3000/api/schools/teachers', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get('/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('/api/schools/teachers', { headers: { Authorization: `Bearer ${token}` } })
         ]);
         setSubjects(sRes.data);
         setTeachers(tRes.data);
@@ -51,7 +51,7 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
     const time = getPeriodTime(period); // حساب الوقت تلقائياً
 
     try {
-      await axios.post(`http://localhost:3000/api/schools/classes/${classId}/timetable`, {
+      await axios.post(`/api/schools/classes/${classId}/timetable`, {
         dayOfWeek: day,
         startTime: time.start,
         endTime: time.end,     // <--- إرسال وقت النهاية
@@ -59,8 +59,8 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
         teacherId
       }, { headers: { Authorization: `Bearer ${token}` } });
       onSuccess();
-    } catch (err) { 
-      alert('Failed to save entry'); 
+    } catch (err) {
+      alert('Failed to save entry');
       console.error(err);
     } finally { setLoading(false); }
   };
