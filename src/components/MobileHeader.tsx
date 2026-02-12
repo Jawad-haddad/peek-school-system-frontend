@@ -1,13 +1,48 @@
-'use client';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 type MobileHeaderProps = {
   onMenuClick: () => void;
 };
 
+// Internal component for status
+function ConnectivityDot() {
+  const [status, setStatus] = useState<'online' | 'offline'>('online');
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        await axios.get('http://localhost:3000/api/health', { timeout: 2000 });
+        setStatus('online');
+      } catch (e) {
+        setStatus('offline');
+      }
+    };
+
+    // Check every 30s
+    const interval = setInterval(checkHealth, 30000);
+    checkHealth(); // Initial check
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span
+      className={`absolute -top-1 -right-2 w-3 h-3 rounded-full border-2 border-gray-800 ${status === 'online' ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}
+      title={status === 'online' ? "System Online" : "Backend Disconnected"}
+    />
+  );
+}
+
 export default function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   return (
     <div className="flex items-center justify-between bg-gray-800 p-4 text-white md:hidden">
-      <h2 className="text-xl font-bold">Peek System</h2>
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <h2 className="text-xl font-bold">Peek System</h2>
+          <ConnectivityDot />
+        </div>
+      </div>
       <div className="flex items-center space-x-2">
         <a href="/dashboard/chat" className="p-2 text-white hover:text-gray-300">
           💬
