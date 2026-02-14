@@ -36,7 +36,7 @@ export default function AdminStats() {
         try {
             setLoading(true);
             setError(null);
-            const res = await api.get('/stats/fees');
+            const res = await api.get('/school/stats/fees');
             setStats(res.data);
         } catch (error: any) {
             console.error("Failed to fetch admin stats", error);

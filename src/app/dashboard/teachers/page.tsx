@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api, { academicApi } from '@/lib/api';
+import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import AddTeacherModal from '@/components/dashboard/AddTeacherModal';
 
@@ -10,9 +10,10 @@ type Teacher = {
     fullName: string;
     email: string;
     phone?: string;
-    specialization?: string; // "Subject"
-    classId?: string; // Assigned class
-    classes?: string[]; // Array of class names
+    phoneNumber?: string;
+    specialization?: string;
+    classId?: string;
+    classes: string[]; // Normalized to string[] for rendering
 };
 
 export default function TeachersPage() {
@@ -25,22 +26,63 @@ export default function TeachersPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
 
+    /**
+     * Extract class names from whatever shape the backend returns.
+     * Backend may return:
+     *   - teacher.classes: string[] or {name}[]
+     *   - teacher.assignments: [{class: {name}}]
+     *   - teacher.TeacherSubjectAssignment: [{class: {name}}]
+     */
+    const extractClassNames = (t: any): string[] => {
+        // Shape 1: direct classes array
+        if (Array.isArray(t.classes)) {
+            return t.classes.map((c: any) => (typeof c === 'string' ? c : c?.name || 'Unknown'));
+        }
+
+        // Shape 2: assignments array with nested class
+        const assignments = t.assignments || t.TeacherSubjectAssignment || t.teacherSubjectAssignments || [];
+        if (Array.isArray(assignments) && assignments.length > 0) {
+            const classNames = assignments
+                .map((a: any) => a.class?.name || a.className || null)
+                .filter(Boolean);
+            // Deduplicate
+            return [...new Set<string>(classNames)];
+        }
+
+        return [];
+    };
+
     const fetchTeachers = async () => {
         setLoading(true);
+        setError('');
         try {
-            const response = await academicApi.fetchTeachers();
-            const data = Array.isArray(response.data.teachers || response.data)
-                ? (response.data.teachers || response.data)
-                : [];
+            const response = await api.get('/school/teachers', {
+                params: { _t: Date.now() }
+            });
+
+            // Defensive: handle {teachers: [...]}, {data: [...]}, or raw array
+            let data: any[] = [];
+            if (Array.isArray(response.data)) {
+                data = response.data;
+            } else if (Array.isArray(response.data?.teachers)) {
+                data = response.data.teachers;
+            } else if (Array.isArray(response.data?.data)) {
+                data = response.data.data;
+            }
 
             setTeachers(data.map((t: any) => ({
                 ...t,
-                fullName: t.fullName || t.name || 'Unknown Teacher'
+                fullName: t.fullName || t.name || 'Unknown Teacher',
+                phone: t.phoneNumber || t.phone || '',
+                classes: extractClassNames(t),
             })));
         } catch (err: any) {
             console.error("Failed to fetch teachers:", err);
-            setError(err.response?.data?.message || "Failed to load teachers.");
-            if (err.response?.status === 403) setError("Access denied to teachers list.");
+            if (err.response?.status === 403) {
+                setError("Access denied to teachers list.");
+            } else {
+                setError(err.response?.data?.message || "Failed to load teachers.");
+            }
         } finally {
             setLoading(false);
         }
@@ -59,13 +101,17 @@ export default function TeachersPage() {
         } catch (err: any) {
             console.error("Failed to delete teacher:", err);
             setError(err.response?.data?.message || "Failed to delete teacher.");
-            if (err.response?.status === 403) setError("Access denied to delete teacher.");
         }
     };
 
     const handleOpenModal = (teacher?: Teacher) => {
         setEditingTeacher(teacher || null);
         setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setEditingTeacher(null);
     };
 
     return (
@@ -83,6 +129,12 @@ export default function TeachersPage() {
                 </button>
             </div>
 
+            {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 font-bold text-sm">
+                    ⚠️ {error}
+                </div>
+            )}
+
             {loading ? (
                 <div className="text-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-violet-600 mx-auto mb-4"></div>
@@ -97,8 +149,9 @@ export default function TeachersPage() {
                 <div className="space-y-4">
                     {/* Header Row */}
                     <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        <div className="col-span-4">Teacher</div>
-                        <div className="col-span-4">Contact</div>
+                        <div className="col-span-3">Teacher</div>
+                        <div className="col-span-3">Contact</div>
+                        <div className="col-span-2">Phone</div>
                         <div className="col-span-3">Classes</div>
                         <div className="col-span-1 text-right">Actions</div>
                     </div>
@@ -106,7 +159,7 @@ export default function TeachersPage() {
                     {/* Teacher Rows */}
                     {teachers.map((teacher) => (
                         <div key={teacher.id} className="glass-card group p-4 rounded-2xl grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:border-violet-300/50 transition-all hover:shadow-lg hover:-translate-y-1">
-                            <div className="col-span-4 flex items-center gap-4">
+                            <div className="col-span-3 flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center text-indigo-700 font-black text-lg shadow-sm">
                                     {(teacher.fullName || 'T').charAt(0)}
                                 </div>
@@ -116,15 +169,27 @@ export default function TeachersPage() {
                                 </div>
                             </div>
 
-                            <div className="col-span-4 text-sm text-gray-500 font-medium break-all">
-                                {teacher.email}
+                            <div className="col-span-3 text-sm text-gray-500 font-medium break-all">
+                                {teacher.email || 'No email'}
+                            </div>
+
+                            <div className="col-span-2 text-sm text-gray-500 font-medium">
+                                {teacher.phone || teacher.phoneNumber ? (
+                                    <a href={`tel:${teacher.phone || teacher.phoneNumber}`} className="text-violet-600 hover:underline">
+                                        {teacher.phone || teacher.phoneNumber}
+                                    </a>
+                                ) : (
+                                    <span className="text-gray-400 italic">No phone</span>
+                                )}
                             </div>
 
                             <div className="col-span-3">
-                                {teacher.classes && teacher.classes.length > 0 ? (
+                                {teacher.classes.length > 0 ? (
                                     <div className="flex flex-wrap gap-1">
                                         {teacher.classes.map((c, i) => (
-                                            <span key={i} className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-md">{c}</span>
+                                            <span key={i} className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
+                                                {c}
+                                            </span>
                                         ))}
                                     </div>
                                 ) : (
@@ -155,7 +220,7 @@ export default function TeachersPage() {
 
             <AddTeacherModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={handleCloseModal}
                 onSuccess={fetchTeachers}
                 teacherToEdit={editingTeacher}
             />

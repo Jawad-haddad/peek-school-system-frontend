@@ -38,13 +38,17 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
 
     useEffect(() => {
         if (isOpen) {
-            // Fetch classes when modal opens
+            // Fetch classes when modal opens — use /school/classes (same as other pages)
             const fetchClasses = async () => {
                 try {
-                    const res = await api.get('/school/classes');
-                    const classesData = Array.isArray(res.data) ? res.data : res.data.data || [];
-
-                    setClasses(classesData);
+                    const res = await api.get('/school/classes', {
+                        params: { _t: Date.now() } // Cache-bust
+                    });
+                    const classesData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+                    setClasses(classesData.map((c: any) => ({
+                        id: c.id,
+                        name: c.name || 'Unknown Class'
+                    })));
                 } catch (err) {
                     console.error("Failed to fetch classes", err);
                 }
@@ -54,9 +58,9 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
             // Pre-fill if editing
             if (teacherToEdit) {
                 setFormData({
-                    fullName: teacherToEdit.fullName,
-                    email: teacherToEdit.email,
-                    password: '', // Keep empty
+                    fullName: teacherToEdit.fullName || '',
+                    email: teacherToEdit.email || '',
+                    password: '', // Always keep empty for security
                     phone: teacherToEdit.phone || '',
                     classId: teacherToEdit.classId || '',
                 });
@@ -80,12 +84,12 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                 if (!payload.password) delete payload.password;
 
                 await api.put(`/school/teachers/${teacherToEdit.id}`, payload);
-                alert("Teacher updated!");
             } else {
                 // Add Logic
                 await api.post('/school/teachers', formData);
-                alert("Teacher added!");
             }
+
+            // CRITICAL: Call onSuccess BEFORE closing to trigger re-fetch
             onSuccess();
             onClose();
         } catch (err: any) {

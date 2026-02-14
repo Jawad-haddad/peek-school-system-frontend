@@ -31,7 +31,7 @@ export default function HomeworkPage() {
             // Fetch homework
             const response = await api.get('/academics/homework');
 
-            console.log("Fetched Homework:", response.data); // Debug log as requested
+
 
             const data = Array.isArray(response.data) ? response.data : response.data.data || [];
 

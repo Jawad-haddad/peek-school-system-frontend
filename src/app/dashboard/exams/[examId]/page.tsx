@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 
 type Schedule = {
   id: string;
@@ -38,16 +38,18 @@ const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () 
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
       try {
         const [cRes, sRes] = await Promise.all([
-          axios.get('/api/schools/classes', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } })
+          api.get('/school/classes'),
+          api.get('/academics/subjects')
         ]);
-        setClasses(cRes.data);
-        setSubjects(sRes.data);
-      } catch (err) { console.error(err); }
+        const classData = Array.isArray(cRes.data) ? cRes.data : cRes.data.classes || cRes.data.data || [];
+        const subjectData = Array.isArray(sRes.data) ? sRes.data : sRes.data.subjects || sRes.data.data || [];
+        setClasses(classData);
+        setSubjects(subjectData);
+      } catch (err) {
+        // Non-critical — dropdowns will be empty
+      }
     };
     fetchData();
   }, []);
@@ -57,32 +59,23 @@ const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () 
     if (!classId || !subjectId || !date) return;
 
     setLoading(true);
-    const token = localStorage.getItem('authToken');
-
-    // Calculate end time on the client side to send it (although backend does it too now, it's safer)
-    // But since we updated the backend to calculate it, we can just send the duration
-    // OR send the calculated endTime if the backend expects it.
-    // Based on our latest backend update, the backend calculates endTime from duration.
-    // However, if your backend expects 'endTime' in the body (like the error suggested), 
-    // we should send it here to be safe.
     const endTime = calculateEndTime(startTime, parseInt(durationMinutes));
 
     try {
-      await axios.post('/api/schools/exam-schedules', {
+      await api.post('/school/exam-schedules', {
         examId,
         classId,
         subjectId,
         date,
         startTime,
-        durationMinutes, // Backend uses this to calculate endTime
-        endTime: endTime // Send this just in case the backend validator requires it directly
-      }, { headers: { Authorization: `Bearer ${token}` } });
+        durationMinutes,
+        endTime
+      });
 
       onSuccess();
       setSubjectId(''); // Reset subject for faster entry
     } catch (err) {
       alert('Failed to add schedule. Check for conflicts.');
-      console.error(err);
     } finally { setLoading(false); }
   };
 
@@ -138,25 +131,21 @@ export default function ExamDetailsPage() {
 
   useEffect(() => {
     const fetchSchedules = async () => {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
       try {
-        const res = await axios.get(`/api/schools/exams/${examId}/schedules`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setSchedules(res.data);
-      } catch (err) { console.error(err); }
+        const res = await api.get(`/school/exams/${examId}/schedules`);
+        const data = Array.isArray(res.data) ? res.data : res.data.schedules || res.data.data || [];
+        setSchedules(data);
+      } catch (err) {
+        // Schedule list will remain empty
+      }
     };
     fetchSchedules();
   }, [examId, refresh]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remove this entry from schedule?')) return;
-    const token = localStorage.getItem('authToken');
     try {
-      await axios.delete(`/api/schools/exam-schedules/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/school/exam-schedules/${id}`);
       setRefresh(r => r + 1);
     } catch (e) { alert('Failed to delete'); }
   };

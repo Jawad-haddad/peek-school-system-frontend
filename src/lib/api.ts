@@ -149,6 +149,13 @@ export const examApi = {
             toast.error("Failed to submit marks: " + (error.response?.data?.message || error.message));
             throw error;
         }
+    },
+    fetchScheduleMarks: async (scheduleId: string) => {
+        try {
+            return await api.get(`/exams/schedules/${scheduleId}/marks`);
+        } catch (error: any) {
+            throw error;
+        }
     }
 };
 

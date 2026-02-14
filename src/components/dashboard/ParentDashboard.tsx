@@ -103,7 +103,7 @@ export default function ParentDashboard() {
                         <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm border border-green-200">ACTIVE</span>
                     </div>
                     <h5 className="font-extrabold text-xl text-gray-800 mb-1">Schedule</h5>
-                    <p className="text-gray-500 text-sm font-medium">Next: Math (8:00 AM)</p>
+                    <p className="text-gray-500 text-sm font-medium">View Schedule</p>
                 </Link>
 
                 {/* CARD 2: ATTENDANCE */}
@@ -117,7 +117,7 @@ export default function ParentDashboard() {
                         </div>
                     </div>
                     <h5 className="font-extrabold text-xl text-gray-800 mb-1">Attendance</h5>
-                    <p className="text-gray-500 text-sm font-medium">Present Today</p>
+                    <p className="text-gray-500 text-sm font-medium">View Attendance</p>
                 </div>
 
                 {/* CARD 3: BUS */}

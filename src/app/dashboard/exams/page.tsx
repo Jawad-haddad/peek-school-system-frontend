@@ -9,8 +9,8 @@ import EditExamForm from '../../../components/EditExamForm';
 type Exam = {
   id: string;
   name: string;
-  date: string; // Start Date
-  endDate?: string; // Optional End Date
+  startDate: string;
+  endDate?: string;
   academicYearId: string;
   academicYear: { name: string };
 };
@@ -50,7 +50,8 @@ export default function ExamsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this exam?')) return;
     try {
-      await api.delete(`/school/exams/${id}`);
+      // Backend exam CRUD is under /exams, not /school/exams
+      await api.delete(`/exams/${id}`);
       setRefresh(p => p + 1);
     } catch (err) { alert('Failed to delete'); }
   };
@@ -102,8 +103,8 @@ export default function ExamsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {exams.map(exam => {
-            const startDate = new Date(exam.date);
-            const endDate = exam.endDate ? new Date(exam.endDate) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Default to 1 week if no end date
+            const startDate = new Date(exam.startDate);
+            const endDate = exam.endDate ? new Date(exam.endDate) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
             const today = new Date();
 
             let status = 'Upcoming';

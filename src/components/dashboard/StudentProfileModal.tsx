@@ -57,8 +57,9 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
     const handleNfcToggle = async (checked: boolean) => {
         setIsNfcEnabled(checked);
         try {
-            await api.patch(`/students/${student.id}/nfc-status`, { active: checked });
-        } catch {
+            await api.patch(`/school/students/${student.id}/nfc-status`, { is_nfc_active: checked });
+        } catch (err) {
+            console.error('NFC toggle failed:', err);
             // Revert on failure
             setIsNfcEnabled(!checked);
         }

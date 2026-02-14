@@ -108,15 +108,32 @@ export default function GradebookPage() {
                 const fetchedStudents = res.data.students || res.data || [];
                 setStudents(fetchedStudents);
 
-                // Initialize grades (TODO: Fetch existing grades if available)
+                // Initialize grades with defaults
                 const initialGrades: Record<string, GradeEntry> = {};
                 fetchedStudents.forEach((student: Student) => {
                     initialGrades[student.id] = { marks: '', comment: '' };
                 });
+
+                // Try to fetch existing marks for this schedule and pre-fill
+                try {
+                    const marksRes = await examApi.fetchScheduleMarks(selectedSchedule);
+                    const existingMarks = marksRes.data.marks || marksRes.data || [];
+                    existingMarks.forEach((m: { studentId: string; marks: number; comment?: string }) => {
+                        if (initialGrades[m.studentId]) {
+                            initialGrades[m.studentId] = {
+                                marks: m.marks,
+                                comment: m.comment || '',
+                            };
+                        }
+                    });
+                } catch {
+                    // Existing marks not available — keep defaults (empty)
+                }
+
                 setGrades(initialGrades);
 
             } catch (error) {
-                console.error("Failed to load students", error);
+                // Student list will remain empty
             } finally {
                 setLoadingStudents(false);
             }

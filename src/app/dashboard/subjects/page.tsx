@@ -22,7 +22,8 @@ export default function SubjectsPage() {
         setLoading(true);
         try {
             const response = await api.get('/academics/subjects');
-            setSubjects(response.data);
+            const data = Array.isArray(response.data) ? response.data : response.data.subjects || [];
+            setSubjects(data);
         } catch (err) {
             console.error("Error fetching subjects:", err);
             setError("Failed to fetch subjects.");
@@ -36,13 +37,22 @@ export default function SubjectsPage() {
     }, []);
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure?")) return;
+        if (!confirm("Are you sure you want to delete this subject?")) return;
         try {
-            await api.delete(`/academics/subjects/${id}`);
+            // Try school route first, fall back to academics route
+            try {
+                await api.delete(`/school/subjects/${id}`);
+            } catch (e: any) {
+                if (e.response?.status === 404) {
+                    await api.delete(`/academics/subjects/${id}`);
+                } else {
+                    throw e;
+                }
+            }
             setSubjects(prev => prev.filter(s => s.id !== id));
-        } catch (err) {
-            console.error(err);
-            alert("Failed to delete subject");
+        } catch (err: any) {
+            console.error('Delete subject failed:', err);
+            alert(err.response?.data?.message || "Failed to delete subject. The backend may not support this operation yet.");
         }
     };
 

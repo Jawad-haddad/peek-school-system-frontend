@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api, { academicApi } from '@/lib/api';
+import api from '@/lib/api';
 import AddClassModal from '@/components/dashboard/AddClassModal';
 import EditClassModal from '@/components/dashboard/EditClassModal';
 
@@ -9,7 +9,7 @@ type SchoolClass = {
     id: string;
     name: string;
     academicYear?: { name: string; id: string };
-    academicYearId?: string; // For editing
+    academicYearId?: string;
     defaultFee?: number;
     _count?: { students: number };
 };
@@ -25,25 +25,32 @@ export default function ClassesPage() {
 
     const fetchClasses = async () => {
         setLoading(true);
+        setError('');
         try {
-            const response = await academicApi.fetchClasses();
-            console.log("Classes Data:", response.data);
+            // Use /school/classes consistently across the app
+            const response = await api.get('/school/classes', {
+                params: { _t: Date.now() } // Cache-bust
+            });
 
-            const data = Array.isArray(response.data.classes || response.data)
-                ? (response.data.classes || response.data)
-                : [];
+            // Defensive: handle multiple response shapes
+            let data: any[] = [];
+            if (Array.isArray(response.data)) {
+                data = response.data;
+            } else if (Array.isArray(response.data?.classes)) {
+                data = response.data.classes;
+            } else if (Array.isArray(response.data?.data)) {
+                data = response.data.data;
+            }
 
-            // Allow empty array without error
             setClasses(data);
-            setError('');
         } catch (err: any) {
             console.error("Failed to fetch classes:", err);
-            setError(err.response?.data?.message || "Failed to load classes.");
-
             if (err.response?.status === 403) {
                 setError("You do not have permission to view classes.");
             } else if (err.response?.status === 404) {
                 setError("No classes resource found.");
+            } else {
+                setError(err.response?.data?.message || "Failed to load classes.");
             }
         } finally {
             setLoading(false);
@@ -68,7 +75,6 @@ export default function ClassesPage() {
     const handleEditClick = (e: React.MouseEvent, cls: SchoolClass) => {
         e.preventDefault();
         e.stopPropagation();
-        // Ensure academicYearId is set if nested object exists
         const classToEdit = {
             ...cls,
             academicYearId: cls.academicYearId || cls.academicYear?.id

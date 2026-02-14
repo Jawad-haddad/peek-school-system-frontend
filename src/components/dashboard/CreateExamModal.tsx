@@ -68,18 +68,20 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
         }
 
         try {
-            // Payload: Sending separate date, startTime, and endTime as strings
+            // Build payload matching backend Exam model: startDate, endDate
             const payload = {
                 name,
-                date: String(date),
+                startDate: date, // "2026-05-20" format
+                endDate: date,   // same day by default
                 startTime: String(startTime),
                 endTime: String(endTime),
                 academicYearId
             };
 
+            console.log('Creating Exam Payload:', payload);
 
-
-            await api.post('/school/exams', payload);
+            // Backend exam CRUD routes are under /exams, not /school/exams
+            await api.post('/exams', payload);
 
             onSuccess();
             setName('');

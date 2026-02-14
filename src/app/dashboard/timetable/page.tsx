@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import { academicApi } from '@/lib/api';
 import Link from 'next/link';
 
 type Class = {
@@ -18,11 +18,13 @@ export default function SelectTimetablePage() {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const response = await api.get('/school/classes');
-                const data = Array.isArray(response.data) ? response.data : response.data.data || [];
+                const response = await academicApi.fetchClasses();
+                const data = Array.isArray(response.data)
+                    ? response.data
+                    : (response.data.classes || response.data.data || []);
                 setClasses(data);
             } catch (error) {
-                console.error("Failed to fetch classes", error);
+                // Classes list will remain empty
             } finally {
                 setLoading(false);
             }
