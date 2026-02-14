@@ -8,8 +8,10 @@ type Teacher = {
     fullName: string;
     email: string;
     phone?: string;
+    phoneNumber?: string;
     specialization?: string;
     classId?: string;
+    classes?: string[];
 };
 
 type ClassOption = {
@@ -30,19 +32,22 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
         email: '',
         password: '',
         phone: '',
-        classId: '',
     });
+
+    // Multi-class selection
+    const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
     const [classes, setClasses] = useState<ClassOption[]>([]);
+
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
         if (isOpen) {
-            // Fetch classes when modal opens — use /school/classes (same as other pages)
+            // Fetch classes when modal opens
             const fetchClasses = async () => {
                 try {
                     const res = await api.get('/school/classes', {
-                        params: { _t: Date.now() } // Cache-bust
+                        params: { _t: Date.now() }
                     });
                     const classesData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
                     setClasses(classesData.map((c: any) => ({
@@ -60,17 +65,33 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                 setFormData({
                     fullName: teacherToEdit.fullName || '',
                     email: teacherToEdit.email || '',
-                    password: '', // Always keep empty for security
-                    phone: teacherToEdit.phone || '',
-                    classId: teacherToEdit.classId || '',
+                    password: '',
+                    phone: teacherToEdit.phone || teacherToEdit.phoneNumber || '',
                 });
+                // Pre-select the teacher's existing classes
+                if (teacherToEdit.classId) {
+                    setSelectedClassIds([teacherToEdit.classId]);
+                } else if (teacherToEdit.classes && teacherToEdit.classes.length > 0) {
+                    // If we have class names but no IDs, we'll match by name later
+                    setSelectedClassIds([]);
+                } else {
+                    setSelectedClassIds([]);
+                }
             } else {
-                // Reset if adding new
-                setFormData({ fullName: '', email: '', password: '', phone: '', classId: '' });
+                setFormData({ fullName: '', email: '', password: '', phone: '' });
+                setSelectedClassIds([]);
             }
             setError('');
         }
     }, [isOpen, teacherToEdit]);
+
+    const toggleClass = (classId: string) => {
+        setSelectedClassIds(prev =>
+            prev.includes(classId)
+                ? prev.filter(id => id !== classId)
+                : [...prev, classId]
+        );
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,18 +99,19 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
         setError('');
 
         try {
-            if (teacherToEdit) {
-                // Edit Logic
-                const payload: any = { ...formData };
-                if (!payload.password) delete payload.password;
+            const payload: any = {
+                ...formData,
+                classIds: selectedClassIds, // Send array for multi-assignment
+                classId: selectedClassIds[0] || undefined, // Backward compat: send first class as classId
+            };
 
+            if (teacherToEdit) {
+                if (!payload.password) delete payload.password;
                 await api.put(`/school/teachers/${teacherToEdit.id}`, payload);
             } else {
-                // Add Logic
-                await api.post('/school/teachers', formData);
+                await api.post('/school/teachers', payload);
             }
 
-            // CRITICAL: Call onSuccess BEFORE closing to trigger re-fetch
             onSuccess();
             onClose();
         } catch (err: any) {
@@ -113,7 +135,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-5">
-                    {error && <p className="text-red-500 text-sm font-bold">{error}</p>}
+                    {error && <p className="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">Full Name</label>
@@ -165,21 +187,39 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                         />
                     </div>
 
+                    {/* Multi-Class Assignment */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Assign Class</label>
-                        <div className="relative">
-                            <select
-                                value={formData.classId}
-                                onChange={e => setFormData({ ...formData, classId: e.target.value })}
-                                className="w-full border-2 border-gray-100 rounded-xl p-3 appearance-none bg-white focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all font-medium"
-                            >
-                                <option value="">Select Class</option>
-                                {classes.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
-                        </div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Assign Classes <span className="text-gray-400 font-normal">(click to select multiple)</span>
+                        </label>
+                        {classes.length === 0 ? (
+                            <p className="text-gray-400 text-sm italic p-3">Loading classes...</p>
+                        ) : (
+                            <div className="flex flex-wrap gap-2 p-3 border-2 border-gray-100 rounded-xl min-h-[48px] bg-gray-50/50">
+                                {classes.map(cls => {
+                                    const isSelected = selectedClassIds.includes(cls.id);
+                                    return (
+                                        <button
+                                            key={cls.id}
+                                            type="button"
+                                            onClick={() => toggleClass(cls.id)}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${isSelected
+                                                    ? 'bg-violet-600 text-white shadow-md shadow-violet-200 scale-105'
+                                                    : 'bg-white text-gray-600 border border-gray-200 hover:border-violet-300 hover:text-violet-600'
+                                                }`}
+                                        >
+                                            {isSelected && <span className="mr-1">✓</span>}
+                                            {cls.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        {selectedClassIds.length > 0 && (
+                            <p className="text-xs text-violet-500 font-medium mt-1.5">
+                                {selectedClassIds.length} class{selectedClassIds.length > 1 ? 'es' : ''} selected
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-50 mt-6">
