@@ -1,17 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { academicApi } from '@/lib/api';
-
-type ClassInfo = {
-    id: string;
-    name: string;
-    subject: string;
-    studentCount: number;
-};
+import { mvpApi, SchoolClass } from '@/lib/api';
 
 export default function TeacherDashboard() {
-    const [classes, setClasses] = useState<ClassInfo[]>([]);
+    const [classes, setClasses] = useState<SchoolClass[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -24,25 +17,17 @@ export default function TeacherDashboard() {
             const teacherId = user.teacherId || user.id;
 
             if (!teacherId) {
-                console.error("No teacher ID found for logged in user");
+                setError("No teacher ID found for logged in user.");
                 setLoading(false);
                 return;
             }
 
             try {
-                const res = await academicApi.fetchTeacherClasses(teacherId);
-                const data = res.data.classes || res.data || [];
-
-                const formatted: ClassInfo[] = data.map((c: any) => ({
-                    id: c.id,
-                    name: c.name,
-                    subject: c.subject?.name || 'General',
-                    studentCount: c._count?.students || 0
-                }));
-
-                setClasses(formatted);
+                const res = await mvpApi.fetchTeacherClasses(teacherId);
+                // Backend MUST return SchoolClass[] directly. No shape guessing.
+                const data = Array.isArray(res.data) ? res.data : [];
+                setClasses(data);
             } catch (error: any) {
-                console.error("Failed to fetch teacher classes", error);
                 setError(error.response?.data?.message || 'Failed to load classes');
             } finally {
                 setLoading(false);
@@ -51,6 +36,7 @@ export default function TeacherDashboard() {
 
         fetchClasses();
     }, []);
+
 
     if (loading) {
         return <div className="p-6 text-center text-gray-500">Loading your schedule...</div>;
@@ -86,10 +72,10 @@ export default function TeacherDashboard() {
                             <div className="mb-6 flex items-start justify-between">
                                 <div>
                                     <h3 className="text-2xl font-black text-gray-800 group-hover:text-violet-700 transition-colors">{cls.name}</h3>
-                                    <p className="text-sm text-violet-500 font-bold uppercase tracking-wider">{cls.subject}</p>
+                                    <p className="text-sm text-violet-500 font-bold uppercase tracking-wider">{cls.subject?.name || 'General'}</p>
                                 </div>
                                 <div className="rounded-xl bg-violet-50 px-3 py-1 text-xs font-black text-violet-600 border border-violet-100">
-                                    {cls.studentCount} Students
+                                    {cls._count?.students ?? 0} Students
                                 </div>
                             </div>
 

@@ -1,25 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
-
-type SchoolClass = {
-    id: string;
-    name: string;
-    academicYearId?: string;
-    defaultFee?: number;
-};
+import { mvpApi, AcademicYear, SchoolClass } from '@/lib/api';
 
 type EditClassModalProps = {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     classData: SchoolClass;
-};
-
-type AcademicYear = {
-    id: string;
-    name: string;
 };
 
 export default function EditClassModal({ isOpen, onClose, onSuccess, classData }: EditClassModalProps) {
@@ -34,21 +22,27 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
 
     useEffect(() => {
         if (isOpen) {
-            fetchAcademicYears();
+            // Pre-fill form with current class data
             setName(classData.name);
-            setSelectedYearId(classData.academicYearId || '');
-            setDefaultFee(classData.defaultFee || '');
+            setSelectedYearId(
+                classData.academicYearId ||
+                (typeof classData.academicYear === 'object' ? classData.academicYear?.id ?? '' : '')
+            );
+            setDefaultFee(classData.defaultFee ?? '');
+            setError('');
+            fetchAcademicYears();
         }
     }, [isOpen, classData]);
 
     const fetchAcademicYears = async () => {
         setLoadingYears(true);
         try {
-            const res = await api.get('/academic-years');
-            const data = Array.isArray(res.data) ? res.data : res.data.data || [];
+            // Contract: GET /academic-years -> AcademicYear[] direct array. No shape guessing.
+            const res = await mvpApi.fetchAcademicYears();
+            const data = Array.isArray(res.data) ? res.data : [];
             setAcademicYears(data);
         } catch (err) {
-            console.error("Failed to fetch academic years", err);
+            // toast is fired inside fetchAcademicYears on error
         } finally {
             setLoadingYears(false);
         }
@@ -56,19 +50,24 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!name || !selectedYearId) {
+            setError('Class name and academic year are required.');
+            return;
+        }
         setIsSubmitting(true);
         setError('');
 
         try {
-            await api.put(`/school/classes/${classData.id}`, {
+            // Contract: PUT /school/classes/:id -> { name, academicYearId, defaultFee? }
+            await mvpApi.updateClass(classData.id, {
                 name,
                 academicYearId: selectedYearId,
-                defaultFee: defaultFee ? Number(defaultFee) : undefined
+                defaultFee: defaultFee ? Number(defaultFee) : undefined,
             });
+            // toast fired inside mvpApi.updateClass on success
             onSuccess();
             onClose();
         } catch (err: any) {
-            console.error("Failed to update class", err);
             setError(err.response?.data?.message || 'Failed to update class.');
         } finally {
             setIsSubmitting(false);
@@ -112,10 +111,13 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
                             onChange={(e) => setSelectedYearId(e.target.value)}
                             className={inputClasses}
                             disabled={loadingYears}
+                            required
                         >
                             <option value="">Select Year</option>
                             {academicYears.map(year => (
-                                <option key={year.id} value={year.id}>{year.name}</option>
+                                <option key={year.id} value={year.id}>
+                                    {year.name} {year.isActive && '(Active)'}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -140,8 +142,8 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
                         </button>
                         <button
                             type="submit"
-                            disabled={isSubmitting}
-                            className="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl shadow-lg hover:shadow-violet-200 hover:-translate-y-0.5 transition-all font-bold"
+                            disabled={isSubmitting || loadingYears}
+                            className="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl shadow-lg hover:shadow-violet-200 hover:-translate-y-0.5 transition-all font-bold disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </button>

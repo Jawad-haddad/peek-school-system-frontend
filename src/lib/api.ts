@@ -1,8 +1,28 @@
 import axios from 'axios';
 
+// ─── Debug Logger ──────────────────────────────────────────────────────────────
+// Enable by adding NEXT_PUBLIC_DEBUG_MVP_API=true to .env.local
+// Remove the env var (or set to false) to disable. Safe to leave in production.
+const DEBUG = process.env.NEXT_PUBLIC_DEBUG_MVP_API === 'true';
+
+function debugLog(label: string, data: unknown): void {
+    if (!DEBUG) return;
+    // Deep-clone so we can mask the token without mutating the original
+    const safe = JSON.parse(JSON.stringify(data));
+    if (safe?.headers?.Authorization) {
+        safe.headers.Authorization = 'Bearer [MASKED]';
+    }
+    if (safe?.token && typeof safe.token === 'string') {
+        safe.token = '[MASKED]';
+    }
+    console.group(`%c[MVP-API] ${label}`, 'color:#7c3aed;font-weight:bold');
+    console.log(safe);
+    console.groupEnd();
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const api = axios.create({
     baseURL: '/api',
-    // You can add other default config here like timeout
 });
 
 api.interceptors.request.use(
@@ -25,9 +45,16 @@ api.interceptors.request.use(
                     // ignore parse error
                 }
             }
-
-
         }
+
+        // Debug instrumentation — masked token, safe to leave during testing
+        debugLog(`→ ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
+            method: config.method,
+            url: `${config.baseURL}${config.url}`,
+            headers: config.headers,
+            data: config.data,
+        });
+
         return config;
     },
     (error) => {
@@ -36,8 +63,24 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Debug instrumentation — logs real response payload (token masked)
+        debugLog(`← ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+            status: response.status,
+            url: response.config.url,
+            data: response.data,
+        });
+        return response;
+    },
     (error) => {
+        // Debug: log error responses too
+        if (error.response) {
+            debugLog(`✗ ${error.response.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+                status: error.response.status,
+                url: error.config?.url,
+                data: error.response.data,
+            });
+        }
         // Handle common errors globally if needed, e.g., 401 Redirects
         if (error.response && error.response.status === 401) {
             if (typeof window !== 'undefined') {
@@ -83,8 +126,6 @@ export const busApi = {
         try {
             return await api.get(`/bus/routes/${routeId}/active-trip`);
         } catch (error: any) {
-            // Optional: Don't show toast for 404 if "no active trip" is valid flow, 
-            // but here we treat errors as system issues
             toast.error("Error loading active trip: " + (error.response?.data?.message || error.message));
             throw error;
         }
@@ -179,7 +220,7 @@ export const examApi = {
     },
     deleteSchedule: async (scheduleId: string) => {
         try {
-            const res = await api.delete(`/school/exam-schedules/${scheduleId}`); // Check if this needs specific path too
+            const res = await api.delete(`/school/exam-schedules/${scheduleId}`);
             toast.success("Schedule removed");
             return res;
         } catch (error: any) {
@@ -213,7 +254,6 @@ export const financeApi = {
 export const schoolApi = {
     fetchStudents: async (classId: string) => {
         try {
-            // Adjusted path to align with existing student fetch patterns
             return await api.get(`/school/students?classId=${classId}`);
         } catch (error: any) {
             toast.error("Failed to fetch students: " + (error.response?.data?.message || error.message));
@@ -352,6 +392,277 @@ export const statsApi = {
             throw error;
         }
     }
+};
+
+// ============================================================================
+// MVP API CONTRACT
+// ── Single source of truth for all MVP flow endpoints and response shapes. ──
+// ── To call an MVP endpoint, add or use an entry here.                     ──
+// ── Never call api.get/post/put/delete directly in MVP component files.    ──
+// ── Guardrail: scripts/check-mvp-contract.mjs                             ──
+// ── @contract-temporary: manually typed until backend provides OpenAPI.   ──
+// ============================================================================
+
+// ── Endpoint Path Registry ────────────────────────────────────────────────────
+// Centralised so path drift requires one edit here and is caught by TypeScript.
+export const MVP_ENDPOINTS = {
+    // Auth
+    LOGIN: '/auth/login',                              // POST
+
+    // Classes (Admin CRUD)
+    CLASSES: '/school/classes',                          // GET, POST
+    CLASS_BY_ID: (id: string) => `/school/classes/${id}`,    // PUT, DELETE
+
+    // Academic year (class form dropdowns)
+    ACADEMIC_YEARS: '/academic-years',                          // GET
+
+    // Teacher attendance flows
+    TEACHER_CLASSES: (teacherId: string) => `/academics/teachers/${teacherId}/classes`,  // GET
+    CLASS_STUDENTS: (classId: string) => `/academics/classes/${classId}/students`,    // GET
+
+    // Attendance submission
+    ATTENDANCE_BULK: '/attendance/bulk',                         // POST
+} as const;
+
+// ── Request / Response Types ──────────────────────────────────────────────────
+
+export type UserRole = 'ADMIN' | 'TEACHER' | 'PARENT';
+
+/** User object returned inside the login response. No deprecated `name` field. */
+export type AuthUser = {
+    id: string;
+    fullName: string;   // backend always returns `fullName`, never `name`
+    email: string;
+    role: UserRole;
+    schoolId: string;
+};
+
+/** Full shape of POST /auth/login 200 response. */
+export type LoginResponse = {
+    message: string;
+    token: string;
+    user: AuthUser;
+};
+
+/** Each item in GET /school/classes response array. */
+export type SchoolClass = {
+    id: string;
+    name: string;
+    academicYear?: { id: string; name: string } | string;
+    academicYearId?: string;
+    defaultFee?: number;
+    _count?: { students: number };
+    subject?: { name: string };
+};
+
+/** Each item in GET /academic-years response array. */
+export type AcademicYear = {
+    id: string;
+    name: string;
+    isActive: boolean;
+};
+
+/** Payload for POST /school/classes */
+export type CreateClassRequest = {
+    name: string;
+    academicYearId: string;
+    defaultFee?: number;
+};
+
+/** Payload for PUT /school/classes/:id */
+export type UpdateClassRequest = {
+    name: string;
+    academicYearId: string;
+    defaultFee?: number;
+};
+
+/**
+ * Each item in GET /academics/classes/:classId/students.
+ * Only `id` and `fullName` are guaranteed by contract.
+ * No index signature — do not add [key: string]: unknown.
+ */
+export type StudentRecord = {
+    id: string;
+    fullName: string;
+    classId?: string;
+    gradeLevel?: string;
+};
+
+/** Attendance status values — lowercase, as required by backend enum. */
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+
+/** A single row within the bulk attendance records array. */
+export type AttendanceSingleRecord = {
+    studentId: string;
+    status: AttendanceStatus;
+};
+
+/**
+ * Payload for POST /attendance/bulk.
+ * classId + date are TOP-LEVEL, NOT inside each record.
+ */
+export type BulkAttendancePayload = {
+    classId: string;
+    date: string;            // ISO date string e.g. "2026-02-24"
+    records: AttendanceSingleRecord[];
+};
+
+/** 200 response from POST /attendance/bulk. */
+export type BulkAttendanceResponse = {
+    savedCount: number;
+    date: string;
+    classId: string;
+};
+
+// ── MVP API Methods ───────────────────────────────────────────────────────────
+// All methods use MVP_ENDPOINTS paths and named request/response types.
+// No `any`. No response-shape guessing (no `|| []`, no `?.data?.data`).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Internal error normaliser — avoids repeating `error as any` in each method. */
+type ApiError = { response?: { data?: { message?: string } }; message?: string };
+
+export const mvpApi = {
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+
+    /**
+     * POST /auth/login
+     * Returns: LoginResponse { message, token, user: AuthUser }
+     */
+    loginUser: async (email: string, password: string) => {
+        return api.post<LoginResponse>(MVP_ENDPOINTS.LOGIN, { email, password });
+    },
+
+    // ── Admin Classes ─────────────────────────────────────────────────────────
+
+    /**
+     * GET /school/classes
+     * Returns: SchoolClass[] — direct array, no envelope.
+     */
+    fetchClasses: async () => {
+        try {
+            return await api.get<SchoolClass[]>(MVP_ENDPOINTS.CLASSES);
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to fetch classes: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
+
+    /**
+     * POST /school/classes
+     * Request: CreateClassRequest
+     * Returns: SchoolClass
+     */
+    createClass: async (data: CreateClassRequest) => {
+        try {
+            const res = await api.post<SchoolClass>(MVP_ENDPOINTS.CLASSES, data);
+            toast.success("Class created successfully");
+            return res;
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to create class: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
+
+    /**
+     * PUT /school/classes/:id
+     * Request: UpdateClassRequest
+     * Returns: SchoolClass
+     */
+    updateClass: async (id: string, data: UpdateClassRequest) => {
+        try {
+            const res = await api.put<SchoolClass>(MVP_ENDPOINTS.CLASS_BY_ID(id), data);
+            toast.success("Class updated successfully");
+            return res;
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to update class: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
+
+    /**
+     * DELETE /school/classes/:id
+     * Returns: 204 No Content or {}
+     */
+    deleteClass: async (id: string) => {
+        try {
+            const res = await api.delete<Record<string, never>>(MVP_ENDPOINTS.CLASS_BY_ID(id));
+            toast.success("Class deleted");
+            return res;
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to delete class: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
+
+    /**
+     * GET /academic-years
+     * Returns: AcademicYear[] — direct array, no envelope.
+     */
+    fetchAcademicYears: async () => {
+        try {
+            return await api.get<AcademicYear[]>(MVP_ENDPOINTS.ACADEMIC_YEARS);
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to load academic years: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
+
+    // ── Teacher Attendance ────────────────────────────────────────────────────
+
+    /**
+     * GET /academics/teachers/:teacherId/classes
+     * Returns: SchoolClass[] — direct array, no envelope.
+     */
+    fetchTeacherClasses: async (teacherId: string) => {
+        try {
+            return await api.get<SchoolClass[]>(MVP_ENDPOINTS.TEACHER_CLASSES(teacherId));
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to fetch teacher classes: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
+
+    /**
+     * GET /academics/classes/:classId/students
+     * Returns: StudentRecord[] — each has { id, fullName }
+     */
+    fetchClassStudents: async (classId: string) => {
+        try {
+            return await api.get<StudentRecord[]>(MVP_ENDPOINTS.CLASS_STUDENTS(classId));
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to fetch students: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
+
+    /**
+     * POST /attendance/bulk
+     * classId + date are TOP-LEVEL in payload, NOT inside records.
+     * Returns: BulkAttendanceResponse { savedCount, date, classId }
+     */
+    submitBulkAttendance: async (payload: BulkAttendancePayload) => {
+        try {
+            const res = await api.post<BulkAttendanceResponse>(
+                MVP_ENDPOINTS.ATTENDANCE_BULK,
+                payload
+            );
+            toast.success("Attendance saved successfully!");
+            return res;
+        } catch (error: unknown) {
+            const e = error as ApiError;
+            toast.error("Failed to save attendance: " + (e.response?.data?.message ?? e.message));
+            throw error;
+        }
+    },
 };
 
 export default api;

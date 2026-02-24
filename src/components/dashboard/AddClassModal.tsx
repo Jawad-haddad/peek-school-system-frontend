@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import { mvpApi, AcademicYear } from '@/lib/api';
 
 type AddClassModalProps = {
     isOpen: boolean;
@@ -9,23 +9,16 @@ type AddClassModalProps = {
     onSuccess: () => void;
 };
 
-type AcademicYear = {
-    id: string;
-    name: string;
-    isActive: boolean;
-};
-
 export default function AddClassModal({ isOpen, onClose, onSuccess }: AddClassModalProps) {
     const [name, setName] = useState('');
     const [selectedYearId, setSelectedYearId] = useState('');
-    const [defaultFee, setDefaultFee] = useState<number | ''>(''); // New State
+    const [defaultFee, setDefaultFee] = useState<number | ''>('');
 
     const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
     const [loadingYears, setLoadingYears] = useState(true);
 
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-
 
     useEffect(() => {
         if (isOpen) {
@@ -36,17 +29,18 @@ export default function AddClassModal({ isOpen, onClose, onSuccess }: AddClassMo
     const fetchAcademicYears = async () => {
         setLoadingYears(true);
         try {
-            const response = await api.get('/academic-years');
-            setAcademicYears(response.data);
+            const response = await mvpApi.fetchAcademicYears();
+            // Backend MUST return AcademicYear[] directly.
+            const years = Array.isArray(response.data) ? response.data : [];
+            setAcademicYears(years);
 
-            const activeYear = response.data.find((year: AcademicYear) => year.isActive);
+            const activeYear = years.find((year) => year.isActive);
             if (activeYear) {
                 setSelectedYearId(activeYear.id);
-            } else if (response.data.length > 0) {
-                setSelectedYearId(response.data[0].id);
+            } else if (years.length > 0) {
+                setSelectedYearId(years[0].id);
             }
         } catch (err) {
-            console.error("Failed to load academic years", err);
             setError("Failed to load academic years. Please check settings.");
         } finally {
             setLoadingYears(false);
@@ -67,10 +61,10 @@ export default function AddClassModal({ isOpen, onClose, onSuccess }: AddClassMo
         setIsSubmitting(true);
 
         try {
-            await api.post('/school/classes', {
+            await mvpApi.createClass({
                 name,
                 academicYearId: selectedYearId,
-                defaultFee: defaultFee ? Number(defaultFee) : undefined // Send payload
+                defaultFee: defaultFee ? Number(defaultFee) : undefined,
             });
 
             onSuccess();
@@ -79,12 +73,12 @@ export default function AddClassModal({ isOpen, onClose, onSuccess }: AddClassMo
             onClose();
 
         } catch (err: any) {
-            console.error("Add Class Error:", err);
             setError(err.response?.data?.message || 'Failed to add class.');
         } finally {
             setIsSubmitting(false);
         }
     };
+
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">

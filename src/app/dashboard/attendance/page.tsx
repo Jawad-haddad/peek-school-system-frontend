@@ -1,24 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { academicApi, schoolApi } from '@/lib/api';
-import { toast } from '@/lib/toast-events';
-import api from '@/lib/api';
+import { mvpApi, AttendanceStatus, StudentRecord } from '@/lib/api';
 
 type ClassInfo = { id: string; name: string };
-type StudentInfo = { id: string; firstName: string; lastName: string };
-type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
 
+// Status config keys must match backend lowercase enum
 const STATUS_CONFIG: Record<AttendanceStatus, { color: string; bg: string }> = {
-    PRESENT: { color: 'text-green-700', bg: 'bg-green-100 border-green-300' },
-    ABSENT: { color: 'text-red-700', bg: 'bg-red-100 border-red-300' },
-    LATE: { color: 'text-yellow-700', bg: 'bg-yellow-100 border-yellow-300' },
-    EXCUSED: { color: 'text-blue-700', bg: 'bg-blue-100 border-blue-300' },
+    present: { color: 'text-green-700', bg: 'bg-green-100 border-green-300' },
+    absent: { color: 'text-red-700', bg: 'bg-red-100 border-red-300' },
+    late: { color: 'text-yellow-700', bg: 'bg-yellow-100 border-yellow-300' },
+    excused: { color: 'text-blue-700', bg: 'bg-blue-100 border-blue-300' },
 };
 
 export default function AttendancePage() {
     const [classes, setClasses] = useState<ClassInfo[]>([]);
-    const [students, setStudents] = useState<StudentInfo[]>([]);
+    const [students, setStudents] = useState<StudentRecord[]>([]);
     const [selectedClass, setSelectedClass] = useState('');
     const [attendance, setAttendance] = useState<Record<string, AttendanceStatus>>({});
 
@@ -37,8 +34,9 @@ export default function AttendancePage() {
             if (!teacherId) { setLoadingClasses(false); return; }
 
             try {
-                const res = await academicApi.fetchTeacherClasses(teacherId);
-                const data = res.data.classes || res.data || [];
+                const res = await mvpApi.fetchTeacherClasses(teacherId);
+                // Backend MUST return SchoolClass[] directly. No shape guessing.
+                const data = Array.isArray(res.data) ? res.data : [];
                 setClasses(data.map((c: any) => ({ id: c.id, name: c.name })));
             } catch (err) {
                 console.error('Failed to load classes', err);
@@ -56,13 +54,14 @@ export default function AttendancePage() {
         const load = async () => {
             setLoadingStudents(true);
             try {
-                const res = await schoolApi.fetchStudents(selectedClass);
-                const data = res.data.students || res.data || [];
+                const res = await mvpApi.fetchClassStudents(selectedClass);
+                // Backend MUST return StudentRecord[] directly. No shape guessing.
+                const data = Array.isArray(res.data) ? res.data : [];
                 setStudents(data);
 
-                // Default all to PRESENT
+                // Default all to 'present' (lowercase per backend contract)
                 const initial: Record<string, AttendanceStatus> = {};
-                data.forEach((s: StudentInfo) => { initial[s.id] = 'PRESENT'; });
+                data.forEach((s: StudentRecord) => { initial[s.id] = 'present'; });
                 setAttendance(initial);
             } catch (err) {
                 console.error('Failed to load students', err);
@@ -82,24 +81,26 @@ export default function AttendancePage() {
         setIsSubmitting(true);
 
         try {
-            const records = students.map(s => ({
-                studentId: s.id,
+            // Contract: POST /attendance/bulk
+            // { classId, date, records: [{ studentId, status }] } — classId/date at top level
+            await mvpApi.submitBulkAttendance({
                 classId: selectedClass,
                 date: new Date().toISOString().split('T')[0],
-                status: attendance[s.id],
-            }));
-
-            await api.post('/attendance/bulk', { records });
-            toast.success('Attendance submitted successfully!');
-        } catch (err: any) {
-            toast.error('Failed to submit attendance: ' + (err.response?.data?.message || err.message));
+                records: students.map(s => ({
+                    studentId: s.id,
+                    status: attendance[s.id] ?? 'present',
+                })),
+            });
+            // toast fired inside submitBulkAttendance on success
+        } catch {
+            // toast fired inside submitBulkAttendance on error
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const presentCount = Object.values(attendance).filter(s => s === 'PRESENT').length;
-    const absentCount = Object.values(attendance).filter(s => s === 'ABSENT').length;
+    const presentCount = Object.values(attendance).filter(s => s === 'present').length;
+    const absentCount = Object.values(attendance).filter(s => s === 'absent').length;
 
     return (
         <div className="p-4 md:p-8 max-w-5xl mx-auto pb-32">
@@ -152,15 +153,16 @@ export default function AttendancePage() {
                         {/* Attendance Cards */}
                         <div className="space-y-3">
                             {students.map(student => {
-                                const status = attendance[student.id] || 'PRESENT';
+                                const status = attendance[student.id] || 'present';
                                 return (
                                     <div key={student.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <div className="flex items-center gap-4">
                                             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center text-indigo-700 font-bold shadow-sm">
-                                                {student.firstName?.charAt(0) || 'S'}
+                                                {student.fullName.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="font-bold text-gray-900">{student.firstName} {student.lastName}</p>
+                                                {/* fullName is the field returned by backend contract */}
+                                                <p className="font-bold text-gray-900">{student.fullName}</p>
                                                 <p className="text-xs text-gray-400">ID: {student.id.substring(0, 8)}...</p>
                                             </div>
                                         </div>
@@ -172,8 +174,8 @@ export default function AttendancePage() {
                                                     type="button"
                                                     onClick={() => handleStatusChange(student.id, s)}
                                                     className={`px-4 py-2 rounded-xl text-xs font-bold border-2 transition-all ${status === s
-                                                            ? `${STATUS_CONFIG[s].bg} ${STATUS_CONFIG[s].color} scale-105 shadow-sm`
-                                                            : 'bg-gray-50 text-gray-400 border-transparent hover:bg-gray-100'
+                                                        ? `${STATUS_CONFIG[s].bg} ${STATUS_CONFIG[s].color} scale-105 shadow-sm`
+                                                        : 'bg-gray-50 text-gray-400 border-transparent hover:bg-gray-100'
                                                         }`}
                                                 >
                                                     {s}

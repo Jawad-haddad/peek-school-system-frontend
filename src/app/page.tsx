@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { mvpApi } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,15 +18,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/login', { email, password });
-      const data = response.data;
+      // Contract: POST /auth/login -> { message, token, user: { id, fullName, email, role, schoolId } }
+      const response = await mvpApi.loginUser(email, password);
+      const { token, user } = response.data;
 
-      // Store auth tokens
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.user.role);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Persist token and user object (role comes from user.role — never derived client-side)
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', user.role);         // 'ADMIN' | 'TEACHER' | 'PARENT'
+      localStorage.setItem('user', JSON.stringify(user));
 
-      // Redirect to dashboard
       router.push('/dashboard');
 
     } catch (err: any) {
