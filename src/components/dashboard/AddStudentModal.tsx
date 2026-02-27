@@ -91,7 +91,11 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
             setWalletBalance('');
         } catch (err: any) {
             console.error("Failed to add student", err);
-            setError(err.response?.data?.message || 'Failed to add student.');
+            let msg = err.message || err.response?.data?.message || 'Failed to add student.';
+            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
+                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
+            }
+            setError(msg);
         } finally {
             setLoading(false);
         }

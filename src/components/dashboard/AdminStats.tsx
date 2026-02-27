@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import api, { request, ApiEnvelopeError } from '@/lib/api';
 
 // ─── Configuration ─────────────────────────────────────────────
 const CURRENCY = 'JOD'; // Change this to localize: 'USD', 'EUR', etc.
@@ -56,11 +56,9 @@ export default function AdminStats() {
         try {
             setLoading(true);
             setError(null);
-            const res = await api.get('/school/stats/fees', {
-                params: { _t: Date.now() }
-            });
-
-            const data = res.data;
+            const data = await request<FeeStats>(() =>
+                api.get('/school/stats/fees', { params: { _t: Date.now() } })
+            );
 
             // Normalize Prisma Decimal fields to JS numbers
             setStats({
@@ -73,11 +71,12 @@ export default function AdminStats() {
                 })),
             });
         } catch (error: any) {
-            console.error("Failed to fetch admin stats", error);
-            if (error.response?.status === 403) {
-                setError('You do not have permission to view stats.');
+            console.error('Failed to fetch admin stats', error);
+            // 404 means no finance data exists yet — show empty state, not a hard error
+            if (error instanceof ApiEnvelopeError && error.code === 'NOT_FOUND') {
+                setStats({ totalOutstanding: 0, totalStudents: 0, classes: [] });
             } else {
-                setError(error.response?.data?.message || error.message || 'Failed to load stats');
+                setError(error.message || 'Failed to load stats');
             }
         } finally {
             setLoading(false);
@@ -90,11 +89,10 @@ export default function AdminStats() {
         // Clear stale data immediately before fetching new data
         setClassStudents([]);
         try {
-            // Use consistent /school/ prefix route
-            const res = await api.get(`/school/stats/fees/class/${classId}`, {
-                params: { _t: Date.now() }
-            });
-            const students = res.data?.students || res.data || [];
+            const data = await request<{ students?: any[] } | any[]>(() =>
+                api.get(`/school/stats/fees/class/${classId}`, { params: { _t: Date.now() } })
+            );
+            const students = (Array.isArray(data) ? data : (data as any)?.students ?? []);
             // Normalize Decimal values
             setClassStudents(students.map((s: any) => ({
                 id: s.id,
@@ -103,7 +101,12 @@ export default function AdminStats() {
             })));
         } catch (error: any) {
             console.error('Failed to load class students:', error);
-            setStudentsError(error.response?.data?.message || 'Failed to load student data for this class.');
+            // 404 means no outstanding fees for this class — show empty list
+            if (error instanceof ApiEnvelopeError && error.code === 'NOT_FOUND') {
+                setClassStudents([]);
+            } else {
+                setStudentsError(error.message || 'Failed to load student data for this class.');
+            }
             setClassStudents([]);
         } finally {
             setStudentsLoading(false);

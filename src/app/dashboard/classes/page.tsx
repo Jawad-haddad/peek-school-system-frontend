@@ -28,17 +28,13 @@ export default function ClassesPage() {
         setError('');
         try {
             const response = await mvpApi.fetchClasses();
-            // Backend MUST return SchoolClass[] directly. If this breaks, it is a backend contract violation.
-            const data = Array.isArray(response.data) ? response.data : [];
+            // fetchClasses now returns SchoolClass[] directly (envelope unwrapped)
+            const data = Array.isArray(response) ? response : [];
             setClasses(data);
         } catch (err: any) {
-            if (err.response?.status === 403) {
-                setError("You do not have permission to view classes.");
-            } else if (err.response?.status === 404) {
-                setError("No classes resource found.");
-            } else {
-                setError(err.response?.data?.message || "Failed to load classes.");
-            }
+            // 403 / TENANT_FORBIDDEN is already normalised to a friendly err.message
+            // by the API layer (ApiEnvelopeError), so no need to inspect err.response.status here.
+            setError(err.message || 'Failed to load classes.');
         } finally {
             setLoading(false);
         }
@@ -98,9 +94,20 @@ export default function ClassesPage() {
                     <span className="font-bold">{error}</span>
                 </div>
             ) : classes.length === 0 ? (
-                <div className="glass-card text-center py-20 rounded-3xl">
+                <div className="glass-card text-center py-24 rounded-3xl mx-auto max-w-2xl border-2 border-dashed border-violet-200 bg-white/50 backdrop-blur-sm">
                     <div className="text-6xl mb-6">🏫</div>
-                    <p className="text-gray-400 font-medium text-xl">No classes found.</p>
+                    <h3 className="text-2xl font-black text-gray-800 mb-2">No Classes Found</h3>
+                    <p className="text-gray-500 font-medium text-lg mb-8 max-w-sm mx-auto">
+                        Your school currently has no classes configured in the system.
+                    </p>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-8 py-4 rounded-2xl hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-1 transition-all inline-flex items-center gap-2 font-bold text-lg"
+                        >
+                            <span>+ Create Your First Class</span>
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

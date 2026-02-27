@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { studentApi } from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 
 type ExamResult = {
     id: string;
@@ -20,9 +21,8 @@ export default function ExamResultsPage() {
 
     useEffect(() => {
         const fetchResults = async () => {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
+            const parsedUser = getSafeUser();
+            if (parsedUser) {
                 setUser(parsedUser);
 
                 if (parsedUser.studentId) {
@@ -86,9 +86,9 @@ export default function ExamResultsPage() {
                                     <span className="text-xs font-bold uppercase tracking-widest text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md">{result.examName}</span>
                                 </div>
                                 <div className={`h-16 w-16 rounded-2xl flex items-center justify-center text-3xl font-black shadow-inner ${result.marks >= 90 ? 'bg-green-100 text-green-600' :
-                                        result.marks >= 75 ? 'bg-blue-100 text-blue-600' :
-                                            result.marks >= 50 ? 'bg-orange-100 text-orange-600' :
-                                                'bg-red-100 text-red-600'
+                                    result.marks >= 75 ? 'bg-blue-100 text-blue-600' :
+                                        result.marks >= 50 ? 'bg-orange-100 text-orange-600' :
+                                            'bg-red-100 text-red-600'
                                     }`}>
                                     {result.marks}
                                 </div>

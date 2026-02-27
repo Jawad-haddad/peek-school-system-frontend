@@ -160,7 +160,11 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
         } catch (err: any) {
             console.error("Teacher form error:", err);
             console.error("Error Response:", err.response); // DEBUG: Inspect detailed error
-            setError(err.response?.data?.message || "Operation failed.");
+            let msg = err.message || err.response?.data?.message || "Operation failed.";
+            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
+                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
+            }
+            setError(msg);
         } finally {
             setSubmitting(false);
         }

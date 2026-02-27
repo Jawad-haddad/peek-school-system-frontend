@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { posApi, financeApi } from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 import { toast } from '@/lib/toast-events';
 
 type Product = {
@@ -21,9 +22,8 @@ export default function ShopPage() {
 
     useEffect(() => {
         const load = async () => {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                const user = JSON.parse(storedUser);
+            const user = getSafeUser();
+            if (user) {
                 const sid = user.studentId || user.children?.[0]?.id;
                 setStudentId(sid);
 
@@ -31,24 +31,33 @@ export default function ShopPage() {
                 if (sid) {
                     try {
                         const walletRes = await financeApi.fetchWalletHistory(sid);
-                        const history = walletRes.data.transactions || walletRes.data || [];
+                        // fetchWalletHistory returns unwrapped data: plain array or { transactions, balance }
+                        const resAny = walletRes as any;
+                        const history = resAny?.transactions ?? (Array.isArray(walletRes) ? walletRes : []);
                         // Calculate balance from transactions or use a balance field
-                        const balance = walletRes.data.balance ?? history.reduce((acc: number, t: any) => {
+                        const balance = resAny?.balance ?? history.reduce((acc: number, t: any) => {
                             return acc + (t.type === 'CREDIT' ? t.amount : -t.amount);
                         }, 0);
                         setWalletBalance(balance);
                     } catch {
-                        // Wallet might not be available
+                        // Wallet might not be available — 404 shows no balance (soft miss)
                     }
                 }
             }
 
             try {
                 const res = await posApi.fetchProducts();
-                setProducts(res.data.products || res.data || []);
+                // res is now plain data: either { products: [...] } or [...]
+                const data = (res as any)?.products ?? (Array.isArray(res) ? res : []);
+                setProducts(data);
             } catch (err: any) {
                 console.error('Failed to load products', err);
-                setError(err.response?.data?.message || 'Failed to load shop products');
+                // 404 means no products exist for this tenant yet — show empty state
+                if (err.name === 'ApiEnvelopeError' && err.code === 'NOT_FOUND') {
+                    setProducts([]);
+                } else {
+                    setError(err.message || 'Failed to load shop products');
+                }
             } finally {
                 setLoading(false);
             }

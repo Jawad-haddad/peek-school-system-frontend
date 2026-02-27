@@ -83,8 +83,11 @@ export default function TopUpModal({ isOpen, onClose, studentId, onSuccess }: To
         } catch (err: unknown) {
             let message = 'Top-up failed. Please try again.';
             if (err && typeof err === 'object' && 'response' in err) {
-                const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+                const axiosErr = err as { response?: { data?: { message?: string } }; message?: string; code?: string; details?: any[] };
                 message = axiosErr.response?.data?.message || axiosErr.message || message;
+                if (axiosErr.code === 'VALIDATION_ERROR' && Array.isArray(axiosErr.details) && axiosErr.details.length > 0) {
+                    message = axiosErr.details[0].message || axiosErr.details[0].string || Object.values(axiosErr.details[0])[0] || message;
+                }
             } else if (err instanceof Error) {
                 message = err.message;
             }

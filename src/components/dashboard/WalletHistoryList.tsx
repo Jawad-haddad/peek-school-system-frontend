@@ -29,8 +29,8 @@ export default function WalletHistoryList({ studentId }: WalletHistoryListProps)
             setLoading(true);
             try {
                 const response = await financeApi.fetchWalletHistory(studentId);
-                // Assuming the API returns { history: [...] } or just [...]
-                const data = response.data.history || response.data || [];
+                // fetchWalletHistory returns unwrapped data — plain array or { history: [...] }
+                const data = (response as any)?.history ?? (Array.isArray(response) ? response : []);
                 setHistory(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error("Failed to fetch wallet history", error);
@@ -80,8 +80,8 @@ export default function WalletHistoryList({ studentId }: WalletHistoryListProps)
                     <div key={tx.id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors group">
                         <div className="flex items-center gap-4">
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-sm ${tx.type === 'TOPUP'
-                                    ? 'bg-green-100/50 text-green-600'
-                                    : 'bg-rose-100/50 text-rose-600'
+                                ? 'bg-green-100/50 text-green-600'
+                                : 'bg-rose-100/50 text-rose-600'
                                 }`}>
                                 {tx.type === 'TOPUP' ? '💰' : '🛒'}
                             </div>
@@ -97,8 +97,8 @@ export default function WalletHistoryList({ studentId }: WalletHistoryListProps)
                             </div>
                         </div>
                         <div className={`font-black text-right ${tx.type === 'TOPUP'
-                                ? 'text-green-600'
-                                : 'text-gray-800'
+                            ? 'text-green-600'
+                            : 'text-gray-800'
                             }`}>
                             <span className="text-xs opacity-50 mr-1">{tx.type === 'TOPUP' ? '+' : '-'}</span>
                             ${Math.abs(tx.amount).toFixed(2)}

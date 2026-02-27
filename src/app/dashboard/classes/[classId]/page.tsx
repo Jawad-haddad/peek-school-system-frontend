@@ -7,6 +7,7 @@ import AddStudentModal from '@/components/dashboard/AddStudentModal';
 import EditStudentModal from '@/components/dashboard/EditStudentModal';
 import StudentProfileModal from '@/components/dashboard/StudentProfileModal'; // Import
 import { Eye, Edit } from 'lucide-react'; // Icons
+import { permissions, Role } from '@/lib/permissions';
 
 type Student = {
     id: string;
@@ -36,8 +37,10 @@ export default function ClassDetailsPage() {
     // New state for editing/viewing
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
     const [viewingStudent, setViewingStudent] = useState<Student | null>(null); // For Profile Modal
+    const [role, setRole] = useState<Role>(null);
 
     useEffect(() => {
+        setRole(localStorage.getItem('role') as Role);
         if (classId) {
             fetchStudents();
         }
@@ -70,12 +73,14 @@ export default function ClassDetailsPage() {
         <div className="p-8 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-gray-800">Class Details</h1>
-                <button
-                    onClick={() => setIsAddStudentOpen(true)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-bold"
-                >
-                    + Add New Student
-                </button>
+                {permissions.canManageStudents(role) && (
+                    <button
+                        onClick={() => setIsAddStudentOpen(true)}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-bold"
+                    >
+                        + Add New Student
+                    </button>
+                )}
             </div>
 
             {loading ? (
@@ -103,13 +108,15 @@ export default function ClassDetailsPage() {
                                     <td className="px-6 py-4 text-sm text-gray-500 font-medium">{student.email || student.parentEmail || 'No Email'}</td>
                                     <td className="px-6 py-4 text-right text-sm">
                                         <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={(e) => handleEditClick(e, student)}
-                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="Edit Student"
-                                            >
-                                                <Edit size={16} />
-                                            </button>
+                                            {permissions.canManageStudents(role) && (
+                                                <button
+                                                    onClick={(e) => handleEditClick(e, student)}
+                                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                    title="Edit Student"
+                                                >
+                                                    <Edit size={16} />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={(e) => handleViewClick(e, student)}
                                                 className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"

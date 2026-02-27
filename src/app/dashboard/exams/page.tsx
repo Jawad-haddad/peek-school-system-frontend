@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { permissions, Role } from '@/lib/permissions';
 import CreateExamModal from '@/components/dashboard/CreateExamModal';
 import EditExamForm from '../../../components/EditExamForm';
 
@@ -22,8 +23,10 @@ export default function ExamsPage() {
   const [refresh, setRefresh] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<Role>(null);
 
   useEffect(() => {
+    setRole(localStorage.getItem('role') as Role);
     const fetchExams = async () => {
       try {
         setLoading(true);
@@ -38,8 +41,8 @@ export default function ExamsPage() {
         setExams(data);
       } catch (err: any) {
         console.error(err);
-        setError(err.response?.data?.message || err.message || 'Failed to load exams');
-        if (err.response?.status === 403) setError('Access denied to exams.');
+        // ApiEnvelopeError passes normalised tenant errors directly in err.message
+        setError(err.message || 'Failed to load exams');
       } finally {
         setLoading(false);
       }
@@ -88,12 +91,14 @@ export default function ExamsPage() {
           <h1 className="text-3xl font-black text-gray-800 tracking-tight">Exam Schedule</h1>
           <p className="text-gray-500 font-medium">Manage exams coverage and timing</p>
         </div>
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="bg-purple-600 text-white px-6 py-2.5 rounded-xl hover:bg-purple-700 transition-all font-bold shadow-lg shadow-purple-200 flex items-center gap-2 hover:-translate-y-0.5"
-        >
-          + Schedule Exam
-        </button>
+        {permissions.canCreateExam(role) && (
+          <button
+            onClick={() => setIsAddOpen(true)}
+            className="bg-purple-600 text-white px-6 py-2.5 rounded-xl hover:bg-purple-700 transition-all font-bold shadow-lg shadow-purple-200 flex items-center gap-2 hover:-translate-y-0.5"
+          >
+            + Schedule Exam
+          </button>
+        )}
       </div>
 
       {exams.length === 0 ? (
@@ -144,20 +149,22 @@ export default function ExamsPage() {
                   >
                     View Schedule
                   </Link>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setEditExam(exam)}
-                      className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      onClick={() => handleDelete(exam.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                  {permissions.canEditExam(role) && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditExam(exam)}
+                        className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={() => handleDelete(exam.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );

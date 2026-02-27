@@ -30,8 +30,8 @@ export default function AddClassModal({ isOpen, onClose, onSuccess }: AddClassMo
         setLoadingYears(true);
         try {
             const response = await mvpApi.fetchAcademicYears();
-            // Backend MUST return AcademicYear[] directly.
-            const years = Array.isArray(response.data) ? response.data : [];
+            // fetchAcademicYears now returns AcademicYear[] directly (envelope unwrapped)
+            const years = Array.isArray(response) ? response : [];
             setAcademicYears(years);
 
             const activeYear = years.find((year) => year.isActive);
@@ -73,7 +73,11 @@ export default function AddClassModal({ isOpen, onClose, onSuccess }: AddClassMo
             onClose();
 
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to add class.');
+            let msg = err.message || 'Failed to add class.';
+            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
+                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
+            }
+            setError(msg);
         } finally {
             setIsSubmitting(false);
         }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import api, { chatApi, academicApi, schoolApi } from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 
 type Contact = {
     id: string;
@@ -36,16 +37,8 @@ export default function ChatPage() {
 
     // Get my ID
     const getMyId = () => {
-        if (typeof window !== 'undefined') {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                try {
-                    const user = JSON.parse(userStr);
-                    return user.id;
-                } catch (e) { return 'current_user_id'; }
-            }
-        }
-        return 'current_user_id';
+        const user = getSafeUser();
+        return user ? user.id : 'current_user_id';
     };
     const MY_ID = getMyId();
 

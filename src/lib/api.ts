@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logout } from './auth';
 
 // ─── Debug Logger ──────────────────────────────────────────────────────────────
 // Enable by adding NEXT_PUBLIC_DEBUG_MVP_API=true to .env.local
@@ -21,8 +22,22 @@ function debugLog(label: string, data: unknown): void {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Configure standard backend connection URL
+const configuredBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+if (!configuredBaseURL && typeof window !== 'undefined') {
+    // Only warn the dev console once on startup
+    console.warn(
+        '%c[API CONFIG WARNING] NEXT_PUBLIC_API_BASE_URL is missing!\n' +
+        'Frontend requests are defaulting to local relative path "/api".\n' +
+        'In production, this could silently fail if routing is not strictly managed.',
+        'color:orange; font-weight:bold'
+    );
+}
+
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: configuredBaseURL || '/api',
+    timeout: 10000, // Enforce a 10s timeout to prevent hanging UI
 });
 
 api.interceptors.request.use(
@@ -81,20 +96,102 @@ api.interceptors.response.use(
                 data: error.response.data,
             });
         }
+        // 403 Tenant / Permission errors — normalise to a friendly ApiEnvelopeError so
+        // any catch block can use err.message directly without inspecting err.response.status.
+        // Original server message (if any) is preserved in .details for logging.
+        if (error.response && error.response.status === 403) {
+            const serverMsg: string | undefined = error.response.data?.error?.message
+                ?? error.response.data?.message
+                ?? undefined;
+            throw new ApiEnvelopeError(
+                "You don't have access to this school's data.",
+                'TENANT_FORBIDDEN',
+                serverMsg,
+            );
+        }
+        // 404 Not Found — normalise to a friendly ApiEnvelopeError.
+        if (error.response && error.response.status === 404) {
+            const serverMsg: string | undefined = error.response.data?.error?.message
+                ?? error.response.data?.message
+                ?? undefined;
+            throw new ApiEnvelopeError(
+                'No finance data found.',
+                'NOT_FOUND',
+                serverMsg,
+            );
+        }
         // Handle common errors globally if needed, e.g., 401 Redirects
         if (error.response && error.response.status === 401) {
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('token');
-                localStorage.removeItem('role');
-                localStorage.removeItem('user');
-                window.location.href = '/';
-            }
+            logout();
         }
         return Promise.reject(error);
     }
 );
 
+// ============================================================================
+// CENTRAL REQUEST WRAPPER
+// Unwraps the backend envelope: { success, data, error: { message, code, details } }
+// On success === false  → throws ApiEnvelopeError (has .message, .code, .details)
+// On success === true   → returns data (T) directly — no .data dereference needed
+// For legacy endpoints that do NOT use the envelope the raw body is returned as-is.
+// ============================================================================
 
+export class ApiEnvelopeError extends Error {
+    code?: string;
+    details?: unknown;
+
+    constructor(message: string, code?: string, details?: unknown) {
+        super(message);
+        this.name = 'ApiEnvelopeError';
+        this.code = code;
+        this.details = details;
+    }
+}
+
+/**
+ * Central fetch helper that unwraps backend envelopes.
+ *
+ * Usage:
+ *   const data = await request<LoginResponse>(() => api.post('/auth/login', body));
+ *   // data is LoginResponse — no .data needed
+ *
+ * Error handling:
+ *   try { ... } catch (err) {
+ *     if (err instanceof ApiEnvelopeError) console.log(err.message, err.code);
+ *   }
+ */
+export async function request<T>(call: () => Promise<{ data: unknown }>): Promise<T> {
+    // Let axios throw on HTTP errors (4xx/5xx) — caught by the interceptor first.
+    const response = await call();
+    const body = response.data as Record<string, unknown>;
+
+    // Detect envelope: backend sets `success` (boolean) at the top level.
+    if (body !== null && typeof body === 'object' && 'success' in body) {
+        if (body.success === false) {
+            const err = body.error as { message?: string; code?: string; details?: unknown } | undefined;
+            const code = err?.code;
+            const rawMessage = err?.message ?? 'An unknown error occurred.';
+
+            // Normalise tenant / permission codes to a single friendly message.
+            // Original server message is preserved in .details for logging.
+            const isTenantForbidden = code === 'TENANT_FORBIDDEN';
+            const message = isTenantForbidden
+                ? "You don't have access to this school's data."
+                : rawMessage;
+
+            throw new ApiEnvelopeError(
+                message,
+                code,
+                isTenantForbidden ? rawMessage : err?.details,
+            );
+        }
+        // success === true — return the inner data payload
+        return body.data as T;
+    }
+
+    // Legacy / non-envelope endpoint — return raw body.
+    return body as T;
+}
 
 export const chatApi = {
     fetchContacts: () => api.get('/chat/contacts'),
@@ -231,24 +328,36 @@ export const examApi = {
 };
 
 export const financeApi = {
+    /**
+     * POST /finance/wallet/topup
+     * Uses request() so envelope is unwrapped and 403/404 produce friendly ApiEnvelopeError.
+     */
     topUpWallet: async (studentId: string, amount: number) => {
         try {
-            const res = await api.post('/finance/wallet/topup', { studentId, amount });
-            toast.success("Wallet topped up successfully");
-            return res;
+            const result = await request<{ message?: string }>(() =>
+                api.post('/finance/wallet/topup', { studentId, amount })
+            );
+            toast.success('Wallet topped up successfully');
+            return result;
         } catch (error: any) {
-            toast.error("Top-up failed: " + (error.response?.data?.message || error.message));
+            toast.error('Top-up failed: ' + (error.message || 'Unknown error'));
             throw error;
         }
     },
+    /**
+     * GET /finance/wallet/:studentId/history
+     * 404 → 'No finance data found.'  403 → tenant message  (both via interceptor)
+     */
     fetchWalletHistory: async (studentId: string) => {
         try {
-            return await api.get(`/finance/wallet/${studentId}/history`);
+            return await request<unknown[]>(() =>
+                api.get(`/finance/wallet/${studentId}/history`)
+            );
         } catch (error: any) {
-            toast.error("Failed to fetch wallet history: " + (error.response?.data?.message || error.message));
+            toast.error('Failed to fetch wallet history: ' + (error.message || 'Unknown error'));
             throw error;
         }
-    }
+    },
 };
 
 export const schoolApi = {
@@ -334,19 +443,25 @@ export const academicApi = {
 export const posApi = {
     fetchProducts: async () => {
         try {
-            return await api.get('/pos/products');
+            return await request<unknown[] | { products: unknown[] }>(() => api.get('/pos/products'));
         } catch (error: any) {
-            toast.error("Failed to fetch products: " + (error.response?.data?.message || error.message));
+            toast.error("Failed to fetch products: " + (error.message || 'Unknown error'));
             throw error;
         }
     },
     createOrder: async (studentId: string, items: { productId: string; quantity: number }[]) => {
         try {
-            const res = await api.post('/pos/orders', { studentId, items });
+            // Note: studentId and items are sent; schoolId is NOT included
+            // relying on the interceptor's x-school-id header for tenant isolation.
+            const res = await request<unknown>(() => api.post('/pos/orders', { studentId, items }));
             toast.success("Order processed successfully");
             return res;
         } catch (error: any) {
-            toast.error("Order failed: " + (error.response?.data?.message || error.message));
+            let msg = error.message || 'Unknown error';
+            if (error.code === 'VALIDATION_ERROR' && Array.isArray(error.details) && error.details.length > 0) {
+                msg = error.details[0].message || error.details[0].string || Object.values(error.details[0])[0] || msg;
+            }
+            toast.error("Order failed: " + msg);
             throw error;
         }
     }
@@ -384,14 +499,18 @@ export const systemApi = {
 };
 
 export const statsApi = {
+    /**
+     * GET /school/stats/fees
+     * Uses request() — 403/404 produce friendly ApiEnvelopeError.
+     */
     fetchFeesStats: async () => {
         try {
-            return await api.get('/school/stats/fees');
+            return await request<unknown>(() => api.get('/school/stats/fees'));
         } catch (error: any) {
-            toast.error("Failed to load fee statistics: " + (error.response?.data?.message || error.message));
+            toast.error('Failed to load fee statistics: ' + (error.message || 'Unknown error'));
             throw error;
         }
-    }
+    },
 };
 
 // ============================================================================
@@ -522,16 +641,25 @@ export type BulkAttendanceResponse = {
 /** Internal error normaliser — avoids repeating `error as any` in each method. */
 type ApiError = { response?: { data?: { message?: string } }; message?: string };
 
+const safeErrorMsg = (e: ApiError, defaultMsg: string) => {
+    if (e.response?.data?.message) return e.response.data.message;
+    if (!e.response && e.message?.includes('Network Error')) return 'Network Error: The server is unreachable.';
+    return e.message ?? defaultMsg;
+};
+
 export const mvpApi = {
 
     // ── Auth ──────────────────────────────────────────────────────────────────
 
     /**
      * POST /auth/login
-     * Returns: LoginResponse { message, token, user: AuthUser }
+     * Returns: LoginResponse { message, token, user: AuthUser } — plain object, no .data wrapper.
+     * Throws ApiEnvelopeError (readable .message) if the server signals failure.
      */
-    loginUser: async (email: string, password: string) => {
-        return api.post<LoginResponse>(MVP_ENDPOINTS.LOGIN, { email, password });
+    loginUser: async (email: string, password: string): Promise<LoginResponse> => {
+        return request<LoginResponse>(() =>
+            api.post(MVP_ENDPOINTS.LOGIN, { email, password })
+        );
     },
 
     // ── Admin Classes ─────────────────────────────────────────────────────────
@@ -540,12 +668,12 @@ export const mvpApi = {
      * GET /school/classes
      * Returns: SchoolClass[] — direct array, no envelope.
      */
-    fetchClasses: async () => {
+    fetchClasses: async (): Promise<SchoolClass[]> => {
         try {
-            return await api.get<SchoolClass[]>(MVP_ENDPOINTS.CLASSES);
+            return await request<SchoolClass[]>(() => api.get(MVP_ENDPOINTS.CLASSES));
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to fetch classes: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to fetch classes: " + safeErrorMsg(e, "Unknown error"));
             throw error;
         }
     },
@@ -555,14 +683,14 @@ export const mvpApi = {
      * Request: CreateClassRequest
      * Returns: SchoolClass
      */
-    createClass: async (data: CreateClassRequest) => {
+    createClass: async (data: CreateClassRequest): Promise<SchoolClass> => {
         try {
-            const res = await api.post<SchoolClass>(MVP_ENDPOINTS.CLASSES, data);
+            const result = await request<SchoolClass>(() => api.post(MVP_ENDPOINTS.CLASSES, data));
             toast.success("Class created successfully");
-            return res;
+            return result;
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to create class: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to create class: " + safeErrorMsg(e, "Unknown error"));
             throw error;
         }
     },
@@ -572,14 +700,14 @@ export const mvpApi = {
      * Request: UpdateClassRequest
      * Returns: SchoolClass
      */
-    updateClass: async (id: string, data: UpdateClassRequest) => {
+    updateClass: async (id: string, data: UpdateClassRequest): Promise<SchoolClass> => {
         try {
-            const res = await api.put<SchoolClass>(MVP_ENDPOINTS.CLASS_BY_ID(id), data);
+            const result = await request<SchoolClass>(() => api.put(MVP_ENDPOINTS.CLASS_BY_ID(id), data));
             toast.success("Class updated successfully");
-            return res;
+            return result;
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to update class: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to update class: " + safeErrorMsg(e, "Unknown error"));
             throw error;
         }
     },
@@ -588,14 +716,14 @@ export const mvpApi = {
      * DELETE /school/classes/:id
      * Returns: 204 No Content or {}
      */
-    deleteClass: async (id: string) => {
+    deleteClass: async (id: string): Promise<Record<string, never>> => {
         try {
-            const res = await api.delete<Record<string, never>>(MVP_ENDPOINTS.CLASS_BY_ID(id));
+            const result = await request<Record<string, never>>(() => api.delete(MVP_ENDPOINTS.CLASS_BY_ID(id)));
             toast.success("Class deleted");
-            return res;
+            return result;
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to delete class: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to delete class: " + safeErrorMsg(e, "Unknown error"));
             throw error;
         }
     },
@@ -604,12 +732,12 @@ export const mvpApi = {
      * GET /academic-years
      * Returns: AcademicYear[] — direct array, no envelope.
      */
-    fetchAcademicYears: async () => {
+    fetchAcademicYears: async (): Promise<AcademicYear[]> => {
         try {
-            return await api.get<AcademicYear[]>(MVP_ENDPOINTS.ACADEMIC_YEARS);
+            return await request<AcademicYear[]>(() => api.get(MVP_ENDPOINTS.ACADEMIC_YEARS));
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to load academic years: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to load academic years: " + safeErrorMsg(e, "Unknown error"));
             throw error;
         }
     },
@@ -620,12 +748,12 @@ export const mvpApi = {
      * GET /academics/teachers/:teacherId/classes
      * Returns: SchoolClass[] — direct array, no envelope.
      */
-    fetchTeacherClasses: async (teacherId: string) => {
+    fetchTeacherClasses: async (teacherId: string): Promise<SchoolClass[]> => {
         try {
-            return await api.get<SchoolClass[]>(MVP_ENDPOINTS.TEACHER_CLASSES(teacherId));
+            return await request<SchoolClass[]>(() => api.get(MVP_ENDPOINTS.TEACHER_CLASSES(teacherId)));
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to fetch teacher classes: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to fetch teacher classes: " + safeErrorMsg(e, "Unknown error"));
             throw error;
         }
     },
@@ -634,12 +762,12 @@ export const mvpApi = {
      * GET /academics/classes/:classId/students
      * Returns: StudentRecord[] — each has { id, fullName }
      */
-    fetchClassStudents: async (classId: string) => {
+    fetchClassStudents: async (classId: string): Promise<StudentRecord[]> => {
         try {
-            return await api.get<StudentRecord[]>(MVP_ENDPOINTS.CLASS_STUDENTS(classId));
+            return await request<StudentRecord[]>(() => api.get(MVP_ENDPOINTS.CLASS_STUDENTS(classId)));
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to fetch students: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to fetch students: " + safeErrorMsg(e, "Unknown error"));
             throw error;
         }
     },
@@ -649,18 +777,33 @@ export const mvpApi = {
      * classId + date are TOP-LEVEL in payload, NOT inside records.
      * Returns: BulkAttendanceResponse { savedCount, date, classId }
      */
-    submitBulkAttendance: async (payload: BulkAttendancePayload) => {
+    submitBulkAttendance: async (payload: BulkAttendancePayload): Promise<BulkAttendanceResponse> => {
         try {
-            const res = await api.post<BulkAttendanceResponse>(
-                MVP_ENDPOINTS.ATTENDANCE_BULK,
-                payload
+            const result = await request<BulkAttendanceResponse>(() =>
+                api.post(MVP_ENDPOINTS.ATTENDANCE_BULK, payload)
             );
-            toast.success("Attendance saved successfully!");
-            return res;
+            toast.success(`Successfully saved ${result.savedCount} attendance records!`);
+            return result;
         } catch (error: unknown) {
             const e = error as ApiError;
-            toast.error("Failed to save attendance: " + (e.response?.data?.message ?? e.message));
+            toast.error("Failed to save attendance: " + safeErrorMsg(e, "Unknown error"));
             throw error;
+        }
+    },
+
+    /**
+     * Connectivity Check
+     * Explicitly bypasses the /api route to hit the raw /health endpoint.
+     * Used on the login page to proactively warn users if the backend is dark.
+     */
+    checkConnectivity: async () => {
+        try {
+            // We use standard axios to avoid token interception, hitting raw base URL
+            const rawBaseURL = configuredBaseURL ? configuredBaseURL.replace(/\/api$/, '') : '';
+            await axios.get(`${rawBaseURL}/health`, { timeout: 3000 });
+            return true;
+        } catch (error) {
+            return false;
         }
     },
 };

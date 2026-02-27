@@ -24,6 +24,7 @@ export default function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubje
 
     const [loadingData, setLoadingData] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         if (isOpen) {
@@ -73,9 +74,13 @@ export default function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubje
             setClassId('');
             setTeacherId('');
             onClose();
-        } catch (error) {
-            console.error("Failed to add subject", error);
-            alert("Failed to add subject");
+        } catch (err: any) {
+            console.error("Failed to add subject", err);
+            let msg = err.message || err.response?.data?.message || 'Failed to add subject.';
+            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
+                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
+            }
+            setError(msg);
         } finally {
             setSubmitting(false);
         }
@@ -88,6 +93,11 @@ export default function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubje
             <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Add New Subject</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {error && (
+                        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100 font-bold">
+                            {error}
+                        </div>
+                    )}
 
                     {/* Subject Name */}
                     <div>

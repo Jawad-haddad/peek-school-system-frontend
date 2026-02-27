@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Users, GraduationCap, DollarSign, TrendingUp, UserCheck, AlertCircle, Loader2, BookOpen } from 'lucide-react';
 import api, { statsApi } from '@/lib/api';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import { permissions } from '@/lib/permissions';
 
 type FeeClassBreakdown = {
     id: string;
@@ -53,9 +55,9 @@ export default function ReportsPage() {
                     setClassCount(arr.length);
                 }
 
-                // Fee Stats
-                if (feeRes.status === 'fulfilled' && feeRes.value?.data) {
-                    const f = feeRes.value.data;
+                // Fee Stats — statsApi.fetchFeesStats() now returns plain data, not AxiosResponse
+                if (feeRes.status === 'fulfilled' && feeRes.value) {
+                    const f = feeRes.value as any;
                     setFeeStats({
                         totalOutstanding: f.totalOutstanding ?? 0,
                         totalStudents: f.totalStudents ?? 0,
@@ -75,29 +77,37 @@ export default function ReportsPage() {
         fetchReports();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64 text-gray-400">
-                <Loader2 className="animate-spin mr-2" size={20} />
-                Loading reports...
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="p-8 text-center">
-                <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 inline-block">
-                    <AlertCircle size={24} className="mx-auto mb-2" />
-                    <p className="font-bold">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
-                    >
-                        Retry
-                    </button>
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <div className="flex items-center justify-center h-64 text-gray-400">
+                    <Loader2 className="animate-spin mr-2" size={20} />
+                    Loading reports...
                 </div>
-            </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="p-8 text-center">
+                    <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 inline-block">
+                        <AlertCircle size={24} className="mx-auto mb-2" />
+                        <p className="font-bold">{error}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        return (
+            <ProtectedRoute allowed={permissions.canViewSensitiveStats}>
+                {renderContent()}
+            </ProtectedRoute>
         );
     }
 

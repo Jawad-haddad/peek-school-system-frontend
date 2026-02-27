@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { mvpApi, AttendanceStatus, StudentRecord } from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 
 type ClassInfo = { id: string; name: string };
 
@@ -26,17 +27,16 @@ export default function AttendancePage() {
     // Fetch teacher's classes
     useEffect(() => {
         const load = async () => {
-            const storedUser = localStorage.getItem('user');
-            if (!storedUser) return;
-            const user = JSON.parse(storedUser);
+            const user = getSafeUser();
+            if (!user) return;
             const teacherId = user.teacherId || user.id;
 
             if (!teacherId) { setLoadingClasses(false); return; }
 
             try {
                 const res = await mvpApi.fetchTeacherClasses(teacherId);
-                // Backend MUST return SchoolClass[] directly. No shape guessing.
-                const data = Array.isArray(res.data) ? res.data : [];
+                // fetchTeacherClasses now returns SchoolClass[] directly (envelope unwrapped)
+                const data = Array.isArray(res) ? res : [];
                 setClasses(data.map((c: any) => ({ id: c.id, name: c.name })));
             } catch (err) {
                 console.error('Failed to load classes', err);
@@ -55,8 +55,8 @@ export default function AttendancePage() {
             setLoadingStudents(true);
             try {
                 const res = await mvpApi.fetchClassStudents(selectedClass);
-                // Backend MUST return StudentRecord[] directly. No shape guessing.
-                const data = Array.isArray(res.data) ? res.data : [];
+                // fetchClassStudents now returns StudentRecord[] directly (envelope unwrapped)
+                const data = Array.isArray(res) ? res : [];
                 setStudents(data);
 
                 // Default all to 'present' (lowercase per backend contract)
@@ -114,9 +114,9 @@ export default function AttendancePage() {
                     className="w-full md:w-1/2 rounded-xl border-gray-200 bg-gray-50/50 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-medium text-gray-700"
                     value={selectedClass}
                     onChange={(e) => setSelectedClass(e.target.value)}
-                    disabled={loadingClasses}
+                    disabled={loadingClasses || classes.length === 0}
                 >
-                    <option value="">-- Choose a class --</option>
+                    <option value="">{classes.length === 0 && !loadingClasses ? "-- No classes available --" : "-- Choose a class --"}</option>
                     {classes.map(cls => (
                         <option key={cls.id} value={cls.id}>{cls.name}</option>
                     ))}
@@ -132,8 +132,12 @@ export default function AttendancePage() {
                         <p className="text-gray-500">Loading students...</p>
                     </div>
                 ) : students.length === 0 ? (
-                    <div className="text-center py-16 bg-gray-50 rounded-3xl border-dashed border-2 border-gray-200">
-                        <p className="text-gray-400">No students found in this class.</p>
+                    <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm max-w-2xl mx-auto">
+                        <div className="text-5xl mb-4">🪑</div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">No Students Enrolled</h3>
+                        <p className="text-gray-500 text-sm max-w-sm mx-auto">
+                            There are currently no students assigned to this class. Students must be enrolled by an administrator before attendance can be taken.
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -191,13 +195,13 @@ export default function AttendancePage() {
                         <div className="hidden md:flex justify-end mt-8">
                             <button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 flex items-center gap-3"
+                                disabled={isSubmitting || !selectedClass || students.length === 0}
+                                className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-3"
                             >
                                 {isSubmitting ? (
-                                    <><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Submitting...</>
+                                    <><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Saving...</>
                                 ) : (
-                                    <>✅ Submit Attendance</>
+                                    <>✅ Save {students.length} Records</>
                                 )}
                             </button>
                         </div>
@@ -206,13 +210,13 @@ export default function AttendancePage() {
                         <div className="fixed bottom-4 right-4 md:hidden z-30">
                             <button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className="bg-green-600 text-white p-4 rounded-full shadow-xl shadow-green-300 hover:scale-110 active:scale-95 transition-transform disabled:opacity-70"
+                                disabled={isSubmitting || !selectedClass || students.length === 0}
+                                className="bg-green-600 text-white p-4 rounded-full shadow-xl shadow-green-300 hover:scale-110 active:scale-95 transition-transform disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {isSubmitting ? (
-                                    <div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <><div className="h-6 w-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div></>
                                 ) : (
-                                    <span className="text-2xl">✅</span>
+                                    <><span className="text-2xl">✅</span><span className="font-bold pr-2">{students.length}</span></>
                                 )}
                             </button>
                         </div>

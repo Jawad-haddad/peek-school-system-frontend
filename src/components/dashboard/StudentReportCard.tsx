@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { studentApi } from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 
 type SubjectGrade = {
     subject: string;
@@ -24,9 +25,8 @@ export default function StudentReportCard() {
 
     useEffect(() => {
         const fetchGrades = async () => {
-            const storedUser = localStorage.getItem('user');
-            if (!storedUser) return;
-            const user = JSON.parse(storedUser);
+            const user = getSafeUser();
+            if (!user) return;
             const studentId = user.studentId || (user.role === 'Student' ? user.id : null);
 
             if (!studentId) {

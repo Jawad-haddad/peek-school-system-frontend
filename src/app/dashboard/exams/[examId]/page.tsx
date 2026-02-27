@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { permissions, Role } from '@/lib/permissions';
 
 type Schedule = {
   id: string;
@@ -127,15 +128,20 @@ export default function ExamDetailsPage() {
   const router = useRouter();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [refresh, setRefresh] = useState(0);
+  const [role, setRole] = useState<Role>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setRole(localStorage.getItem('role') as Role);
     const fetchSchedules = async () => {
       try {
+        setError(null);
         const res = await api.get(`/school/exams/${examId}/schedules`);
         const data = Array.isArray(res.data) ? res.data : res.data.schedules || res.data.data || [];
         setSchedules(data);
-      } catch (err) {
-        // Schedule list will remain empty
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || 'Failed to load schedule');
+        if (err.response?.status === 403) setError('Access denied to this exam schedule.');
       }
     };
     fetchSchedules();
@@ -158,8 +164,16 @@ export default function ExamDetailsPage() {
         <h1 className="text-3xl font-bold text-gray-800">Exam Schedule Management</h1>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg">
+          {error}
+        </div>
+      )}
+
       {/* Form to add new schedule */}
-      <AddScheduleForm examId={examId} onSuccess={() => setRefresh(r => r + 1)} />
+      {permissions.canEditExam(role) && (
+        <AddScheduleForm examId={examId} onSuccess={() => setRefresh(r => r + 1)} />
+      )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
@@ -187,18 +201,22 @@ export default function ExamDetailsPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => router.push(`/dashboard/exams/${examId}/grades/${sch.id}`)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4 font-medium"
-                  >
-                    Enter Grades
-                  </button>
-                  <button
-                    onClick={() => handleDelete(sch.id)}
-                    className="text-red-600 hover:text-red-900 font-medium"
-                  >
-                    Remove
-                  </button>
+                  {permissions.canGrade(role) && (
+                    <button
+                      onClick={() => router.push(`/dashboard/exams/${examId}/grades/${sch.id}`)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4 font-medium"
+                    >
+                      Enter Grades
+                    </button>
+                  )}
+                  {permissions.canEditExam(role) && (
+                    <button
+                      onClick={() => handleDelete(sch.id)}
+                      className="text-red-600 hover:text-red-900 font-medium"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { logout } from '@/lib/auth';
 
 // Define all possible menu items
 const ALL_MENU_ITEMS = [
@@ -53,12 +54,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('user');
-    router.push('/');
+    logout();
   };
 
   return (

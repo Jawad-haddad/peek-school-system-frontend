@@ -5,6 +5,7 @@ import Link from 'next/link';
 import WalletHistoryList from './WalletHistoryList';
 import TopUpModal from './TopUpModal'; // NEW
 import api, { academicApi, schoolApi } from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 
 type User = {
     name: string;
@@ -22,9 +23,8 @@ export default function ParentDashboard() {
     useEffect(() => {
         const fetchDashboardData = async () => {
             // 1. Get User/Student
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
+            const parsedUser = getSafeUser();
+            if (parsedUser) {
                 setUser(parsedUser);
 
                 // If user has a studentId (Parent/Student login), fetch their class teachers

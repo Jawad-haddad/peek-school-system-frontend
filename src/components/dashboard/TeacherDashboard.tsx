@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { mvpApi, SchoolClass } from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 
 export default function TeacherDashboard() {
     const [classes, setClasses] = useState<SchoolClass[]>([]);
@@ -10,9 +11,8 @@ export default function TeacherDashboard() {
 
     useEffect(() => {
         const fetchClasses = async () => {
-            const storedUser = localStorage.getItem('user');
-            if (!storedUser) return;
-            const user = JSON.parse(storedUser);
+            const user = getSafeUser();
+            if (!user) return;
 
             const teacherId = user.teacherId || user.id;
 
@@ -24,11 +24,11 @@ export default function TeacherDashboard() {
 
             try {
                 const res = await mvpApi.fetchTeacherClasses(teacherId);
-                // Backend MUST return SchoolClass[] directly. No shape guessing.
-                const data = Array.isArray(res.data) ? res.data : [];
+                // fetchTeacherClasses now returns SchoolClass[] directly (envelope unwrapped)
+                const data = Array.isArray(res) ? res : [];
                 setClasses(data);
             } catch (error: any) {
-                setError(error.response?.data?.message || 'Failed to load classes');
+                setError(error.message || 'Failed to load classes');
             } finally {
                 setLoading(false);
             }
@@ -62,8 +62,12 @@ export default function TeacherDashboard() {
             </div>
 
             {classes.length === 0 ? (
-                <div className="glass-card text-center py-20 rounded-3xl">
-                    <p className="text-gray-400 font-medium text-lg">You have no classes assigned yet.</p>
+                <div className="glass-card text-center py-20 rounded-3xl border-2 border-dashed border-violet-200 bg-white/50 backdrop-blur-sm mx-auto max-w-2xl">
+                    <div className="text-6xl mb-6">📅</div>
+                    <h3 className="text-2xl font-black text-gray-800 mb-2">My Schedule is Empty</h3>
+                    <p className="text-gray-500 font-medium text-lg max-w-sm mx-auto">
+                        You have not been assigned to any classes yet. Please contact the school administration to have classes synced to your profile.
+                    </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">

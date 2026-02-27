@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { mvpApi, AttendanceStatus, StudentRecord } from '@/lib/api';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import { permissions } from '@/lib/permissions';
 
 export default function ClassAttendancePage() {
     const params = useParams();
@@ -15,6 +17,7 @@ export default function ClassAttendancePage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!classId) return;
@@ -25,7 +28,7 @@ export default function ClassAttendancePage() {
             try {
                 // Contract: GET /academics/classes/:classId/students -> StudentRecord[]
                 const res = await mvpApi.fetchClassStudents(classId);
-                const studentList = Array.isArray(res.data) ? res.data : [];
+                const studentList = Array.isArray(res) ? res : [];
                 setStudents(studentList);
 
                 // Default all to 'present'
@@ -33,7 +36,7 @@ export default function ClassAttendancePage() {
                 studentList.forEach((s) => { initial[s.id] = 'present'; });
                 setAttendance(initial);
             } catch (err: any) {
-                setError(err.response?.data?.message || err.message || 'Failed to load students.');
+                setError(err.message || 'Failed to load students.');
             } finally {
                 setLoading(false);
             }
@@ -48,6 +51,7 @@ export default function ClassAttendancePage() {
 
     const handleSave = async () => {
         setSubmitting(true);
+        setSubmitError(null);
         try {
             // Contract: POST /attendance/bulk
             // Exact payload: { classId, date, records: [{ studentId, status }] }
@@ -62,8 +66,13 @@ export default function ClassAttendancePage() {
             });
             // toast fired inside submitBulkAttendance on success
             router.push('/dashboard');
-        } catch {
-            // toast fired inside submitBulkAttendance on error
+        } catch (err: any) {
+            console.error("Attendance submit error:", err);
+            let msg = err.message || err.response?.data?.message || 'Failed to submit attendance.';
+            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
+                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
+            }
+            setSubmitError(msg);
         } finally {
             setSubmitting(false);
         }
@@ -96,72 +105,81 @@ export default function ClassAttendancePage() {
     ];
 
     return (
-        <div className="pb-24 p-4 md:p-8 max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Take Attendance</h1>
-                    <p className="text-gray-500">Class: {classId}</p>
-                </div>
-                <div>
-                    <label htmlFor="attendance-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                    <input
-                        id="attendance-date"
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    />
-                </div>
-            </div>
-
-            {/* Student List */}
-            <div className="space-y-4">
-                {students.map((student) => (
-                    <div key={student.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shrink-0">
-                                {student.fullName.charAt(0)}
-                            </div>
-                            {/* fullName is the field returned by backend contract */}
-                            <span className="font-medium text-gray-900">{student.fullName}</span>
-                        </div>
-
-                        {/* Attendance Controls */}
-                        <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
-                            {STATUS_OPTIONS.map(({ status, label, activeClass }) => (
-                                <button
-                                    key={status}
-                                    onClick={() => handleStatusChange(student.id, status)}
-                                    className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${attendance[student.id] === status
-                                            ? activeClass
-                                            : 'text-gray-500 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
+        <ProtectedRoute allowed={permissions.canSubmitAttendance}>
+            <div className="pb-24 p-4 md:p-8 max-w-4xl mx-auto">
+                {/* Header */}
+                <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Take Attendance</h1>
+                        <p className="text-gray-500">Class: {classId}</p>
                     </div>
-                ))}
+                    <div>
+                        <label htmlFor="attendance-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input
+                            id="attendance-date"
+                            type="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                    </div>
+                </div>
 
-                {students.length === 0 && (
-                    <div className="text-center py-10 text-gray-500">
-                        No students found in this class.
+                {/* Validation Error Banner */}
+                {submitError && (
+                    <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-medium text-sm flex items-start gap-2">
+                        <span>⚠️</span>
+                        <span>{submitError}</span>
                     </div>
                 )}
-            </div>
 
-            {/* Floating Save Button */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-up md:static md:bg-transparent md:border-0 md:shadow-none md:p-0 md:mt-8 flex justify-end">
-                <button
-                    onClick={handleSave}
-                    disabled={submitting || students.length === 0}
-                    className="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                    {submitting ? 'Saving...' : '💾 Save Attendance'}
-                </button>
+                {/* Student List */}
+                <div className="space-y-4">
+                    {students.map((student) => (
+                        <div key={student.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shrink-0">
+                                    {student.fullName.charAt(0)}
+                                </div>
+                                <span className="font-medium text-gray-900">{student.fullName}</span>
+                            </div>
+
+                            {/* Attendance Controls */}
+                            <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
+                                {STATUS_OPTIONS.map(({ status, label, activeClass }) => (
+                                    <button
+                                        key={status}
+                                        onClick={() => handleStatusChange(student.id, status)}
+                                        className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${attendance[student.id] === status
+                                            ? activeClass
+                                            : 'text-gray-500 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+
+                    {students.length === 0 && (
+                        <div className="text-center py-10 text-gray-500">
+                            No students found in this class.
+                        </div>
+                    )}
+                </div>
+
+                {/* Floating Save Button */}
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-up md:static md:bg-transparent md:border-0 md:shadow-none md:p-0 md:mt-8 flex justify-end">
+                    <button
+                        onClick={handleSave}
+                        disabled={submitting || students.length === 0}
+                        className="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold shadow-lg hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {submitting ? 'Saving...' : `💾 Save ${students.length} Records`}
+                    </button>
+                </div>
             </div>
-        </div>
+        </ProtectedRoute>
     );
 }

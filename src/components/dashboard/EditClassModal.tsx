@@ -39,7 +39,7 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
         try {
             // Contract: GET /academic-years -> AcademicYear[] direct array. No shape guessing.
             const res = await mvpApi.fetchAcademicYears();
-            const data = Array.isArray(res.data) ? res.data : [];
+            const data = Array.isArray(res) ? res : [];
             setAcademicYears(data);
         } catch (err) {
             // toast is fired inside fetchAcademicYears on error
@@ -68,7 +68,11 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
             onSuccess();
             onClose();
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update class.');
+            let msg = err.message || 'Failed to update class.';
+            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
+                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
+            }
+            setError(msg);
         } finally {
             setIsSubmitting(false);
         }

@@ -29,9 +29,14 @@ export default function POSTerminalPage() {
         const fetchProducts = async () => {
             try {
                 const res = await posApi.fetchProducts();
-                setProducts(res.data.products || res.data || []);
-            } catch (error) {
-                console.error(error);
+                // res is now plain data: either { products: [...] } or [...]
+                const data = (res as any)?.products ?? (Array.isArray(res) ? res : []);
+                setProducts(data);
+            } catch (err: any) {
+                console.error('Failed to load products', err);
+                if (err.name === 'ApiEnvelopeError' && err.code === 'NOT_FOUND') {
+                    setProducts([]);
+                }
             } finally {
                 setLoading(false);
             }
@@ -112,8 +117,8 @@ export default function POSTerminalPage() {
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
                                 className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${activeCategory === cat
-                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                                        : 'bg-white text-gray-500 hover:bg-gray-50'
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                    : 'bg-white text-gray-500 hover:bg-gray-50'
                                     }`}
                             >
                                 {cat}

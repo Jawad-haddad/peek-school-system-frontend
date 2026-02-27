@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { permissions, Role } from '@/lib/permissions';
 import AddHomeworkModal from '@/components/dashboard/AddHomeworkModal';
 
 // Define the shape of the Homework object based on API expectations
@@ -21,7 +22,7 @@ export default function HomeworkPage() {
     const [homeworkList, setHomeworkList] = useState<Homework[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [role, setRole] = useState<string | null>(null);
+    const [role, setRole] = useState<Role>(null);
     const [error, setError] = useState<string | null>(null);
 
     const fetchHomework = async () => {
@@ -43,8 +44,7 @@ export default function HomeworkPage() {
             setHomeworkList(sortedData);
         } catch (error: any) {
             console.error('Failed to fetch homework:', error);
-            setError(error.response?.data?.message || 'Failed to load assignments');
-            if (error.response?.status === 403) setError('Access denied to homework.');
+            setError(error.message || 'Failed to load assignments');
         } finally {
             setLoading(false);
         }
@@ -52,7 +52,7 @@ export default function HomeworkPage() {
 
     useEffect(() => {
         const storedRole = localStorage.getItem('role') || localStorage.getItem('userRole');
-        setRole(storedRole ? storedRole.toUpperCase() : null);
+        setRole(storedRole ? storedRole.toUpperCase() as Role : null);
 
         fetchHomework();
     }, []);
@@ -70,7 +70,8 @@ export default function HomeworkPage() {
         return 'Unknown Class';
     };
 
-    const canCreate = role === 'TEACHER';
+    // Admin and Teacher can assign homework (mapping to canGrade for teaching actions)
+    const canCreate = permissions.canGrade(role);
 
     return (
         <div className="p-6 space-y-8">

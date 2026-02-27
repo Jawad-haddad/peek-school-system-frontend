@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { getSafeUser } from '@/lib/auth';
 
 type ScheduleEntry = {
     id: string;
@@ -32,9 +33,8 @@ export default function SchedulePage() {
 
     useEffect(() => {
         const fetchSchedule = async () => {
-            const storedUser = localStorage.getItem('user');
-            if (!storedUser) return;
-            const user = JSON.parse(storedUser);
+            const user = getSafeUser();
+            if (!user) return;
             const teacherId = user.teacherId || user.id;
 
             if (!teacherId) {

@@ -40,8 +40,9 @@ export default function SettingsPage() {
         setMessage('');
 
         const payload = {
-            startYear: startYear,
-            endYear: endYear
+            name: yearName,
+            startDate: `${startYear}-09-01`,
+            endDate: `${endYear}-06-30`
         };
 
         try {
@@ -50,8 +51,11 @@ export default function SettingsPage() {
             fetchYears(); // Refresh list
         } catch (error: any) {
             console.error("Create Academic Year Error:", error);
-            const logMsg = error.response?.data?.message || error.message || 'Unknown Error';
-            setMessage(`Failed to create Academic Year: ${logMsg}`);
+            let logMsg = error.response?.data?.message || error.message || 'Unknown Error';
+            if (error.code === 'VALIDATION_ERROR' && Array.isArray(error.details) && error.details.length > 0) {
+                logMsg = error.details[0].message || error.details[0].string || Object.values(error.details[0])[0] || logMsg;
+            }
+            setMessage(`Failed to create: ${logMsg}`);
         } finally {
             setLoading(false);
         }

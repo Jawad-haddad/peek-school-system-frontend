@@ -18,6 +18,7 @@ type EditSubjectModalProps = {
 export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }: EditSubjectModalProps) {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         if (subject) {
@@ -34,9 +35,13 @@ export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }
             alert("Subject updated!");
             onSuccess();
             onClose();
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to update subject", err);
-            alert("Failed to update subject");
+            let msg = err.message || err.response?.data?.message || 'Failed to update subject.';
+            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
+                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
+            }
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -53,6 +58,11 @@ export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {error && (
+                        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100 font-bold">
+                            {error}
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name</label>
                         <input
