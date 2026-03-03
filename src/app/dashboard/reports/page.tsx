@@ -5,6 +5,7 @@ import { Users, GraduationCap, DollarSign, TrendingUp, UserCheck, AlertCircle, L
 import api, { statsApi } from '@/lib/api';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
+import { DashboardSkeleton } from '@/components/ui/Skeletons';
 
 type FeeClassBreakdown = {
     id: string;
@@ -79,12 +80,7 @@ export default function ReportsPage() {
 
     const renderContent = () => {
         if (loading) {
-            return (
-                <div className="flex items-center justify-center h-64 text-gray-400">
-                    <Loader2 className="animate-spin mr-2" size={20} />
-                    Loading reports...
-                </div>
-            );
+            return <DashboardSkeleton />;
         }
 
         if (error) {

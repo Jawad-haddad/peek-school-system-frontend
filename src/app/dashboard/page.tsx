@@ -5,6 +5,7 @@ import ParentDashboard from '@/components/dashboard/ParentDashboard';
 import TeacherDashboard from '@/components/dashboard/TeacherDashboard';
 import AdminStats from '@/components/dashboard/AdminStats';
 import { getSafeUser, logout } from '@/lib/auth';
+import { DashboardSkeleton } from '@/components/ui/Skeletons';
 
 export default function DashboardPage() {
   const [role, setRole] = useState<string | null>(null);
@@ -21,11 +22,7 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (role === 'ADMIN') {

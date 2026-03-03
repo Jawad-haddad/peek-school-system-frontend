@@ -22,6 +22,49 @@ function debugLog(label: string, data: unknown): void {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+function generateRequestId(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+}
+
+// ─── Lightweight TTL Cache ────────────────────────────────────────────────────
+// In-memory module cache for read-only list endpoints (30 s TTL).
+// Cache key includes schoolId so switching tenants always busts the cache.
+// Also eliminates React Strict Mode double-mount duplicate requests for free.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type CacheEntry<T> = { data: T; expiresAt: number };
+
+function createTTLCache<T>(ttlMs: number = 30_000) {
+    const store = new Map<string, CacheEntry<T>>();
+
+    function cacheKey(args: unknown[]): string {
+        const schoolId = typeof window !== 'undefined' ? (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}').schoolId ?? '' : '') : '';
+        return `${schoolId}:${JSON.stringify(args)}`;
+    }
+
+    return {
+        /** Return cached value if fresh, otherwise call fetcher and cache result. */
+        async get(args: unknown[], fetcher: () => Promise<T>): Promise<T> {
+            const key = cacheKey(args);
+            const hit = store.get(key);
+            if (hit && Date.now() < hit.expiresAt) return hit.data;
+            const data = await fetcher();
+            store.set(key, { data, expiresAt: Date.now() + ttlMs });
+            return data;
+        },
+        /** Imperatively bust the cache (call after mutations). */
+        bust() { store.clear(); },
+    };
+}
+
+// One cache instance per cacheable endpoint
+const _classesCache = createTTLCache<SchoolClass[]>();
+const _yearsCache = createTTLCache<AcademicYear[]>();
+const _productsCache = createTTLCache<unknown[] | { products: unknown[] }>();
+
 // Configure standard backend connection URL
 const configuredBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -36,12 +79,14 @@ if (!configuredBaseURL && typeof window !== 'undefined') {
 }
 
 const api = axios.create({
-    baseURL: configuredBaseURL || '/api',
+    baseURL: configuredBaseURL ?? '/api',
     timeout: 10000, // Enforce a 10s timeout to prevent hanging UI
 });
 
 api.interceptors.request.use(
     (config) => {
+        config.headers['X-Request-Id'] = generateRequestId();
+
         if (typeof window !== 'undefined') {
             const token = localStorage.getItem('token');
             if (token) {
@@ -88,6 +133,8 @@ api.interceptors.response.use(
         return response;
     },
     (error) => {
+        const reqId = error.config?.headers?.['X-Request-Id'] || error.response?.headers?.['x-request-id'];
+
         // Debug: log error responses too
         if (error.response) {
             debugLog(`✗ ${error.response.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
@@ -107,6 +154,7 @@ api.interceptors.response.use(
                 "You don't have access to this school's data.",
                 'TENANT_FORBIDDEN',
                 serverMsg,
+                reqId
             );
         }
         // 404 Not Found — normalise to a friendly ApiEnvelopeError.
@@ -118,6 +166,7 @@ api.interceptors.response.use(
                 'No finance data found.',
                 'NOT_FOUND',
                 serverMsg,
+                reqId
             );
         }
         // Handle common errors globally if needed, e.g., 401 Redirects
@@ -139,12 +188,14 @@ api.interceptors.response.use(
 export class ApiEnvelopeError extends Error {
     code?: string;
     details?: unknown;
+    requestId?: string;
 
-    constructor(message: string, code?: string, details?: unknown) {
+    constructor(message: string, code?: string, details?: unknown, requestId?: string) {
         super(message);
         this.name = 'ApiEnvelopeError';
         this.code = code;
         this.details = details;
+        this.requestId = requestId;
     }
 }
 
@@ -160,10 +211,11 @@ export class ApiEnvelopeError extends Error {
  *     if (err instanceof ApiEnvelopeError) console.log(err.message, err.code);
  *   }
  */
-export async function request<T>(call: () => Promise<{ data: unknown }>): Promise<T> {
+export async function request<T>(call: () => Promise<{ data: unknown, config?: any, headers?: any }>): Promise<T> {
     // Let axios throw on HTTP errors (4xx/5xx) — caught by the interceptor first.
-    const response = await call();
+    const response = await call() as any;
     const body = response.data as Record<string, unknown>;
+    const reqId = response.config?.headers?.['X-Request-Id'] || response.headers?.['x-request-id'];
 
     // Detect envelope: backend sets `success` (boolean) at the top level.
     if (body !== null && typeof body === 'object' && 'success' in body) {
@@ -183,6 +235,7 @@ export async function request<T>(call: () => Promise<{ data: unknown }>): Promis
                 message,
                 code,
                 isTenantForbidden ? rawMessage : err?.details,
+                reqId
             );
         }
         // success === true — return the inner data payload
@@ -202,12 +255,37 @@ export const chatApi = {
 
 import { toast } from '@/lib/toast-events';
 
+export function formatApiError(prefix: string, error: any, defaultMsg: string = 'Unknown error'): string {
+    let msg = defaultMsg;
+
+    if (error && typeof error === 'object' && error.name === 'ApiEnvelopeError') {
+        msg = error.message;
+        if (error.code === 'VALIDATION_ERROR' && Array.isArray(error.details) && error.details.length > 0) {
+            msg = error.details[0].message || error.details[0].string || Object.values(error.details[0])[0] || msg;
+        }
+    } else if (error?.response?.data?.message) {
+        msg = error.response.data.message;
+    } else if (!error?.response && error?.message?.includes('Network Error')) {
+        msg = 'Network Error: The server is unreachable.';
+    } else if (error?.message) {
+        msg = error.message;
+    }
+
+    const reqId = error?.requestId || error?.config?.headers?.['X-Request-Id'] || error?.response?.headers?.['x-request-id'];
+
+    if (process.env.NODE_ENV !== 'production' && reqId) {
+        return `${prefix}: ${msg} (Request ID: ${reqId})`;
+    }
+
+    return `${prefix}: ${msg}`;
+}
+
 export const busApi = {
     getRoutes: async () => {
         try {
             return await api.get('/bus/routes');
         } catch (error: any) {
-            toast.error("Failed to load routes: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to load routes", error));
             throw error;
         }
     },
@@ -215,7 +293,7 @@ export const busApi = {
         try {
             return await api.get(`/bus/trip/${tripId}`);
         } catch (error: any) {
-            toast.error("Failed to load trip: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to load trip", error));
             throw error;
         }
     },
@@ -223,7 +301,7 @@ export const busApi = {
         try {
             return await api.get(`/bus/routes/${routeId}/active-trip`);
         } catch (error: any) {
-            toast.error("Error loading active trip: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Error loading active trip", error));
             throw error;
         }
     },
@@ -234,7 +312,7 @@ export const busApi = {
             toast.success(`Student ${status.replace('_', ' ')}`);
             return res;
         } catch (error: any) {
-            toast.error("Scan Failed: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Scan Failed", error));
             throw error;
         }
     },
@@ -245,7 +323,7 @@ export const busApi = {
             toast.success("Trip Started");
             return res;
         } catch (error: any) {
-            toast.error("Failed to start trip: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to start trip", error));
             throw error;
         }
     },
@@ -255,10 +333,22 @@ export const busApi = {
             toast.success("Trip Ended");
             return res;
         } catch (error: any) {
-            toast.error("Failed to end trip: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to end trip", error));
             throw error;
         }
     },
+};
+
+export type ExamSchedule = {
+    id: string;
+    examId: string;
+    exam?: { id: string; name: string };
+    class: { id: string; name: string };
+    subject: { id: string; name: string };
+    date: string;
+    startTime: string;
+    endTime: string;
+    _count?: { marks: number };
 };
 
 export const examApi = {
@@ -266,7 +356,7 @@ export const examApi = {
         try {
             return await api.get('/school/exams');
         } catch (error: any) {
-            toast.error("Failed to fetch exams: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch exams", error));
             throw error;
         }
     },
@@ -274,7 +364,7 @@ export const examApi = {
         try {
             return await api.get(`/exams/${examId}/schedules`);
         } catch (error: any) {
-            toast.error("Failed to fetch schedules: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch schedules", error));
             throw error;
         }
     },
@@ -284,7 +374,7 @@ export const examApi = {
             toast.success("Marks submitted successfully");
             return res;
         } catch (error: any) {
-            toast.error("Failed to submit marks: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to submit marks", error));
             throw error;
         }
     },
@@ -301,7 +391,7 @@ export const examApi = {
             toast.success("Exam updated successfully");
             return res;
         } catch (error: any) {
-            toast.error("Failed to update exam: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to update exam", error));
             throw error;
         }
     },
@@ -311,7 +401,7 @@ export const examApi = {
             toast.success("Schedule added successfully");
             return res;
         } catch (error: any) {
-            toast.error("Failed to add schedule: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to add schedule", error));
             throw error;
         }
     },
@@ -321,10 +411,41 @@ export const examApi = {
             toast.success("Schedule removed");
             return res;
         } catch (error: any) {
-            toast.error("Failed to delete schedule");
+            toast.error(formatApiError("Failed to delete schedule", error));
             throw error;
         }
-    }
+    },
+
+    /**
+     * GET /academics/exam-schedules?classId=...
+     * Returns flat list of exam schedules, optionally filtered by class.
+     * Falls back to [] if endpoint isn't available yet.
+     */
+    listSchedules: async (classId?: string): Promise<ExamSchedule[]> => {
+        try {
+            const params = classId ? { classId } : {};
+            return await request<ExamSchedule[]>(() =>
+                api.get('/academics/exam-schedules', { params })
+            );
+        } catch (err: any) {
+            if (err?.code === 'TEACHER_NOT_ASSIGNED') throw err;
+            return [];
+        }
+    },
+
+    /**
+     * GET /school/exam-schedules/:scheduleId
+     * Returns a single schedule for the detail page.
+     */
+    getSchedule: async (scheduleId: string): Promise<ExamSchedule> => {
+        try {
+            return await request<ExamSchedule>(() =>
+                api.get(`/school/exam-schedules/${scheduleId}`)
+            );
+        } catch (err: any) {
+            throw err;
+        }
+    },
 };
 
 export const financeApi = {
@@ -340,7 +461,7 @@ export const financeApi = {
             toast.success('Wallet topped up successfully');
             return result;
         } catch (error: any) {
-            toast.error('Top-up failed: ' + (error.message || 'Unknown error'));
+            toast.error(formatApiError("Top-up failed", error));
             throw error;
         }
     },
@@ -354,7 +475,7 @@ export const financeApi = {
                 api.get(`/finance/wallet/${studentId}/history`)
             );
         } catch (error: any) {
-            toast.error('Failed to fetch wallet history: ' + (error.message || 'Unknown error'));
+            toast.error(formatApiError("Failed to fetch wallet history", error));
             throw error;
         }
     },
@@ -365,7 +486,7 @@ export const schoolApi = {
         try {
             return await api.get(`/school/students?classId=${classId}`);
         } catch (error: any) {
-            toast.error("Failed to fetch students: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch students", error));
             throw error;
         }
     },
@@ -373,7 +494,7 @@ export const schoolApi = {
         try {
             return await api.get(`/school/students/${studentId}`);
         } catch (error: any) {
-            toast.error("Failed to fetch student: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch student", error));
             throw error;
         }
     },
@@ -383,7 +504,7 @@ export const schoolApi = {
             toast.success("Student updated");
             return res;
         } catch (error: any) {
-            toast.error("Update failed: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Update failed", error));
             throw error;
         }
     }
@@ -394,7 +515,7 @@ export const academicApi = {
         try {
             return await api.get('/academics/classes');
         } catch (error: any) {
-            toast.error("Failed to fetch classes: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch classes", error));
             throw error;
         }
     },
@@ -402,7 +523,7 @@ export const academicApi = {
         try {
             return await api.get('/academics/subjects');
         } catch (error: any) {
-            toast.error("Failed to fetch subjects: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch subjects", error));
             throw error;
         }
     },
@@ -410,7 +531,7 @@ export const academicApi = {
         try {
             return await api.get(`/academics/subjects?classId=${classId}`);
         } catch (error: any) {
-            toast.error("Failed to fetch class subjects: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch class subjects", error));
             throw error;
         }
     },
@@ -418,7 +539,7 @@ export const academicApi = {
         try {
             return await api.get('/academics/teachers');
         } catch (error: any) {
-            toast.error("Failed to fetch teachers: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch teachers", error));
             throw error;
         }
     },
@@ -426,7 +547,7 @@ export const academicApi = {
         try {
             return await api.get(`/academics/classes/${classId}/teachers`);
         } catch (error: any) {
-            toast.error("Failed to fetch class teachers: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch class teachers", error));
             throw error;
         }
     },
@@ -434,7 +555,7 @@ export const academicApi = {
         try {
             return await api.get(`/academics/teachers/${teacherId}/classes`);
         } catch (error: any) {
-            toast.error("Failed to fetch teacher classes: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch teacher classes", error));
             throw error;
         }
     }
@@ -443,9 +564,11 @@ export const academicApi = {
 export const posApi = {
     fetchProducts: async () => {
         try {
-            return await request<unknown[] | { products: unknown[] }>(() => api.get('/pos/products'));
+            return await _productsCache.get([], () =>
+                request<unknown[] | { products: unknown[] }>(() => api.get('/pos/products'))
+            );
         } catch (error: any) {
-            toast.error("Failed to fetch products: " + (error.message || 'Unknown error'));
+            toast.error(formatApiError("Failed to fetch products", error));
             throw error;
         }
     },
@@ -472,7 +595,7 @@ export const studentApi = {
         try {
             return await api.get('/student/profile');
         } catch (error: any) {
-            toast.error("Failed to fetch profile: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch profile", error));
             throw error;
         }
     },
@@ -480,7 +603,7 @@ export const studentApi = {
         try {
             return await api.get(`/student/${studentId}/results`);
         } catch (error: any) {
-            toast.error("Failed to fetch results: " + (error.response?.data?.message || error.message));
+            toast.error(formatApiError("Failed to fetch results", error));
             throw error;
         }
     }
@@ -507,7 +630,7 @@ export const statsApi = {
         try {
             return await request<unknown>(() => api.get('/school/stats/fees'));
         } catch (error: any) {
-            toast.error('Failed to load fee statistics: ' + (error.message || 'Unknown error'));
+            toast.error(formatApiError("Failed to load fee statistics", error));
             throw error;
         }
     },
@@ -545,7 +668,7 @@ export const MVP_ENDPOINTS = {
 
 // ── Request / Response Types ──────────────────────────────────────────────────
 
-export type UserRole = 'ADMIN' | 'TEACHER' | 'PARENT';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER' | 'PARENT';
 
 /** User object returned inside the login response. No deprecated `name` field. */
 export type AuthUser = {
@@ -670,13 +793,17 @@ export const mvpApi = {
      */
     fetchClasses: async (): Promise<SchoolClass[]> => {
         try {
-            return await request<SchoolClass[]>(() => api.get(MVP_ENDPOINTS.CLASSES));
+            return await _classesCache.get([], () =>
+                request<SchoolClass[]>(() => api.get(MVP_ENDPOINTS.CLASSES))
+            );
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to fetch classes: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to fetch classes", error));
             throw error;
         }
     },
+
+    /** Bust the classes cache — call after creating / editing / deleting a class. */
+    bustClassesCache: () => _classesCache.bust(),
 
     /**
      * POST /school/classes
@@ -689,8 +816,7 @@ export const mvpApi = {
             toast.success("Class created successfully");
             return result;
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to create class: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to create class", error));
             throw error;
         }
     },
@@ -706,8 +832,7 @@ export const mvpApi = {
             toast.success("Class updated successfully");
             return result;
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to update class: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to update class", error));
             throw error;
         }
     },
@@ -722,8 +847,7 @@ export const mvpApi = {
             toast.success("Class deleted");
             return result;
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to delete class: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to delete class", error));
             throw error;
         }
     },
@@ -734,10 +858,11 @@ export const mvpApi = {
      */
     fetchAcademicYears: async (): Promise<AcademicYear[]> => {
         try {
-            return await request<AcademicYear[]>(() => api.get(MVP_ENDPOINTS.ACADEMIC_YEARS));
+            return await _yearsCache.get([], () =>
+                request<AcademicYear[]>(() => api.get(MVP_ENDPOINTS.ACADEMIC_YEARS))
+            );
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to load academic years: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to load academic years", error));
             throw error;
         }
     },
@@ -752,8 +877,7 @@ export const mvpApi = {
         try {
             return await request<SchoolClass[]>(() => api.get(MVP_ENDPOINTS.TEACHER_CLASSES(teacherId)));
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to fetch teacher classes: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to fetch teacher classes", error));
             throw error;
         }
     },
@@ -766,8 +890,7 @@ export const mvpApi = {
         try {
             return await request<StudentRecord[]>(() => api.get(MVP_ENDPOINTS.CLASS_STUDENTS(classId)));
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to fetch students: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to fetch students", error));
             throw error;
         }
     },
@@ -785,8 +908,7 @@ export const mvpApi = {
             toast.success(`Successfully saved ${result.savedCount} attendance records!`);
             return result;
         } catch (error: unknown) {
-            const e = error as ApiError;
-            toast.error("Failed to save attendance: " + safeErrorMsg(e, "Unknown error"));
+            toast.error(formatApiError("Failed to save attendance", error));
             throw error;
         }
     },
@@ -808,4 +930,209 @@ export const mvpApi = {
     },
 };
 
-export default api;
+export const platformApi = {
+    onboardSchool: async (data: any) => {
+        try {
+            const res = await request<any>(() => api.post('/platform/onboard-school', data));
+            toast.success("School onboarded successfully");
+            return res;
+        } catch (error: any) {
+            toast.error(formatApiError("Onboarding failed", error));
+            throw error;
+        }
+    }
+};
+
+// ── Attendance read API ───────────────────────────────────────────────────────
+// Separate from mvpApi.submitBulkAttendance (POST) — these are the read paths.
+
+export type AttendanceDayRecord = { studentId: string; status: AttendanceStatus };
+export type AttendanceHistoryDay = { date: string; presentCount: number; absentCount: number; lateCount: number; excusedCount: number };
+
+export const attendanceApi = {
+    /**
+     * GET /attendance/:classId?date=YYYY-MM-DD
+     * Returns existing attendance records for a specific date.
+     * Falls back to empty array if endpoint returns 404 (date never recorded).
+     */
+    getForDate: async (classId: string, date: string): Promise<AttendanceDayRecord[]> => {
+        try {
+            return await request<AttendanceDayRecord[]>(() =>
+                api.get(`/attendance/${classId}`, { params: { date } })
+            );
+        } catch (err: any) {
+            // 404 means no records were saved for this date — treat as empty
+            if (err?.code === 'NOT_FOUND' || err?.response?.status === 404) return [];
+            throw err;
+        }
+    },
+
+    /**
+     * GET /attendance/:classId/history?days=14
+     * Returns aggregate counts per day for the history panel.
+     * Falls back to empty array if endpoint is not yet available.
+     */
+    getHistory: async (classId: string, days: number = 14): Promise<AttendanceHistoryDay[]> => {
+        try {
+            return await request<AttendanceHistoryDay[]>(() =>
+                api.get(`/attendance/${classId}/history`, { params: { days } })
+            );
+        } catch {
+            return []; // Non-critical — history panel simply stays empty
+        }
+    },
+};
+
+// ── Teacher self-service API ──────────────────────────────────────────────────
+// Uses /teacher/classes (JWT identifies teacher — no teacherId URL param).
+
+export const teacherApi = {
+    /**
+     * GET /teacher/classes
+     * Returns the classes assigned to the currently authenticated teacher.
+     */
+    getMyClasses: async (): Promise<SchoolClass[]> => {
+        try {
+            return await request<SchoolClass[]>(() => api.get('/teacher/classes'));
+        } catch (err: any) {
+            if (err?.code === 'TEACHER_NOT_ASSIGNED') return [];
+            toast.error(formatApiError('Failed to load your classes', err));
+            throw err;
+        }
+    },
+};
+
+// ── Homework API ──────────────────────────────────────────────────────────────
+
+export type HomeworkItem = {
+    id: string;
+    title: string;
+    subject: string;
+    classId: string;
+    class?: { name: string };
+    className?: string;
+    dueDate: string;
+    description: string;
+    status?: 'active' | 'completed';
+};
+
+export type CreateHomeworkPayload = {
+    title: string;
+    subject: string;
+    classId: string;
+    dueDate: string;
+    description: string;
+};
+
+export const homeworkApi = {
+    /**
+     * GET /academics/homework?classId=...
+     * Returns homework list, optionally filtered by classId.
+     */
+    list: async (classId?: string): Promise<HomeworkItem[]> => {
+        try {
+            const params = classId ? { classId } : {};
+            return await request<HomeworkItem[]>(() =>
+                api.get('/academics/homework', { params })
+            );
+        } catch (err: any) {
+            const isNotAssigned = err?.code === 'TEACHER_NOT_ASSIGNED';
+            if (isNotAssigned) throw err; // let page handle this
+            toast.error(formatApiError('Failed to load homework', err));
+            throw err;
+        }
+    },
+
+    /**
+     * POST /academics/homework
+     */
+    create: async (data: CreateHomeworkPayload): Promise<HomeworkItem> => {
+        try {
+            const result = await request<HomeworkItem>(() =>
+                api.post('/academics/homework', data)
+            );
+            toast.success('Assignment created!');
+            return result;
+        } catch (err: any) {
+            throw err; // caller handles VALIDATION_ERROR display
+        }
+    },
+
+    /**
+     * PUT /academics/homework/:id
+     */
+    update: async (id: string, data: Partial<CreateHomeworkPayload>): Promise<HomeworkItem> => {
+        try {
+            const result = await request<HomeworkItem>(() =>
+                api.put(`/academics/homework/${id}`, data)
+            );
+            toast.success('Assignment updated!');
+            return result;
+        } catch (err: any) {
+            throw err;
+        }
+    },
+
+    /**
+     * DELETE /academics/homework/:id
+     */
+    remove: async (id: string): Promise<void> => {
+        try {
+            await request<unknown>(() => api.delete(`/academics/homework/${id}`));
+            toast.success('Assignment deleted.');
+        } catch (err: any) {
+            toast.error(formatApiError('Delete failed', err));
+            throw err;
+        }
+    },
+};
+
+// ── Homework Grades API ───────────────────────────────────────────────────────
+
+export type HomeworkGradeRecord = {
+    studentId: string;
+    studentName: string;
+    grade: number | null;
+    comment?: string;
+};
+
+export type HomeworkGradesResponse = {
+    homeworkId: string;
+    title: string;
+    dueDate: string;
+    maxPoints: number;
+    classId: string;
+    grades: HomeworkGradeRecord[];
+};
+
+export type SubmitGradeEntry = {
+    studentId: string;
+    grade: number;
+    comment?: string;
+};
+
+export const homeworkGradesApi = {
+    /**
+     * GET /academics/homework/:homeworkId/grades
+     * Returns homework metadata + per-student grade records.
+     */
+    getForHomework: async (homeworkId: string): Promise<HomeworkGradesResponse> => {
+        try {
+            return await request<HomeworkGradesResponse>(() =>
+                api.get(`/academics/homework/${homeworkId}/grades`)
+            );
+        } catch (err: any) {
+            throw err; // page handles TEACHER_NOT_ASSIGNED + generic errors
+        }
+    },
+
+    /**
+     * POST /academics/homework/:homeworkId/grades
+     * Bulk-submit grades. Backend performs upsert (idempotent on re-submit).
+     */
+    submit: async (homeworkId: string, grades: SubmitGradeEntry[]): Promise<{ savedCount: number }> => {
+        try {
+            const result = await request<{ savedCount: number }>(() =>
+                api.post(`/academics/homework/${homeworkId}/grades`, { grades })
+            );
+            export default api;

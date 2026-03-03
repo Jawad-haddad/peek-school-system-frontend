@@ -6,6 +6,8 @@ import { useParams } from 'next/navigation';
 import AddStudentModal from '@/components/dashboard/AddStudentModal';
 import EditStudentModal from '@/components/dashboard/EditStudentModal';
 import StudentProfileModal from '@/components/dashboard/StudentProfileModal'; // Import
+import ResponsiveTable from '@/components/ui/ResponsiveTable';
+import { TableSkeleton } from '@/components/ui/Skeletons';
 import { Eye, Edit } from 'lucide-react'; // Icons
 import { permissions, Role } from '@/lib/permissions';
 
@@ -32,6 +34,7 @@ export default function ClassDetailsPage() {
 
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
 
     // New state for editing/viewing
@@ -48,12 +51,14 @@ export default function ClassDetailsPage() {
 
     const fetchStudents = async () => {
         setLoading(true);
+        setError(null);
         try {
             const response = await schoolApi.fetchStudents(classId);
             const data = response.data.students || response.data || [];
             setStudents(data);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to fetch students", err);
+            setError(err.message || "Failed to load students.");
         } finally {
             setLoading(false);
         }
@@ -84,15 +89,18 @@ export default function ClassDetailsPage() {
             </div>
 
             {loading ? (
-                <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                <TableSkeleton rows={5} cols={3} />
+            ) : error ? (
+                <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-100 flex items-center gap-3">
+                    <span className="text-xl">⚠️</span>
+                    <span className="font-bold">{error}</span>
                 </div>
             ) : students.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-xl shadow border border-gray-100">
                     <p className="text-gray-500 font-medium">No students found in this class.</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <ResponsiveTable>
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -130,7 +138,7 @@ export default function ClassDetailsPage() {
                             ))}
                         </tbody>
                     </table>
-                </div>
+                </ResponsiveTable>
             )}
 
             {/* Modals */}

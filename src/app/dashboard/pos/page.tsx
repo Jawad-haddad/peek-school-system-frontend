@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { posApi, financeApi } from '@/lib/api';
 import { toast } from '@/lib/toast-events';
+import { CardsSkeleton } from '@/components/ui/Skeletons';
 
 type Product = {
     id: string;
@@ -22,11 +23,14 @@ export default function POSTerminalPage() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [studentId, setStudentId] = useState('');
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);
     const [activeCategory, setActiveCategory] = useState('ALL');
 
     useEffect(() => {
         const fetchProducts = async () => {
+            setLoading(true);
+            setError(null);
             try {
                 const res = await posApi.fetchProducts();
                 // res is now plain data: either { products: [...] } or [...]
@@ -36,6 +40,8 @@ export default function POSTerminalPage() {
                 console.error('Failed to load products', err);
                 if (err.name === 'ApiEnvelopeError' && err.code === 'NOT_FOUND') {
                     setProducts([]);
+                } else {
+                    setError(err.message || 'Failed to initialize terminal.');
                 }
             } finally {
                 setLoading(false);
@@ -128,8 +134,21 @@ export default function POSTerminalPage() {
                 </div>
 
                 {loading ? (
-                    <div className="flex-1 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-indigo-600"></div>
+                    <div className="flex-1">
+                        <CardsSkeleton count={6} />
+                    </div>
+                ) : error ? (
+                    <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 flex items-center gap-4">
+                        <span className="text-2xl">⚠️</span>
+                        <span className="font-bold">{error}</span>
+                    </div>
+                ) : filteredProducts.length === 0 ? (
+                    <div className="glass-card text-center py-20 rounded-3xl mx-auto w-full border-2 border-dashed border-indigo-100 bg-white/50 backdrop-blur-sm">
+                        <div className="text-6xl mb-6">🛒</div>
+                        <h3 className="text-2xl font-black text-gray-800 mb-2">No Items Available</h3>
+                        <p className="text-gray-500 font-medium max-w-sm mx-auto">
+                            The canteen is currently empty or the selected category has no items.
+                        </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-3 gap-4 overflow-y-auto pr-2 pb-20">

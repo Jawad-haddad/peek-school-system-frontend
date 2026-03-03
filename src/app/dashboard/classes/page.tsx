@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { mvpApi, SchoolClass } from '@/lib/api';
 import AddClassModal from '@/components/dashboard/AddClassModal';
 import EditClassModal from '@/components/dashboard/EditClassModal';
+import { CardsSkeleton } from '@/components/ui/Skeletons';
 
 export default function ClassesPage() {
     const [classes, setClasses] = useState<SchoolClass[]>([]);
@@ -84,10 +85,7 @@ export default function ClassesPage() {
             </div>
 
             {loading ? (
-                <div className="text-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-violet-600 mx-auto mb-4"></div>
-                    <p className="text-violet-500 font-bold animate-pulse">Loading classes...</p>
-                </div>
+                <CardsSkeleton count={6} />
             ) : error ? (
                 <div className="bg-red-50 text-red-600 p-6 rounded-3xl border border-red-100 flex items-center gap-4">
                     <span className="text-2xl">⚠️</span>

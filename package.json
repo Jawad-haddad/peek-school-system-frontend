@@ -8,6 +8,7 @@
     "start": "next start",
     "check:types": "tsc --noEmit",
     "check:mvp": "node scripts/check-mvp-contract.mjs",
+    "smoke:test": "node scripts/smoke-test.mjs",
     "ci": "npm run check:types && npm run check:mvp && npm run build"
   },
   "dependencies": {
