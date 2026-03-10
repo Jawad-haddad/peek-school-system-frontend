@@ -1,220 +1,306 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import WalletHistoryList from './WalletHistoryList';
-import TopUpModal from './TopUpModal'; // NEW
-import api, { academicApi, schoolApi } from '@/lib/api';
+import TopUpModal from './TopUpModal';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import {
+    AuthUser,
+    ChildRecord,
+    HomeworkItem,
+    parentApi,
+} from '@/lib/api';
 import { getSafeUser } from '@/lib/auth';
+import { permissions } from '@/lib/permissions';
 
-type User = {
-    name: string;
-    role: string;
-    studentId?: string; // Added studentId to User type
+// ── Attendance status badge ───────────────────────────────────────────────────
+
+const STATUS_STYLES: Record<string, string> = {
+    present: 'bg-teal-100 text-teal-700',
+    absent: 'bg-red-100 text-red-700',
+    late: 'bg-amber-100 text-amber-700',
+    excused: 'bg-indigo-100 text-indigo-700',
 };
 
-export default function ParentDashboard() {
-    const [user, setUser] = useState<User | null>(null);
+function AttendanceBadge({ status }: { status: string }) {
+    const cls = STATUS_STYLES[status.toLowerCase()] ?? 'bg-gray-100 text-gray-600';
+    return (
+        <span className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${cls}`}>
+            {status}
+        </span>
+    );
+}
 
+// ── Bus status pill ───────────────────────────────────────────────────────────
 
-    const [subjects, setSubjects] = useState<any[]>([]);
-    const [isTopUpOpen, setIsTopUpOpen] = useState(false); // NEW
+type BusStatus = { status: string; location?: string } | null;
+
+function BusPill({ busStatus, loading }: { busStatus: BusStatus; loading: boolean }) {
+    if (loading) {
+        return (
+            <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
+                Loading…
+            </span>
+        );
+    }
+    if (!busStatus) {
+        return (
+            <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-full">
+                🚌 Unavailable
+            </span>
+        );
+    }
+    const st = (busStatus.status ?? '').toUpperCase();
+    const isActive = ['EN_ROUTE', 'BOARDED', 'ON_BUS'].includes(st);
+    return (
+        <span className={`inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full ${isActive ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+            🚌 {busStatus.status || 'Unknown'}
+            {busStatus.location ? ` · ${busStatus.location}` : ''}
+        </span>
+    );
+}
+
+// ── Per-child card ────────────────────────────────────────────────────────────
+
+function ChildCard({ child }: { child: ChildRecord }) {
+    const [homework, setHomework] = useState<HomeworkItem[]>([]);
+    const [busStatus, setBusStatus] = useState<BusStatus>(null);
+    const [busLoading, setBusLoading] = useState(true);
+    const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+    const [walletKey, setWalletKey] = useState(0);
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            // 1. Get User/Student
-            const parsedUser = getSafeUser();
-            if (parsedUser) {
-                setUser(parsedUser);
+        // Homework — sorted by dueDate asc, only future/today items, max 3
+        parentApi.getHomework(child.id).then((items) => {
+            const now = new Date().toISOString().slice(0, 10);
+            const upcoming = items
+                .filter((h) => h.dueDate >= now)
+                .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+                .slice(0, 3);
+            setHomework(upcoming);
+        });
 
-                // If user has a studentId (Parent/Student login), fetch their class teachers
-                if (parsedUser.studentId) {
-                    try {
-                        // Fetch the student profile to get classId for loading teachers
-                        const studentRes = await api.get(`/student/${parsedUser.studentId}/profile`);
-                        const classId = studentRes.data?.classId;
-                        if (classId) {
-                            const teachersRes = await api.get(`/academics/classes/${classId}/teachers`);
-                            // Teachers data can be used to display class teachers
-                        }
-                    } catch (err) {
-                        // Non-critical — dashboard still usable without teacher list
-                    }
-                }
-            }
-        };
-        fetchDashboardData();
+        // Bus live status
+        parentApi.getBusLive(child.id).then((data) => {
+            setBusStatus(data);
+            setBusLoading(false);
+        });
+    }, [child.id]);
+
+    const handleTopUpSuccess = useCallback(() => {
+        setWalletKey((k) => k + 1); // force WalletHistoryList to re-fetch
+        setIsTopUpOpen(false);
     }, []);
 
-    // NEW EFFECT for Teacher Fetching
-    // NEW EFFECT for Teacher Fetching
-    useEffect(() => {
-        if (!user || (!user.studentId && user.role !== 'Student')) return;
-
-        const loadTeachers = async () => {
-            // Determine Student ID to use
-            const targetStudentId = user.studentId || (user.role === 'Student' ? (user as any).id : null);
-            if (!targetStudentId) return;
-
-            try {
-                // 1. Fetch Student Profile to get Class ID
-                const studentRes = await schoolApi.fetchStudent(targetStudentId);
-                const studentData = studentRes.data.student || studentRes.data;
-
-                if (studentData && studentData.classId) {
-                    // 2. Fetch Subjects for that Class (which contain teacher info)
-                    const subjectsRes = await academicApi.fetchClassSubjects(studentData.classId);
-                    setSubjects(subjectsRes.data.subjects || subjectsRes.data || []);
-                }
-            } catch (e) {
-                console.error("Failed to load subjects", e);
-            }
-        };
-        loadTeachers();
-    }, [user]);
+    const lastAttendance = (child.attendance ?? []).slice(0, 5);
 
     return (
-        <div className="min-h-screen">
-            {/* 1. HEADER SECTION - Floating Glass Panel */}
-            <div className="mb-8">
-                <div className="glass-panel p-8 rounded-3xl text-center md:text-left flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
-                    <div className="relative z-10">
-                        <h5 className="text-violet-500 font-bold uppercase tracking-widest text-sm mb-2">Welcome back</h5>
-                        <h2 className="text-4xl font-black text-gray-800 tracking-tight">{user?.name || 'Parent'}</h2>
-                    </div>
-
-                    {/* Decorative Circle */}
-                    <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-violet-200/50 to-fuchsia-200/50 rounded-full blur-3xl"></div>
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* ── Card header ── */}
+            <div className="bg-gradient-to-r from-violet-50 to-indigo-50 p-6 flex items-center justify-between">
+                <div>
+                    <h3 className="font-extrabold text-xl text-gray-800">{child.fullName || 'Unknown Student'}</h3>
+                    {child.class && (
+                        <p className="text-sm text-indigo-600 font-semibold mt-0.5">{child.class.name}</p>
+                    )}
                 </div>
+                <BusPill busStatus={busStatus} loading={busLoading} />
             </div>
 
-            {/* 2. MAIN GRID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-20">
-
-                {/* CARD 1: SCHEDULE */}
-                <Link href="/dashboard/schedule" className="glass-card p-6 rounded-3xl group relative overflow-hidden hover:scale-105 transition-transform duration-300">
-                    <div className="absolute top- right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <span className="text-8xl">📅</span>
+            <div className="p-6 space-y-6">
+                {/* ── Attendance preview ── */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-gray-700 flex items-center gap-2">
+                            <span className="bg-teal-100 text-teal-600 p-1 rounded-lg text-base">✅</span>
+                            Attendance
+                        </h4>
+                        <Link
+                            href={`/dashboard/parent/children/${child.id}/attendance`}
+                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                        >
+                            View Attendance →
+                        </Link>
                     </div>
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-100/50 flex items-center justify-center text-2xl text-indigo-600 shadow-sm">
-                            📅
-                        </div>
-                        <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm border border-green-200">ACTIVE</span>
-                    </div>
-                    <h5 className="font-extrabold text-xl text-gray-800 mb-1">Schedule</h5>
-                    <p className="text-gray-500 text-sm font-medium">View Schedule</p>
-                </Link>
-
-                {/* CARD 2: ATTENDANCE */}
-                <div className="glass-card p-6 rounded-3xl group relative overflow-hidden hover:scale-105 transition-transform duration-300">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <span className="text-8xl">✅</span>
-                    </div>
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-teal-100/50 flex items-center justify-center text-2xl text-teal-600 shadow-sm">
-                            ✅
-                        </div>
-                    </div>
-                    <h5 className="font-extrabold text-xl text-gray-800 mb-1">Attendance</h5>
-                    <p className="text-gray-500 text-sm font-medium">View Attendance</p>
-                </div>
-
-                {/* CARD 3: BUS */}
-                <Link href="/dashboard/bus" className="glass-card p-6 rounded-3xl group relative overflow-hidden hover:scale-105 transition-transform duration-300">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <span className="text-8xl">🚌</span>
-                    </div>
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-100/50 flex items-center justify-center text-2xl text-amber-600 shadow-sm">
-                            🚌
-                        </div>
-                        <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm border border-amber-200">TRACKING</span>
-                    </div>
-                    <h5 className="font-extrabold text-xl text-gray-800 mb-1">Bus</h5>
-                    <p className="text-gray-500 text-sm font-medium">Live Location</p>
-                </Link>
-
-                {/* CARD 4: SHOP (New) */}
-                <div className="glass-card p-6 rounded-3xl group relative overflow-hidden hover:scale-105 transition-transform duration-300">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-purple-100/50 flex items-center justify-center text-2xl text-purple-600 shadow-sm">
-                            👕
-                        </div>
-                    </div>
-                    <h5 className="font-extrabold text-xl text-gray-800 mb-1">Shop</h5>
-                    <p className="text-gray-500 text-sm font-medium">Buy Uniforms</p>
-                </div>
-
-                {/* CARD 5: HOMEWORK */}
-                <Link href="/dashboard/homework" className="glass-card p-6 rounded-3xl group relative overflow-hidden hover:scale-105 transition-transform duration-300">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-100/50 flex items-center justify-center text-2xl text-blue-600 shadow-sm">
-                            📚
-                        </div>
-                    </div>
-                    <h5 className="font-extrabold text-xl text-gray-800 mb-1">Homework</h5>
-                    <p className="text-gray-500 text-sm font-medium">Check Assignments</p>
-                </Link>
-
-            </div>
-
-
-
-            {/* 2.5 MY TEACHERS (via Subjects) SECTION */}
-            {
-                subjects.length > 0 && (
-                    <div className="mb-8">
-                        <h3 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
-                            <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg text-xl">👨‍🏫</span>
-                            My Teachers & Subjects
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {subjects.map((sub: any) => (
-                                <div key={sub.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-shadow">
-                                    <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-lg">
-                                        {sub.name?.charAt(0) || 'S'}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-gray-800">{sub.name}</h4>
-                                        <p className="text-xs text-gray-500 font-medium">
-                                            {sub.teacher ? sub.teacher.fullName || sub.teacher.name : 'No Teacher Assigned'}
-                                        </p>
-                                    </div>
+                    {lastAttendance.length === 0 ? (
+                        <p className="text-sm text-gray-400">No attendance records yet.</p>
+                    ) : (
+                        <div className="flex flex-wrap gap-2">
+                            {lastAttendance.map((rec, i) => (
+                                <div key={i} className="flex items-center gap-1.5 bg-gray-50 rounded-xl px-3 py-1.5 border border-gray-100">
+                                    <span className="text-xs text-gray-500 font-medium">
+                                        {new Date(rec.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </span>
+                                    <AttendanceBadge status={rec.status} />
                                 </div>
                             ))}
                         </div>
-                    </div>
-                )
-            }
-
-            {/* 3. WALLET HISTORY SECTION */}
-            <div className="mb-12">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-                        <span className="bg-green-100 text-green-600 p-1.5 rounded-lg text-xl">💳</span>
-                        Wallet History
-                    </h3>
-                    <button
-                        onClick={() => setIsTopUpOpen(true)}
-                        className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-gray-200 hover:scale-105 transition-transform flex items-center gap-2"
-                    >
-                        <span>+</span> Top Up
-                    </button>
+                    )}
                 </div>
-                <WalletHistoryList studentId={user?.studentId || ''} />
+
+                {/* ── Homework preview ── */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-gray-700 flex items-center gap-2">
+                            <span className="bg-blue-100 text-blue-600 p-1 rounded-lg text-base">📚</span>
+                            Upcoming Homework
+                        </h4>
+                        <Link
+                            href={`/dashboard/parent/children/${child.id}/homework`}
+                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                        >
+                            View Homework →
+                        </Link>
+                    </div>
+                    {homework.length === 0 ? (
+                        <p className="text-sm text-gray-400">No upcoming homework! 🎉</p>
+                    ) : (
+                        <ul className="space-y-2">
+                            {homework.map((hw) => (
+                                <li key={hw.id} className="flex items-start gap-3 bg-blue-50/50 rounded-2xl p-3 border border-blue-100/50">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-gray-800 text-sm truncate">{hw.title}</p>
+                                        <p className="text-xs text-gray-500 font-medium mt-0.5">{hw.subject}</p>
+                                    </div>
+                                    <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg whitespace-nowrap border border-amber-100">
+                                        Due {new Date(hw.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+
+                {/* ── Wallet ── */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-gray-700 flex items-center gap-2">
+                            <span className="bg-green-100 text-green-600 p-1 rounded-lg text-base">💳</span>
+                            Wallet
+                        </h4>
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/dashboard/parent/children"
+                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                            >
+                                View Invoices →
+                            </Link>
+                            <button
+                                onClick={() => setIsTopUpOpen(true)}
+                                className="bg-gray-900 text-white text-xs font-bold px-4 py-1.5 rounded-xl hover:scale-105 transition-transform flex items-center gap-1 shadow-sm"
+                            >
+                                + Top Up
+                            </button>
+                        </div>
+                    </div>
+                    {/* key forces re-mount (refetch) after successful top-up */}
+                    <WalletHistoryList key={walletKey} studentId={child.id} />
+                </div>
             </div>
 
             <TopUpModal
                 isOpen={isTopUpOpen}
                 onClose={() => setIsTopUpOpen(false)}
-                studentId={user?.studentId || ''}
-                onSuccess={() => {
-                    // Start a refresh or just close
-                    // Ideally we refresh the balance in the header if we had one
-                    window.location.reload(); // Simple refresh to update balance everywhere
-                }}
+                studentId={child.id}
+                onSuccess={handleTopUpSuccess}
             />
-        </div >
+        </div>
+    );
+}
+
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+function ParentDashboardInner() {
+    const [user, setUser] = useState<AuthUser | null>(null);
+    const [children, setChildren] = useState<ChildRecord[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const parsedUser = getSafeUser() as AuthUser | null;
+        if (parsedUser) {
+            setUser(parsedUser);
+        }
+
+        parentApi
+            .getMyChildren()
+            .then((data) => {
+                setChildren(data);
+            })
+            .catch(() => {
+                setError('Could not load your children. Please refresh the page.');
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
+
+    return (
+        <div className="min-h-screen">
+            {/* ── Header ── */}
+            <div className="mb-8">
+                <div className="glass-panel p-8 rounded-3xl text-center md:text-left flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
+                    <div className="relative z-10">
+                        <h5 className="text-violet-500 font-bold uppercase tracking-widest text-sm mb-2">Welcome back</h5>
+                        <h2 className="text-4xl font-black text-gray-800 tracking-tight">
+                            {user?.fullName || 'Parent'}
+                        </h2>
+                    </div>
+                    <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-violet-200/50 to-fuchsia-200/50 rounded-full blur-3xl" />
+                </div>
+            </div>
+
+            {/* ── Loading skeleton ── */}
+            {loading && (
+                <div className="space-y-6">
+                    {[1, 2].map((n) => (
+                        <div key={n} className="bg-white rounded-3xl border border-gray-100 p-6 animate-pulse">
+                            <div className="h-6 bg-gray-200 rounded-xl w-40 mb-4" />
+                            <div className="h-4 bg-gray-100 rounded-xl w-24 mb-6" />
+                            <div className="space-y-3">
+                                <div className="h-4 bg-gray-100 rounded-xl w-full" />
+                                <div className="h-4 bg-gray-100 rounded-xl w-3/4" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* ── Error state ── */}
+            {!loading && error && (
+                <div className="bg-red-50 border border-red-100 text-red-700 rounded-2xl p-6 text-center font-medium">
+                    {error}
+                </div>
+            )}
+
+            {/* ── Empty state ── */}
+            {!loading && !error && children.length === 0 && (
+                <div className="bg-gray-50 border border-dashed border-gray-200 rounded-3xl p-12 text-center text-gray-400">
+                    <p className="text-5xl mb-4">👨‍👧‍👦</p>
+                    <p className="font-bold text-lg text-gray-600">No children linked to your account</p>
+                    <p className="text-sm mt-2">Please contact the school administrator to link your children.</p>
+                </div>
+            )}
+
+            {/* ── Per-child cards ── */}
+            {!loading && !error && children.length > 0 && (
+                <div className="space-y-8">
+                    {children.map((child) => (
+                        <ChildCard key={child.id} child={child} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function ParentDashboard() {
+    return (
+        <ProtectedRoute allowed={permissions.isParent}>
+            <ParentDashboardInner />
+        </ProtectedRoute>
     );
 }

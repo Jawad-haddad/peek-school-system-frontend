@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import api from '@/lib/api';
+import api, { request, formatApiError, ApiEnvelopeError } from '@/lib/api';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
 
@@ -20,12 +20,23 @@ export default function BroadcastPage() {
         setStatus(null);
 
         try {
-            await api.post('/communication/broadcast', formData);
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('[DEBUG] Sending broadcast to /communication/broadcast:', formData);
+            }
+            await request(() => api.post('/communication/broadcast', formData));
             setStatus({ type: 'success', message: 'Broadcast sent successfully!' });
             setFormData({ title: '', message: '', target: 'all' }); // Reset form
         } catch (err: any) {
             console.error("Broadcast error:", err);
-            setStatus({ type: 'error', message: err.response?.data?.message || 'Failed to send broadcast.' });
+            // Handle specific forbidden/validation errors mapped by `request()`
+            if (err instanceof ApiEnvelopeError) {
+                if (err.code === 'FORBIDDEN_ROLE') {
+                    setStatus({ type: 'error', message: "You don't have permission to send broadcasts." });
+                    return;
+                }
+            }
+            const errorMsg = formatApiError('Broadcast failed', err);
+            setStatus({ type: 'error', message: errorMsg });
         } finally {
             setLoading(false);
         }

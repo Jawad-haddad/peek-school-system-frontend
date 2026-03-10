@@ -54,11 +54,25 @@ export default function ClassDetailsPage() {
         setError(null);
         try {
             const response = await schoolApi.fetchStudents(classId);
-            const data = response.data.students || response.data || [];
-            setStudents(data);
+            // Backend may return several shapes depending on the endpoint version:
+            //   - plain array                   (legacy)
+            //   - { students: [...] }            (some routes)
+            //   - { success, data: [...] }       (envelope, direct array)
+            //   - { success, data: { students } } (envelope, nested)
+            const raw = response.data;
+            if (process.env.NODE_ENV !== 'production') {
+                console.log('[ClassDetails] raw students response shape:', raw);
+            }
+            const list: Student[] =
+                Array.isArray(raw) ? raw
+                    : Array.isArray((raw as any)?.students) ? (raw as any).students
+                        : Array.isArray((raw as any)?.data) ? (raw as any).data
+                            : Array.isArray((raw as any)?.data?.students) ? (raw as any).data.students
+                                : [];
+            setStudents(list);
         } catch (err: any) {
-            console.error("Failed to fetch students", err);
-            setError(err.message || "Failed to load students.");
+            console.error('Failed to fetch students', err);
+            setError(err.message || 'Failed to load students.');
         } finally {
             setLoading(false);
         }
@@ -110,7 +124,7 @@ export default function ClassDetailsPage() {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {students.map((student) => (
+                            {(Array.isArray(students) ? students : []).map((student) => (
                                 <tr key={student.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-bold text-gray-900">{student.name || student.fullName || 'No Name'}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500 font-medium">{student.email || student.parentEmail || 'No Email'}</td>

@@ -37,8 +37,15 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
           axios.get('/api/schools/subjects', { headers: { Authorization: `Bearer ${token}` } }),
           axios.get('/api/schools/teachers', { headers: { Authorization: `Bearer ${token}` } })
         ]);
-        setSubjects(sRes.data);
-        setTeachers(tRes.data);
+
+        const extractList = (resData: any) =>
+          Array.isArray(resData) ? resData :
+            Array.isArray(resData?.data) ? resData.data :
+              Array.isArray(resData?.subjects) ? resData.subjects :
+                Array.isArray(resData?.teachers) ? resData.teachers : [];
+
+        setSubjects(extractList(sRes.data));
+        setTeachers(extractList(tRes.data));
       } catch (err) { console.error(err); }
     };
     fetchData();
@@ -72,10 +79,16 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Subject</label>
-            <select required value={subjectId} onChange={e => setSubjectId(e.target.value)} className="w-full border p-2 rounded">
-              <option value="">Select Subject</option>
-              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            {subjects.length === 0 ? (
+              <div className="text-sm font-medium text-amber-600 bg-amber-50 p-2 rounded border border-amber-200 mt-1">
+                No subjects yet. <a href="/dashboard/subjects" className="underline font-bold">Create subjects first.</a>
+              </div>
+            ) : (
+              <select required value={subjectId} onChange={e => setSubjectId(e.target.value)} className="w-full border p-2 rounded mt-1">
+                <option value="">Select Subject</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>{s.name || (s as any).subjectName}</option>)}
+              </select>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Teacher</label>

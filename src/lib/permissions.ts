@@ -12,5 +12,6 @@ export const permissions = {
     canViewSensitiveStats: (role: Role) => role === 'ADMIN' || role === 'FINANCE',
     isSuperAdmin: (role: Role) => role === 'SUPER_ADMIN',
     isTeacher: (role: Role) => role === 'TEACHER',
+    isParent: (role: Role) => role === 'PARENT',
 };
 

@@ -158,9 +158,18 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
             onSuccess();
             onClose();
         } catch (err: any) {
-            console.error("Teacher form error:", err);
-            console.error("Error Response:", err.response); // DEBUG: Inspect detailed error
+            if (process.env.NODE_ENV !== 'production') {
+                console.error("Teacher form error:", err);
+                console.error("Error Response:", err.response); // DEBUG: Inspect detailed error
+            }
+
             let msg = err.message || err.response?.data?.message || "Operation failed.";
+
+            // Handle 409 Conflict (e.g. Email exists)
+            if (err.response?.status === 409) {
+                msg = err.response?.data?.message || 'Email already exists. Please use a different email.';
+            }
+
             if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
                 msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
             }

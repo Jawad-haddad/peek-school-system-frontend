@@ -23,10 +23,11 @@ const ALL_MENU_ITEMS = [
   // Teacher
   { name: 'My Schedule', href: '/dashboard/schedule', icon: '📅', roles: ['TEACHER'] },
   { name: 'Attendance', href: '/dashboard/attendance', icon: '✅', roles: ['TEACHER'] },
-  { name: 'Homework', href: '/dashboard/homework', icon: '📚', roles: ['TEACHER', 'PARENT'] },
+  { name: 'Homework', href: '/dashboard/homework', icon: '📚', roles: ['TEACHER'] },
   { name: 'Gradebook', href: '/dashboard/exams/gradebook', icon: '💯', roles: ['TEACHER'] },
 
   // Parent
+  { name: 'My Children', href: '/dashboard/parent/children', icon: '👨‍👧‍👦', roles: ['PARENT'] },
   { name: 'Results', href: '/dashboard/results', icon: '📊', roles: ['PARENT'] },
   { name: 'Shop', href: '/dashboard/shop', icon: '🛒', roles: ['PARENT'] },
 ];

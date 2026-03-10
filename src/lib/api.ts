@@ -162,8 +162,13 @@ api.interceptors.response.use(
             const serverMsg: string | undefined = error.response.data?.error?.message
                 ?? error.response.data?.message
                 ?? undefined;
+
+            const url = error.config?.url || '';
+            const isFinanceRoute = url.includes('/finance') || url.includes('/fees');
+            const fallbackMsg = isFinanceRoute ? 'No finance data found.' : 'Resource not found.';
+
             throw new ApiEnvelopeError(
-                'No finance data found.',
+                serverMsg || fallbackMsg,
                 'NOT_FOUND',
                 serverMsg,
                 reqId
@@ -1135,4 +1140,101 @@ export const homeworkGradesApi = {
             const result = await request<{ savedCount: number }>(() =>
                 api.post(`/academics/homework/${homeworkId}/grades`, { grades })
             );
-            export default api;
+            toast.success(`Saved ${result.savedCount} grade(s).`);
+            return result;
+        } catch (err: any) {
+            toast.error(formatApiError('Failed to submit grades', err));
+            throw err;
+        }
+    },
+};
+
+// ── Parent-scoped Types ───────────────────────────────────────────────────────
+
+export type ChildAttendanceRecord = {
+    date: string;
+    status: AttendanceStatus;
+};
+
+/** One day in GET /parent/attendance/:studentId response. */
+export type StudentAttendanceDay = {
+    date: string;       // YYYY-MM-DD
+    status: AttendanceStatus;
+};
+
+export type ChildRecord = {
+    id: string;
+    fullName: string;
+    class?: { id: string; name: string };
+    attendance?: ChildAttendanceRecord[];
+};
+
+// ── Parent API ────────────────────────────────────────────────────────────────
+
+export const parentApi = {
+    /**
+     * GET /students/my-children
+     * Authenticated as parent (JWT) — returns the parent's linked children with
+     * basic profile data and last N attendance records.
+     */
+    getMyChildren: async (): Promise<ChildRecord[]> => {
+        try {
+            return await request<ChildRecord[]>(() => api.get('/students/my-children'));
+        } catch (err: any) {
+            toast.error(formatApiError('Failed to load your children', err));
+            throw err;
+        }
+    },
+
+    /**
+     * GET /academics/homework?studentId=<id>
+     * Returns HomeworkItem[] filtered for a specific student.
+     * Silently returns [] on error — parent dashboard degrades gracefully.
+     */
+    getHomework: async (studentId: string): Promise<HomeworkItem[]> => {
+        try {
+            return await request<HomeworkItem[]>(() =>
+                api.get('/academics/homework', { params: { studentId } })
+            );
+        } catch {
+            return [];
+        }
+    },
+
+    /**
+     * GET /buses/live/:studentId
+     * Returns current bus status for the student.
+     * Returns null on error — bus section shows "Unavailable".
+     */
+    getBusLive: async (studentId: string): Promise<{ status: string; location?: string } | null> => {
+        try {
+            return await request<{ status: string; location?: string }>(() =>
+                api.get(`/buses/live/${studentId}`)
+            );
+        } catch {
+            return null;
+        }
+    },
+
+    /**
+     * GET /parent/attendance/:studentId?from=YYYY-MM-DD&to=YYYY-MM-DD
+     * Returns per-day attendance records for the date range.
+     * Returns [] on failure so the attendance page degrades gracefully.
+     */
+    getStudentAttendance: async (
+        studentId: string,
+        from: string,
+        to: string,
+    ): Promise<StudentAttendanceDay[]> => {
+        try {
+            return await request<StudentAttendanceDay[]>(() =>
+                api.get(`/parent/attendance/${studentId}`, { params: { from, to } })
+            );
+        } catch (err: any) {
+            toast.error(formatApiError('Failed to load attendance', err));
+            throw err;
+        }
+    },
+};
+
+export default api;
