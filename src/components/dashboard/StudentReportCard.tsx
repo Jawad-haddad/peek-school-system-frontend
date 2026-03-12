@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { studentApi } from '@/lib/api';
 import { getSafeUser } from '@/lib/auth';
+import { useLang } from '@/lib/LangProvider';
 
 type SubjectGrade = {
     subject: string;
@@ -20,6 +21,7 @@ const calculateGrade = (mark: number, total: number) => {
 };
 
 export default function StudentReportCard() {
+    const { t } = useLang();
     const [grades, setGrades] = useState<SubjectGrade[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -54,18 +56,18 @@ export default function StudentReportCard() {
         fetchGrades();
     }, []);
 
-    if (loading) return <div className="p-6 text-center text-gray-400">Loading grades...</div>;
+    if (loading) return <div className="p-6 text-center text-gray-400">{t('auto_193')}</div>;
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-bold text-gray-800">Recent Grades</h3>
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Latest</span>
+                <h3 className="font-bold text-gray-800">{t('auto_299')}</h3>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t('auto_188')}</span>
             </div>
 
             <div className="divide-y divide-gray-100">
                 {grades.length === 0 ? (
-                    <div className="p-6 text-center text-gray-400">No grades published yet.</div>
+                    <div className="p-6 text-center text-gray-400">{t('auto_247')}</div>
                 ) : (
                     grades.map((grade, idx) => {
                         const { label, color } = calculateGrade(grade.mark, 100);
@@ -74,7 +76,7 @@ export default function StudentReportCard() {
                             <div key={idx} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                                 <div className="flex flex-col">
                                     <span className="font-medium text-gray-900">{grade.subject}</span>
-                                    <span className="text-xs text-gray-500">Score: {grade.mark}/100</span>
+                                    <span className="text-xs text-gray-500">{t('auto_327')} {grade.mark}/100</span>
                                 </div>
 
                                 <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg ${color}`}>
@@ -88,8 +90,8 @@ export default function StudentReportCard() {
 
             <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-center">
                 <button className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                    View Full Report Card →
-                </button>
+                    {t('auto_397')}
+                                    </button>
             </div>
         </div>
     );

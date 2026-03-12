@@ -5,6 +5,7 @@ import { X, Phone, User, CreditCard, Calendar, GraduationCap, ShieldCheck, Shiel
 import { Switch } from '@/components/ui/Switch';
 import WalletHistoryList from './WalletHistoryList';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type Student = {
     id: string;
@@ -29,6 +30,7 @@ type StudentProfileModalProps = {
 };
 
 export default function StudentProfileModal({ isOpen, onClose, student, className }: StudentProfileModalProps) {
+    const { t } = useLang();
     // Initialize state with prop value, default to true if undefined
     const [isNfcEnabled, setIsNfcEnabled] = useState(student.isNfcActive ?? true);
 
@@ -78,7 +80,7 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                         <X size={20} />
                     </button>
 
-                    <h2 className="text-xl font-bold tracking-tight opacity-90 drop-shadow-sm">Student ID Card</h2>
+                    <h2 className="text-xl font-bold tracking-tight opacity-90 drop-shadow-sm">{t('auto_357')}</h2>
                     <p className="text-sm font-medium opacity-75 drop-shadow-sm">{className || 'Peek School System'}</p>
                 </div>
 
@@ -95,21 +97,21 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                 <div className="p-6 pt-16 flex-1 space-y-6">
                     <div className="text-center">
                         <h1 className="text-2xl font-black text-gray-800 tracking-tight leading-tight">{displayName}</h1>
-                        <p className="text-xs text-gray-400 font-mono mt-1">ID: {(student.nfcTagId || student.id).slice(0, 8).toUpperCase()}</p>
+                        <p className="text-xs text-gray-400 font-mono mt-1">{t('auto_176')} {(student.nfcTagId || student.id).slice(0, 8).toUpperCase()}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         {/* 📛 Identity & Class */}
                         <div className="bg-white/60 p-4 rounded-2xl border border-gray-100 flex flex-col items-center justify-center text-center gap-1">
                             <GraduationCap size={20} className="text-violet-500 mb-1" />
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Class</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('auto_070')}</span>
                             <span className="text-sm font-black text-gray-800">{className || 'N/A'}</span>
                         </div>
 
                         {/* 🎂 Personal */}
                         <div className="bg-white/60 p-4 rounded-2xl border border-gray-100 flex flex-col items-center justify-center text-center gap-1">
                             <Calendar size={20} className="text-blue-500 mb-1" />
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Age</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('auto_036')}</span>
                             <span className="text-sm font-black text-gray-800">{age}</span>
                             <span className="text-[10px] text-gray-400">{student.gender || 'N/A'}</span>
                         </div>
@@ -124,19 +126,19 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                                        <CreditCard size={16} /> Digital Wallet
-                                    </h3>
-                                    <p className="text-[10px] text-gray-400 mt-1">Daily Limit: {dailyLimit} JOD</p>
+                                        <CreditCard size={16} /> {t('auto_110')}
+                                                                            </h3>
+                                    <p className="text-[10px] text-gray-400 mt-1">{t('auto_100')} {dailyLimit} {t('auto_183')}</p>
                                 </div>
                                 {isLowBalance && !isDebt && (
                                     <span className="px-2 py-1 rounded-lg bg-yellow-500/20 text-yellow-300 text-[10px] font-bold border border-yellow-500/30 flex items-center gap-1">
-                                        <AlertTriangle size={10} /> Low Balance
-                                    </span>
+                                        <AlertTriangle size={10} /> {t('auto_205')}
+                                                                            </span>
                                 )}
                                 {isDebt && (
                                     <span className="px-2 py-1 rounded-lg bg-red-500/20 text-red-300 text-[10px] font-bold border border-red-500/30 flex items-center gap-1">
-                                        <AlertTriangle size={10} /> Outstanding
-                                    </span>
+                                        <AlertTriangle size={10} /> {t('auto_269')}
+                                                                            </span>
                                 )}
                             </div>
 
@@ -144,7 +146,7 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                                 <span className={`text-4xl font-black tracking-tight ${isDebt ? 'text-red-400' : 'text-white'}`}>
                                     {balance.toFixed(2)}
                                 </span>
-                                <span className="text-sm font-medium text-gray-400">JOD</span>
+                                <span className="text-sm font-medium text-gray-400">{t('auto_183')}</span>
                             </div>
                         </div>
                     </div>
@@ -181,7 +183,7 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                                 <User size={16} />
                             </div>
                             <div>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Guardian</span>
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">{t('auto_172')}</span>
                                 <h3 className="font-bold text-gray-700 text-sm">{student.parentName || 'No Parent Linked'}</h3>
                             </div>
                         </div>

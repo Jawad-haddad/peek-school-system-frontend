@@ -4,8 +4,10 @@ import { useState } from 'react';
 import api, { request, formatApiError, ApiEnvelopeError } from '@/lib/api';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
+import { useLang } from '@/lib/LangProvider';
 
 export default function BroadcastPage() {
+    const { t } = useLang();
     const [formData, setFormData] = useState({
         title: '',
         message: '',
@@ -45,8 +47,8 @@ export default function BroadcastPage() {
     return (
         <ProtectedRoute allowed={permissions.canBroadcast}>
             <div className="p-8 max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">Send Broadcast</h1>
-                <p className="text-gray-500 mb-8">Send announcements to teachers, parents, or everyone.</p>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">{t('auto_344')}</h1>
+                <p className="text-gray-500 mb-8">{t('auto_345')}</p>
 
                 <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
                     {status && (
@@ -57,19 +59,19 @@ export default function BroadcastPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Announcement Title</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_042')}</label>
                             <input
                                 type="text"
                                 required
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 className="w-full border-2 border-gray-100 rounded-xl p-4 focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all font-medium text-lg"
-                                placeholder="e.g. School Closure Update"
+                                placeholder={t('auto_423')}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Audience</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_057')}</label>
                             <div className="grid grid-cols-3 gap-4">
                                 {[
                                     { id: 'all', label: '📢 Everyone', desc: 'Teachers & Parents' },
@@ -95,14 +97,14 @@ export default function BroadcastPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Message Content</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_217')}</label>
                             <textarea
                                 required
                                 rows={6}
                                 value={formData.message}
                                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                 className="w-full border-2 border-gray-100 rounded-xl p-4 focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 transition-all font-medium text-gray-600 leading-relaxed resize-none"
-                                placeholder="Type your announcement here..."
+                                placeholder={t('auto_387')}
                             />
                         </div>
 
@@ -122,11 +124,11 @@ export default function BroadcastPage() {
                                 {loading ? (
                                     <>
                                         <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        Sending...
-                                    </>
+                                        {t('auto_346')}
+                                                                            </>
                                 ) : (
                                     <>
-                                        <span>🚀 Send Broadcast</span>
+                                        <span>{t('auto_455')}</span>
                                     </>
                                 )}
                             </button>

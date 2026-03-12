@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type Subject = {
     id: string;
@@ -16,6 +17,7 @@ type EditSubjectModalProps = {
 };
 
 export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }: EditSubjectModalProps) {
+    const { t } = useLang();
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -32,7 +34,7 @@ export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }
 
         try {
             await api.put(`/academics/subjects/${subject.id}`, { name });
-            alert("Subject updated!");
+            alert(t('auto_366'));
             onSuccess();
             onClose();
         } catch (err: any) {
@@ -53,7 +55,7 @@ export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-800">Edit Subject</h2>
+                    <h2 className="text-xl font-bold text-gray-800">{t('auto_122')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
                 </div>
 
@@ -64,14 +66,14 @@ export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }
                         </div>
                     )}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_365')}</label>
                         <input
                             type="text"
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                            placeholder="e.g. Mathematics"
+                            placeholder={t('auto_422')}
                         />
                     </div>
 
@@ -81,8 +83,8 @@ export default function EditSubjectModal({ isOpen, onClose, onSuccess, subject }
                             onClick={onClose}
                             className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={loading}

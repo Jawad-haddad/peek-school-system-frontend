@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { posApi, financeApi } from '@/lib/api';
 import { getSafeUser } from '@/lib/auth';
 import { toast } from '@/lib/toast-events';
+import { useLang } from '@/lib/LangProvider';
 
 type Product = {
     id: string;
@@ -14,6 +15,7 @@ type Product = {
 };
 
 export default function ShopPage() {
+    const { t } = useLang();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -67,7 +69,7 @@ export default function ShopPage() {
 
     const handleBuy = async (product: Product) => {
         if (!studentId) {
-            toast.error('No student linked to this account');
+            toast.error(t('auto_255'));
             return;
         }
 
@@ -87,7 +89,7 @@ export default function ShopPage() {
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                    <p className="text-gray-500">Loading shop...</p>
+                    <p className="text-gray-500">{t('auto_196')}</p>
                 </div>
             </div>
         );
@@ -97,12 +99,12 @@ export default function ShopPage() {
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-800 mb-1">Canteen Shop</h1>
-                    <p className="text-gray-500">Browse items available at the school canteen</p>
+                    <h1 className="text-3xl font-black text-gray-800 mb-1">{t('auto_067')}</h1>
+                    <p className="text-gray-500">{t('auto_061')}</p>
                 </div>
                 {walletBalance !== null && (
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl px-6 py-3 text-center">
-                        <p className="text-xs text-green-600 font-medium uppercase tracking-wider">Wallet Balance</p>
+                        <p className="text-xs text-green-600 font-medium uppercase tracking-wider">{t('auto_405')}</p>
                         <p className="text-2xl font-black text-green-700">${walletBalance.toFixed(2)}</p>
                     </div>
                 )}
@@ -110,14 +112,14 @@ export default function ShopPage() {
 
             {error && (
                 <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3 mb-6">
-                    <span className="font-bold">Error:</span> {error}
+                    <span className="font-bold">{t('auto_134')}</span> {error}
                 </div>
             )}
 
             {products.length === 0 ? (
                 <div className="text-center py-24 bg-gray-50 rounded-3xl border-dashed border-2 border-gray-200">
                     <div className="text-6xl mb-4 opacity-20">🛒</div>
-                    <p className="text-gray-400 font-medium">No products available right now.</p>
+                    <p className="text-gray-400 font-medium">{t('auto_251')}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -137,8 +139,8 @@ export default function ShopPage() {
                                         onClick={() => handleBuy(product)}
                                         className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-sm"
                                     >
-                                        Buy
-                                    </button>
+                                        {t('auto_063')}
+                                                                            </button>
                                 </div>
                             </div>
                         </div>

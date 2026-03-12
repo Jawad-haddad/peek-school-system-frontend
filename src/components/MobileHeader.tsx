@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLang } from '@/lib/LangProvider';
 
 type MobileHeaderProps = {
   onMenuClick: () => void;
@@ -35,11 +36,12 @@ function ConnectivityDot() {
 }
 
 export default function MobileHeader({ onMenuClick }: MobileHeaderProps) {
+    const { t } = useLang();
   return (
     <div className="flex items-center justify-between bg-gray-800 p-4 text-white md:hidden">
       <div className="flex items-center gap-3">
         <div className="relative">
-          <h2 className="text-xl font-bold">Peek System</h2>
+          <h2 className="text-xl font-bold">{t('auto_282')}</h2>
           <ConnectivityDot />
         </div>
       </div>

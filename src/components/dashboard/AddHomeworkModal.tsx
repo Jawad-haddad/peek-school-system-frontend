@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type AddHomeworkModalProps = {
     isOpen: boolean;
@@ -17,6 +18,7 @@ type ClassOption = {
 };
 
 export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHomeworkModalProps) {
+    const { t } = useLang();
     const [title, setTitle] = useState('');
     const [subject, setSubject] = useState('');
     const [classId, setClassId] = useState('');
@@ -68,7 +70,7 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
         setError('');
 
         if (!classId) {
-            setError("Please select a class.");
+            setError(t('auto_289'));
             setLoading(false);
             return;
         }
@@ -91,7 +93,7 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
         } catch (err: any) {
 
             setError(err.response?.data?.message || 'Failed to create assignment. Please try again.');
-            if (err.response?.status === 403) setError('You do not have permission to create homework.');
+            if (err.response?.status === 403) setError(t('auto_411'));
         } finally {
             setLoading(false);
         }
@@ -103,7 +105,7 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all relative z-50">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h2 className="text-xl font-bold text-gray-800">Assign Homework</h2>
+                    <h2 className="text-xl font-bold text-gray-800">{t('auto_048')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         ✕
                     </button>
@@ -117,40 +119,40 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_379')}</label>
                         <input
                             type="text"
                             required
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             className={inputClasses}
-                            placeholder="e.g., Algebra Worksheet 3"
+                            placeholder={t('auto_424')}
                         />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_364')}</label>
                             <select
                                 required
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                                 className={inputClasses}
                             >
-                                <option value="">Select Subject</option>
+                                <option value="">{t('auto_333')}</option>
                                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Class
-                                {loadingClasses && <span className="ml-2 text-xs text-purple-500">Loading...</span>}
+                                {t('auto_070')}
+                                                                {loadingClasses && <span className="ml-2 text-xs text-purple-500">{t('auto_202')}</span>}
                             </label>
 
                             {noClassesFound ? (
                                 <div className="px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-xs font-bold text-red-600 flex items-center gap-1">
-                                    ⚠️ No classes assigned. Contact Admin.
-                                </div>
+                                    {t('auto_438')}
+                                                                    </div>
                             ) : (
                                 <select
                                     required
@@ -159,7 +161,7 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
                                     className={`${inputClasses} ${loadingClasses ? 'opacity-50 cursor-wait' : ''}`}
                                     disabled={loadingClasses}
                                 >
-                                    <option value="">Select Class</option>
+                                    <option value="">{t('auto_329')}</option>
                                     {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             )}
@@ -167,7 +169,7 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_113')}</label>
                         <input
                             type="date"
                             required
@@ -178,14 +180,14 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_109')}</label>
                         <textarea
                             required
                             rows={3}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             className={inputClasses}
-                            placeholder="Instructions for the students..."
+                            placeholder={t('auto_182')}
                         />
                     </div>
 
@@ -195,8 +197,8 @@ export default function AddHomeworkModal({ isOpen, onClose, onSuccess }: AddHome
                             onClick={onClose}
                             className="px-4 py-2 mr-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={loading || noClassesFound || !classId}

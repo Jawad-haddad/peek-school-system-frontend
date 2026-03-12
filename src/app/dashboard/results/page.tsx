@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { studentApi } from '@/lib/api';
 import { getSafeUser } from '@/lib/auth';
+import { useLang } from '@/lib/LangProvider';
 
 type ExamResult = {
     id: string;
@@ -15,6 +16,7 @@ type ExamResult = {
 };
 
 export default function ExamResultsPage() {
+    const { t } = useLang();
     const [results, setResults] = useState<ExamResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
@@ -55,8 +57,8 @@ export default function ExamResultsPage() {
     if (!user?.studentId) {
         return (
             <div className="p-8 text-center">
-                <h1 className="text-2xl font-bold text-gray-800">Exam Results</h1>
-                <p className="text-gray-500 mt-4">No student profile linked to this account.</p>
+                <h1 className="text-2xl font-bold text-gray-800">{t('auto_136')}</h1>
+                <p className="text-gray-500 mt-4">{t('auto_256')}</p>
             </div>
         );
     }
@@ -65,8 +67,8 @@ export default function ExamResultsPage() {
         <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8">
             <div className="glass-panel p-8 rounded-3xl text-center md:text-left relative overflow-hidden">
                 <div className="relative z-10">
-                    <h1 className="text-3xl font-black text-gray-800 tracking-tight">Exam Results</h1>
-                    <p className="text-gray-500 font-medium">Academic performance report</p>
+                    <h1 className="text-3xl font-black text-gray-800 tracking-tight">{t('auto_136')}</h1>
+                    <p className="text-gray-500 font-medium">{t('auto_019')}</p>
                 </div>
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-blue-200/50 to-cyan-200/50 rounded-full blur-3xl"></div>
             </div>
@@ -74,7 +76,7 @@ export default function ExamResultsPage() {
             {results.length === 0 ? (
                 <div className="glass-card text-center py-20 rounded-3xl">
                     <div className="text-6xl mb-6">📈</div>
-                    <p className="text-gray-400 font-medium text-xl">No exam results published yet.</p>
+                    <p className="text-gray-400 font-medium text-xl">{t('auto_243')}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -96,11 +98,11 @@ export default function ExamResultsPage() {
 
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-400 font-medium">Grade</span>
+                                    <span className="text-gray-400 font-medium">{t('auto_169')}</span>
                                     <span className="font-bold text-gray-800">{result.grade}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-400 font-medium">Date</span>
+                                    <span className="text-gray-400 font-medium">{t('auto_101')}</span>
                                     <span className="font-bold text-gray-800">{new Date(result.date).toLocaleDateString()}</span>
                                 </div>
                             </div>

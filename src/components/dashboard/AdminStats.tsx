@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api, { request, ApiEnvelopeError } from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 // ─── Configuration ─────────────────────────────────────────────
 const CURRENCY = 'JOD'; // Change this to localize: 'USD', 'EUR', etc.
@@ -38,6 +39,7 @@ type StudentFee = {
 
 // ─── Component ─────────────────────────────────────────────────
 export default function AdminStats() {
+    const { t } = useLang();
     const [view, setView] = useState<'overview' | 'classes' | 'students'>('overview');
     const [selectedClass, setSelectedClass] = useState<{ id: string; name: string } | null>(null);
 
@@ -113,19 +115,19 @@ export default function AdminStats() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading stats...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500">{t('auto_197')}</div>;
 
     if (error) {
         return (
             <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
-                <h3 className="text-red-800 font-semibold mb-2">Error Loading Stats</h3>
+                <h3 className="text-red-800 font-semibold mb-2">{t('auto_133')}</h3>
                 <p className="text-red-600">{error}</p>
                 <button
                     onClick={() => fetchStats()}
                     className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
-                    Retry
-                </button>
+                    {t('auto_307')}
+                                    </button>
             </div>
         );
     }
@@ -148,7 +150,7 @@ export default function AdminStats() {
                     className="group flex items-center text-sm font-bold text-violet-600 hover:text-violet-800 transition-colors mb-6 bg-white/50 px-4 py-2 rounded-full w-fit backdrop-blur-sm shadow-sm"
                 >
                     <span className="mr-2 transform group-hover:-translate-x-1 transition-transform">←</span>
-                    Back to {view === 'students' ? 'Classes' : 'Overview'}
+                    {t('auto_059')} {view === 'students' ? 'Classes' : 'Overview'}
                 </button>
             )}
 
@@ -163,7 +165,7 @@ export default function AdminStats() {
                             <span className="text-9xl">💰</span>
                         </div>
                         <div className="relative z-10">
-                            <h3 className="text-violet-500 text-sm font-black uppercase tracking-widest mb-1">Outstanding Fees</h3>
+                            <h3 className="text-violet-500 text-sm font-black uppercase tracking-widest mb-1">{t('auto_271')}</h3>
                             <div className="flex items-baseline space-x-1">
                                 <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600">
                                     {fmt(stats.totalOutstanding)}
@@ -171,7 +173,7 @@ export default function AdminStats() {
                                 <span className="text-xl font-bold text-gray-400">{CURRENCY}</span>
                             </div>
                             <div className="mt-6 flex items-center text-violet-600 text-sm font-bold bg-violet-50 w-fit px-3 py-1 rounded-full group-hover:bg-violet-100 transition-colors">
-                                <span>View Breakdown</span>
+                                <span>{t('auto_396')}</span>
                                 <span className="ml-2 transform group-hover:translate-x-1 transition-transform">→</span>
                             </div>
                         </div>
@@ -183,13 +185,13 @@ export default function AdminStats() {
                             <span className="text-9xl">👥</span>
                         </div>
                         <div className="relative z-10">
-                            <h3 className="text-cyan-500 text-sm font-black uppercase tracking-widest mb-1">Total Students</h3>
+                            <h3 className="text-cyan-500 text-sm font-black uppercase tracking-widest mb-1">{t('auto_383')}</h3>
                             <div className="flex items-baseline space-x-1">
                                 <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
                                     {stats.totalStudents || 0}
                                 </span>
                             </div>
-                            <p className="mt-6 text-sm text-gray-500 font-medium">Active academic enrollments</p>
+                            <p className="mt-6 text-sm text-gray-500 font-medium">{t('auto_024')}</p>
                         </div>
                     </div>
                 </div>
@@ -199,15 +201,15 @@ export default function AdminStats() {
                 <div className="glass-panel rounded-3xl overflow-hidden">
                     <div className="p-8 border-b border-white/30 bg-white/40">
                         <h2 className="text-2xl font-black text-gray-800 flex items-center">
-                            <span className="mr-3 text-2xl">🏫</span> Fee Breakdown by Class
-                        </h2>
+                            <span className="mr-3 text-2xl">🏫</span> {t('auto_160')}
+                                                    </h2>
                     </div>
                     <div className="p-4">
                         <table className="min-w-full">
                             <thead>
                                 <tr className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                    <th className="px-6 py-4">Class Name</th>
-                                    <th className="px-6 py-4 text-right">Outstanding Amount</th>
+                                    <th className="px-6 py-4">{t('auto_075')}</th>
+                                    <th className="px-6 py-4 text-right">{t('auto_270')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100/50">
@@ -230,7 +232,7 @@ export default function AdminStats() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={2} className="px-6 py-8 text-center text-gray-400 font-medium">No class data available.</td>
+                                        <td colSpan={2} className="px-6 py-8 text-center text-gray-400 font-medium">{t('auto_240')}</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -242,14 +244,14 @@ export default function AdminStats() {
             {view === 'students' && selectedClass && (
                 <div className="glass-panel rounded-3xl overflow-hidden">
                     <div className="p-8 border-b border-white/30 bg-white/40 flex justify-between items-center">
-                        <h2 className="text-2xl font-black text-gray-800">Outstanding: {selectedClass.name}</h2>
-                        <span className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-inner">Unpaid List</span>
+                        <h2 className="text-2xl font-black text-gray-800">{t('auto_272')} {selectedClass.name}</h2>
+                        <span className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-inner">{t('auto_389')}</span>
                     </div>
                     <div className="p-4">
                         {studentsLoading ? (
                             <div className="flex justify-center items-center py-12">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mr-3"></div>
-                                <span className="text-gray-500 font-medium">Loading students...</span>
+                                <span className="text-gray-500 font-medium">{t('auto_198')}</span>
                             </div>
                         ) : studentsError ? (
                             <div className="py-8 text-center">
@@ -258,15 +260,15 @@ export default function AdminStats() {
                                     onClick={() => fetchClassStudents(selectedClass.id)}
                                     className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors text-sm font-bold"
                                 >
-                                    Retry
-                                </button>
+                                    {t('auto_307')}
+                                                                        </button>
                             </div>
                         ) : (
                             <table className="min-w-full">
                                 <thead>
                                     <tr className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                        <th className="px-6 py-4">Student Name</th>
-                                        <th className="px-6 py-4 text-right">Amount Due</th>
+                                        <th className="px-6 py-4">{t('auto_359')}</th>
+                                        <th className="px-6 py-4 text-right">{t('auto_040')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100/50">
@@ -278,7 +280,7 @@ export default function AdminStats() {
                                     ))}
                                     {classStudents.length === 0 && (
                                         <tr>
-                                            <td colSpan={2} className="px-6 py-12 text-center text-gray-400 font-medium">No students found with outstanding fees.</td>
+                                            <td colSpan={2} className="px-6 py-12 text-center text-gray-400 font-medium">{t('auto_258')}</td>
                                         </tr>
                                     )}
                                 </tbody>

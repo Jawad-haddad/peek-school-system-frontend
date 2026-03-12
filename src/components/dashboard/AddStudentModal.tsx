@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type AddStudentModalProps = {
     isOpen: boolean;
@@ -16,6 +17,7 @@ type ClassOption = {
 };
 
 export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: preSelectedClassId }: AddStudentModalProps) {
+    const { t } = useLang();
     const [fullName, setFullName] = useState('');
     const [parentEmail, setParentEmail] = useState('');
     const [parentPhone, setParentPhone] = useState('');
@@ -51,7 +53,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
             setClasses(data);
         } catch (err) {
             console.error("Failed to load classes", err);
-            setError("Could not load classes. Please refresh.");
+            setError(t('auto_090'));
         } finally {
             setLoadingClasses(false);
         }
@@ -63,7 +65,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
         setError('');
 
         if (!selectedClassId) {
-            setError("Please select a class.");
+            setError(t('auto_289'));
             setLoading(false);
             return;
         }
@@ -111,8 +113,8 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="p-6 md:p-8 border-b border-gray-100 bg-gradient-to-r from-violet-50 via-white to-white flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-black text-gray-800 tracking-tight">Add New Student</h2>
-                        <p className="text-gray-500 text-sm font-medium">Create student profile & parent account</p>
+                        <h2 className="text-2xl font-black text-gray-800 tracking-tight">{t('auto_028')}</h2>
+                        <p className="text-gray-500 text-sm font-medium">{t('auto_097')}</p>
                     </div>
                     <button onClick={onClose} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
                         ✕
@@ -122,7 +124,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-5">
                     {error && (
                         <div className="p-4 text-sm font-bold text-red-600 bg-red-50 rounded-xl border border-red-100 flex items-start gap-2">
-                            <span>⚠️</span>
+                            <span>{t('auto_436')}</span>
                             <span>{error}</span>
                         </div>
                     )}
@@ -130,24 +132,24 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                     <div className="space-y-5">
                         {/* Input 1: Full Name */}
                         <div>
-                            <label className={labelClasses}>Full 4-Part Name</label>
+                            <label className={labelClasses}>{t('auto_164')}</label>
                             <input
                                 type="text"
                                 required
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className={inputClasses}
-                                placeholder="e.g. Leo Andres Messi Cuccittini"
+                                placeholder={t('auto_421')}
                             />
                         </div>
 
                         {/* Input 2: Class Dropdown */}
                         <div>
-                            <label className={labelClasses}>Class Assignment</label>
+                            <label className={labelClasses}>{t('auto_072')}</label>
                             {preSelectedClassId ? (
                                 <div className="px-4 py-3 bg-violet-50 text-violet-700 font-bold rounded-xl border border-violet-100 flex items-center gap-2">
-                                    🔒 Class Pre-selected
-                                </div>
+                                    {t('auto_451')}
+                                                                    </div>
                             ) : (
                                 <select
                                     value={selectedClassId}
@@ -155,7 +157,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                                     className={inputClasses}
                                     disabled={loadingClasses}
                                 >
-                                    <option value="">Select a Class</option>
+                                    <option value="">{t('auto_336')}</option>
                                     {classes.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
@@ -166,18 +168,18 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                         {/* Input 3: Gender & DOB */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className={labelClasses}>Gender</label>
+                                <label className={labelClasses}>{t('auto_166')}</label>
                                 <select
                                     value={gender}
                                     onChange={(e) => setGender(e.target.value)}
                                     className={inputClasses}
                                 >
-                                    <option value="MALE">Male</option>
-                                    <option value="FEMALE">Female</option>
+                                    <option value="MALE">{t('auto_206')}</option>
+                                    <option value="FEMALE">{t('auto_161')}</option>
                                 </select>
                             </div>
                             <div>
-                                <label className={labelClasses}>Date of Birth</label>
+                                <label className={labelClasses}>{t('auto_103')}</label>
                                 <input
                                     type="date"
                                     required
@@ -190,7 +192,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
 
                         {/* Input 4: Parent Email */}
                         <div>
-                            <label className={labelClasses}>Parent's Email (for Login)</label>
+                            <label className={labelClasses}>{t('auto_279')}</label>
                             <input
                                 type="email"
                                 required
@@ -204,7 +206,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                         {/* Input 5: Parent Phone */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className={labelClasses}>Parent Phone (Optional)</label>
+                                <label className={labelClasses}>{t('auto_277')}</label>
                                 <input
                                     type="tel"
                                     value={parentPhone}
@@ -214,20 +216,20 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                                 />
                             </div>
                             <div>
-                                <label className={labelClasses}>NFC Tag ID (Optional)</label>
+                                <label className={labelClasses}>{t('auto_225')}</label>
                                 <input
                                     type="text"
                                     value={nfcTagId}
                                     onChange={(e) => setNfcTagId(e.target.value)}
                                     className={inputClasses}
-                                    placeholder="Scan card..."
+                                    placeholder={t('auto_316')}
                                 />
                             </div>
                         </div>
 
                         {/* Input 6: Wallet */}
                         <div>
-                            <label className={labelClasses}>Initial Wallet Credit (JOD)</label>
+                            <label className={labelClasses}>{t('auto_180')}</label>
                             <input
                                 type="number"
                                 step="any"
@@ -245,8 +247,8 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             onClick={onClose}
                             className="px-6 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors font-bold"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={loading}
@@ -255,8 +257,8 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             {loading ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Saving...
-                                </>
+                                    {t('auto_313')}
+                                                                    </>
                             ) : (
                                 'Create Student'
                             )}

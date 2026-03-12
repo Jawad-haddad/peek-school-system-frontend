@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Role } from '@/lib/permissions';
 import Link from 'next/link';
+import { useLang } from '@/lib/LangProvider';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -11,6 +12,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, allowed }: ProtectedRouteProps) {
+    const { t } = useLang();
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const router = useRouter();
 
@@ -31,16 +33,16 @@ export default function ProtectedRoute({ children, allowed }: ProtectedRouteProp
                 <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-4xl mb-6 border-8 border-rose-100/50">
                     🔒
                 </div>
-                <h1 className="text-3xl font-black text-gray-800 tracking-tight mb-2">Access Denied</h1>
+                <h1 className="text-3xl font-black text-gray-800 tracking-tight mb-2">{t('auto_020')}</h1>
                 <p className="text-gray-500 font-medium mb-8 max-w-md">
-                    You do not have permission to view or modify this page. If you believe this is an error, please contact your administrator.
-                </p>
+                    {t('auto_412')}
+                                    </p>
                 <Link
                     href="/dashboard"
                     className="font-bold text-white bg-gray-900 hover:bg-gray-800 px-8 py-3 rounded-xl transition-all shadow-lg hover:-translate-y-0.5"
                 >
-                    Return to Dashboard
-                </Link>
+                    {t('auto_309')}
+                                    </Link>
             </div>
         );
     }

@@ -10,9 +10,11 @@ import {
     ChildRecord,
     HomeworkItem,
     parentApi,
+    communicationApi,
 } from '@/lib/api';
 import { getSafeUser } from '@/lib/auth';
 import { permissions } from '@/lib/permissions';
+import { useLang } from '@/lib/LangProvider';
 
 // ── Attendance status badge ───────────────────────────────────────────────────
 
@@ -24,6 +26,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 function AttendanceBadge({ status }: { status: string }) {
+    const { t } = useLang();
     const cls = STATUS_STYLES[status.toLowerCase()] ?? 'bg-gray-100 text-gray-600';
     return (
         <span className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${cls}`}>
@@ -37,19 +40,20 @@ function AttendanceBadge({ status }: { status: string }) {
 type BusStatus = { status: string; location?: string } | null;
 
 function BusPill({ busStatus, loading }: { busStatus: BusStatus; loading: boolean }) {
+    const { t } = useLang();
     if (loading) {
         return (
             <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-full">
                 <span className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
-                Loading…
-            </span>
+                {t('auto_203')}
+                            </span>
         );
     }
     if (!busStatus) {
         return (
             <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-500 text-xs font-bold px-3 py-1.5 rounded-full">
-                🚌 Unavailable
-            </span>
+                {t('auto_456')}
+                            </span>
         );
     }
     const st = (busStatus.status ?? '').toUpperCase();
@@ -65,6 +69,7 @@ function BusPill({ busStatus, loading }: { busStatus: BusStatus; loading: boolea
 // ── Per-child card ────────────────────────────────────────────────────────────
 
 function ChildCard({ child }: { child: ChildRecord }) {
+    const { t } = useLang();
     const [homework, setHomework] = useState<HomeworkItem[]>([]);
     const [busStatus, setBusStatus] = useState<BusStatus>(null);
     const [busLoading, setBusLoading] = useState(true);
@@ -115,17 +120,17 @@ function ChildCard({ child }: { child: ChildRecord }) {
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="font-bold text-gray-700 flex items-center gap-2">
                             <span className="bg-teal-100 text-teal-600 p-1 rounded-lg text-base">✅</span>
-                            Attendance
-                        </h4>
+                            {t('auto_056')}
+                                                    </h4>
                         <Link
                             href={`/dashboard/parent/children/${child.id}/attendance`}
                             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
                         >
-                            View Attendance →
-                        </Link>
+                            {t('auto_395')}
+                                                    </Link>
                     </div>
                     {lastAttendance.length === 0 ? (
-                        <p className="text-sm text-gray-400">No attendance records yet.</p>
+                        <p className="text-sm text-gray-400">{t('auto_237')}</p>
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {lastAttendance.map((rec, i) => (
@@ -145,17 +150,17 @@ function ChildCard({ child }: { child: ChildRecord }) {
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="font-bold text-gray-700 flex items-center gap-2">
                             <span className="bg-blue-100 text-blue-600 p-1 rounded-lg text-base">📚</span>
-                            Upcoming Homework
-                        </h4>
+                            {t('auto_391')}
+                                                    </h4>
                         <Link
                             href={`/dashboard/parent/children/${child.id}/homework`}
                             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
                         >
-                            View Homework →
-                        </Link>
+                            {t('auto_398')}
+                                                    </Link>
                     </div>
                     {homework.length === 0 ? (
-                        <p className="text-sm text-gray-400">No upcoming homework! 🎉</p>
+                        <p className="text-sm text-gray-400">{t('auto_263')}</p>
                     ) : (
                         <ul className="space-y-2">
                             {homework.map((hw) => (
@@ -165,7 +170,7 @@ function ChildCard({ child }: { child: ChildRecord }) {
                                         <p className="text-xs text-gray-500 font-medium mt-0.5">{hw.subject}</p>
                                     </div>
                                     <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg whitespace-nowrap border border-amber-100">
-                                        Due {new Date(hw.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        {t('auto_112')} {new Date(hw.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                     </span>
                                 </li>
                             ))}
@@ -178,21 +183,21 @@ function ChildCard({ child }: { child: ChildRecord }) {
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="font-bold text-gray-700 flex items-center gap-2">
                             <span className="bg-green-100 text-green-600 p-1 rounded-lg text-base">💳</span>
-                            Wallet
-                        </h4>
+                            {t('auto_404')}
+                                                    </h4>
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/dashboard/parent/children"
                                 className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
                             >
-                                View Invoices →
-                            </Link>
+                                {t('auto_399')}
+                                                            </Link>
                             <button
                                 onClick={() => setIsTopUpOpen(true)}
                                 className="bg-gray-900 text-white text-xs font-bold px-4 py-1.5 rounded-xl hover:scale-105 transition-transform flex items-center gap-1 shadow-sm"
                             >
-                                + Top Up
-                            </button>
+                                {t('auto_008')}
+                                                            </button>
                         </div>
                     </div>
                     {/* key forces re-mount (refetch) after successful top-up */}
@@ -216,8 +221,10 @@ function ChildCard({ child }: { child: ChildRecord }) {
 function ParentDashboardInner() {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [children, setChildren] = useState<ChildRecord[]>([]);
+    const [announcements, setAnnouncements] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { t } = useLang();
 
     useEffect(() => {
         const parsedUser = getSafeUser() as AuthUser | null;
@@ -225,17 +232,18 @@ function ParentDashboardInner() {
             setUser(parsedUser);
         }
 
-        parentApi
-            .getMyChildren()
-            .then((data) => {
-                setChildren(data);
-            })
-            .catch(() => {
-                setError('Could not load your children. Please refresh the page.');
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+        Promise.all([
+            parentApi.getMyChildren().catch(() => {
+                setError(t('auto_091'));
+                return [];
+            }),
+            communicationApi.getAnnouncements(5).catch(() => [])
+        ]).then(([childrenData, announcementsData]) => {
+            if (childrenData) setChildren(childrenData as ChildRecord[]);
+            if (announcementsData) setAnnouncements(announcementsData as any[]);
+        }).finally(() => {
+            setLoading(false);
+        });
     }, []);
 
     return (
@@ -244,9 +252,9 @@ function ParentDashboardInner() {
             <div className="mb-8">
                 <div className="glass-panel p-8 rounded-3xl text-center md:text-left flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
                     <div className="relative z-10">
-                        <h5 className="text-violet-500 font-bold uppercase tracking-widest text-sm mb-2">Welcome back</h5>
+                        <h5 className="text-violet-500 font-bold uppercase tracking-widest text-sm mb-2">{t('parent.welcome')}</h5>
                         <h2 className="text-4xl font-black text-gray-800 tracking-tight">
-                            {user?.fullName || 'Parent'}
+                            {user?.fullName || t('parent.parent')}
                         </h2>
                     </div>
                     <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-violet-200/50 to-fuchsia-200/50 rounded-full blur-3xl" />
@@ -256,6 +264,11 @@ function ParentDashboardInner() {
             {/* ── Loading skeleton ── */}
             {loading && (
                 <div className="space-y-6">
+                    <div className="bg-white rounded-3xl border border-gray-100 p-6 animate-pulse">
+                        <div className="h-6 bg-gray-200 rounded-xl w-40 mb-4" />
+                        <div className="h-4 bg-gray-100 rounded-xl w-full mb-2" />
+                        <div className="h-4 bg-gray-100 rounded-xl w-3/4" />
+                    </div>
                     {[1, 2].map((n) => (
                         <div key={n} className="bg-white rounded-3xl border border-gray-100 p-6 animate-pulse">
                             <div className="h-6 bg-gray-200 rounded-xl w-40 mb-4" />
@@ -269,6 +282,36 @@ function ParentDashboardInner() {
                 </div>
             )}
 
+            {/* ── Announcements ── */}
+            {!loading && !error && (
+                <div className="mb-8 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 border-b border-amber-100/50">
+                        <h3 className="font-extrabold text-xl text-gray-800 flex items-center gap-2">
+                            <span>📢</span> {t('announcements.title')}
+                        </h3>
+                    </div>
+                    <div className="p-6">
+                        {announcements.length === 0 ? (
+                            <p className="text-sm text-gray-400">{t('announcements.empty')}</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {announcements.map((ann, i) => (
+                                    <div key={i} className="border-b border-gray-50 last:border-0 pb-4 last:pb-0">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <h4 className="font-bold text-gray-800">{ann.title}</h4>
+                                            <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap ml-4">
+                                                {new Date(ann.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 line-clamp-2">{ann.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* ── Error state ── */}
             {!loading && error && (
                 <div className="bg-red-50 border border-red-100 text-red-700 rounded-2xl p-6 text-center font-medium">
@@ -279,9 +322,9 @@ function ParentDashboardInner() {
             {/* ── Empty state ── */}
             {!loading && !error && children.length === 0 && (
                 <div className="bg-gray-50 border border-dashed border-gray-200 rounded-3xl p-12 text-center text-gray-400">
-                    <p className="text-5xl mb-4">👨‍👧‍👦</p>
-                    <p className="font-bold text-lg text-gray-600">No children linked to your account</p>
-                    <p className="text-sm mt-2">Please contact the school administrator to link your children.</p>
+                    <p className="text-5xl mb-4">{t('auto_447')}</p>
+                    <p className="font-bold text-lg text-gray-600">{t('parent.noChildren')}</p>
+                    <p className="text-sm mt-2">{t('parent.noChildrenDesc')}</p>
                 </div>
             )}
 
@@ -298,6 +341,7 @@ function ParentDashboardInner() {
 }
 
 export default function ParentDashboard() {
+    const { t } = useLang();
     return (
         <ProtectedRoute allowed={permissions.isParent}>
             <ParentDashboardInner />

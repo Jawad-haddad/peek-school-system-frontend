@@ -7,6 +7,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { CardsSkeleton } from '@/components/ui/Skeletons';
 import { parentApi, HomeworkItem, formatApiError } from '@/lib/api';
 import { permissions } from '@/lib/permissions';
+import { useLang } from '@/lib/LangProvider';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ function formatDate(iso: string) {
 // ── Homework card ─────────────────────────────────────────────────────────────
 
 function HomeworkCard({ hw, overdue }: { hw: HomeworkItem; overdue: boolean }) {
+    const { t } = useLang();
     return (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden">
             {/* Top colour bar */}
@@ -91,6 +93,7 @@ function HomeworkSection({
 // ── Page inner ────────────────────────────────────────────────────────────────
 
 function HomeworkPageInner({ studentId }: { studentId: string }) {
+    const { t } = useLang();
     const [items, setItems] = useState<HomeworkItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -130,19 +133,19 @@ function HomeworkPageInner({ studentId }: { studentId: string }) {
                 href="/dashboard/parent/children"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
             >
-                ← Back to My Children
-            </Link>
+                {t('auto_434')}
+                            </Link>
 
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Homework</h1>
-                <p className="text-gray-500 text-sm mt-1">All assignments for this student</p>
+                <h1 className="text-3xl font-black text-gray-800 tracking-tight">{t('auto_173')}</h1>
+                <p className="text-gray-500 text-sm mt-1">{t('auto_039')}</p>
             </div>
 
             {/* Error */}
             {error && (
                 <div className="bg-red-50 border border-red-100 text-red-700 rounded-2xl p-4 flex items-center gap-3">
-                    <span className="text-xl">⚠️</span>
+                    <span className="text-xl">{t('auto_436')}</span>
                     <span className="font-medium">{error}</span>
                 </div>
             )}
@@ -154,14 +157,14 @@ function HomeworkPageInner({ studentId }: { studentId: string }) {
             {!loading && !error && (
                 <>
                     <HomeworkSection
-                        title="Upcoming"
+                        title={t('auto_390')}
                         emoji="📋"
                         items={upcoming}
                         overdue={false}
                         emptyMsg="No upcoming homework — enjoy the break! 🎉"
                     />
                     <HomeworkSection
-                        title="Past"
+                        title={t('auto_280')}
                         emoji="📁"
                         items={past}
                         overdue={true}
@@ -180,6 +183,7 @@ export default function HomeworkPage({
 }: {
     params: Promise<{ studentId: string }>;
 }) {
+    const { t } = useLang();
     const { studentId } = use(params);
 
     return (

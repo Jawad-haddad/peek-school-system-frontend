@@ -7,6 +7,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { TableSkeleton } from '@/components/ui/Skeletons';
 import { parentApi, StudentAttendanceDay, AttendanceStatus, formatApiError } from '@/lib/api';
 import { permissions } from '@/lib/permissions';
+import { useLang } from '@/lib/LangProvider';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 function StatusBadge({ status }: { status: string }) {
+    const { t } = useLang();
     const cls = STATUS_STYLES[status.toLowerCase()] ?? 'bg-gray-100 text-gray-600';
     return (
         <span className={`inline-block text-xs font-bold uppercase px-2.5 py-0.5 rounded-full ${cls}`}>
@@ -51,6 +53,7 @@ function SummaryPill({ label, count, color }: { label: string; count: number; co
 // ── Page inner ────────────────────────────────────────────────────────────────
 
 function AttendancePageInner({ studentId }: { studentId: string }) {
+    const { t } = useLang();
     const { from, to } = useMemo(defaultRange, []);
     const [records, setRecords] = useState<StudentAttendanceDay[]>([]);
     const [loading, setLoading] = useState(true);
@@ -85,21 +88,21 @@ function AttendancePageInner({ studentId }: { studentId: string }) {
                 href="/dashboard/parent/children"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
             >
-                ← Back to My Children
-            </Link>
+                {t('auto_434')}
+                            </Link>
 
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Attendance</h1>
+                <h1 className="text-3xl font-black text-gray-800 tracking-tight">{t('auto_056')}</h1>
                 <p className="text-gray-500 text-sm mt-1">
-                    Last 14 days · {from} → {to}
+                    {t('auto_186')} {from} → {to}
                 </p>
             </div>
 
             {/* Error */}
             {error && (
                 <div className="bg-red-50 border border-red-100 text-red-700 rounded-2xl p-4 flex items-center gap-3">
-                    <span className="text-xl">⚠️</span>
+                    <span className="text-xl">{t('auto_436')}</span>
                     <span className="font-medium">{error}</span>
                 </div>
             )}
@@ -113,21 +116,21 @@ function AttendancePageInner({ studentId }: { studentId: string }) {
                     {/* Summary pills */}
                     {records.length > 0 && (
                         <div className="flex flex-wrap gap-3">
-                            <SummaryPill label="Present" count={counts.present} color="bg-teal-50 text-teal-700" />
-                            <SummaryPill label="Absent" count={counts.absent} color="bg-red-50 text-red-700" />
-                            <SummaryPill label="Late" count={counts.late} color="bg-amber-50 text-amber-700" />
-                            <SummaryPill label="Excused" count={counts.excused} color="bg-indigo-50 text-indigo-700" />
+                            <SummaryPill label={t('auto_291')} count={counts.present} color="bg-teal-50 text-teal-700" />
+                            <SummaryPill label={t('auto_015')} count={counts.absent} color="bg-red-50 text-red-700" />
+                            <SummaryPill label={t('auto_187')} count={counts.late} color="bg-amber-50 text-amber-700" />
+                            <SummaryPill label={t('auto_140')} count={counts.excused} color="bg-indigo-50 text-indigo-700" />
                         </div>
                     )}
 
                     {/* Empty state */}
                     {records.length === 0 && (
                         <div className="text-center py-20 bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl">
-                            <p className="text-5xl mb-4">🗓️</p>
-                            <h2 className="text-xl font-bold text-gray-700 mb-2">No records found</h2>
+                            <p className="text-5xl mb-4">{t('auto_454')}</p>
+                            <h2 className="text-xl font-bold text-gray-700 mb-2">{t('auto_252')}</h2>
                             <p className="text-sm text-gray-400">
-                                No attendance was recorded for this period.
-                            </p>
+                                {t('auto_238')}
+                                                            </p>
                         </div>
                     )}
 
@@ -135,8 +138,8 @@ function AttendancePageInner({ studentId }: { studentId: string }) {
                     {records.length > 0 && (
                         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                             <div className="grid grid-cols-2 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wide">
-                                <span>Date</span>
-                                <span className="text-right">Status</span>
+                                <span>{t('auto_101')}</span>
+                                <span className="text-right">{t('auto_354')}</span>
                             </div>
                             <div className="divide-y divide-gray-50">
                                 {records.map((rec) => (
@@ -172,6 +175,7 @@ export default function AttendancePage({
 }: {
     params: Promise<{ studentId: string }>;
 }) {
+    const { t } = useLang();
     const { studentId } = use(params);
 
     return (

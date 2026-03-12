@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { posApi, financeApi } from '@/lib/api';
 import { toast } from '@/lib/toast-events';
 import { CardsSkeleton } from '@/components/ui/Skeletons';
+import { useLang } from '@/lib/LangProvider';
 
 type Product = {
     id: string;
@@ -19,6 +20,7 @@ type CartItem = {
 };
 
 export default function POSTerminalPage() {
+    const { t } = useLang();
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [studentId, setStudentId] = useState('');
@@ -82,7 +84,7 @@ export default function POSTerminalPage() {
 
     const handleCheckout = async () => {
         if (!studentId) {
-            toast.error("Please enter Student ID");
+            toast.error(t('auto_286'));
             return;
         }
         if (cart.length === 0) return;
@@ -95,7 +97,7 @@ export default function POSTerminalPage() {
             })));
             setCart([]);
             setStudentId('');
-            toast.success("Order processed successfully!");
+            toast.success(t('auto_268'));
         } catch (error) {
             console.error(error);
         } finally {
@@ -114,8 +116,8 @@ export default function POSTerminalPage() {
             <div className="w-2/3 flex flex-col gap-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-black text-gray-800">Canteen POS</h1>
-                        <p className="text-gray-500 font-medium">Select items to add to order</p>
+                        <h1 className="text-3xl font-black text-gray-800">{t('auto_066')}</h1>
+                        <p className="text-gray-500 font-medium">{t('auto_342')}</p>
                     </div>
                     <div className="flex gap-2">
                         {categories.map(cat => (
@@ -139,16 +141,16 @@ export default function POSTerminalPage() {
                     </div>
                 ) : error ? (
                     <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 flex items-center gap-4">
-                        <span className="text-2xl">⚠️</span>
+                        <span className="text-2xl">{t('auto_436')}</span>
                         <span className="font-bold">{error}</span>
                     </div>
                 ) : filteredProducts.length === 0 ? (
                     <div className="glass-card text-center py-20 rounded-3xl mx-auto w-full border-2 border-dashed border-indigo-100 bg-white/50 backdrop-blur-sm">
                         <div className="text-6xl mb-6">🛒</div>
-                        <h3 className="text-2xl font-black text-gray-800 mb-2">No Items Available</h3>
+                        <h3 className="text-2xl font-black text-gray-800 mb-2">{t('auto_230')}</h3>
                         <p className="text-gray-500 font-medium max-w-sm mx-auto">
-                            The canteen is currently empty or the selected category has no items.
-                        </p>
+                            {t('auto_374')}
+                                                            </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-3 gap-4 overflow-y-auto pr-2 pb-20">
@@ -172,14 +174,14 @@ export default function POSTerminalPage() {
             {/* Right: Cart & Checkout */}
             <div className="w-1/3 bg-white rounded-3xl shadow-xl flex flex-col overflow-hidden border border-gray-100">
                 <div className="p-6 bg-gray-50 border-b border-gray-100">
-                    <h2 className="text-xl font-black text-gray-800">Current Order</h2>
+                    <h2 className="text-xl font-black text-gray-800">{t('auto_099')}</h2>
                     <div className="mt-4">
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Student ID / NFC</label>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('auto_356')}</label>
                         <input
                             type="text"
                             value={studentId}
                             onChange={(e) => setStudentId(e.target.value)}
-                            placeholder="Scan or Type ID..."
+                            placeholder={t('auto_317')}
                             className="w-full bg-white border-2 border-indigo-100 focus:border-indigo-500 rounded-xl px-4 py-3 font-mono font-bold text-lg outline-none transition-colors"
                             autoFocus
                         />
@@ -190,7 +192,7 @@ export default function POSTerminalPage() {
                     {cart.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-gray-300">
                             <span className="text-6xl mb-2">🛒</span>
-                            <p className="font-bold">Cart is empty</p>
+                            <p className="font-bold">{t('auto_068')}</p>
                         </div>
                     ) : (
                         cart.map(item => (
@@ -221,7 +223,7 @@ export default function POSTerminalPage() {
 
                 <div className="p-6 bg-gray-50 border-t border-gray-100">
                     <div className="flex justify-between items-center mb-6">
-                        <span className="text-gray-500 font-bold">Total</span>
+                        <span className="text-gray-500 font-bold">{t('auto_381')}</span>
                         <span className="text-3xl font-black text-gray-800">${total.toFixed(2)}</span>
                     </div>
                     <button
@@ -232,12 +234,12 @@ export default function POSTerminalPage() {
                         {processing ? (
                             <>
                                 <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"></div>
-                                Processing...
-                            </>
+                                {t('auto_296')}
+                                                            </>
                         ) : (
                             <>
-                                <span>💳</span> Process Payment
-                            </>
+                                <span>💳</span> {t('auto_294')}
+                                                                </>
                         )}
                     </button>
                 </div>

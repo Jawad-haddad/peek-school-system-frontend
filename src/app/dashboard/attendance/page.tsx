@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { mvpApi, AttendanceStatus, StudentRecord } from '@/lib/api';
 import { getSafeUser } from '@/lib/auth';
+import { useLang } from '@/lib/LangProvider';
 
 type ClassInfo = { id: string; name: string };
 
@@ -15,6 +16,7 @@ const STATUS_CONFIG: Record<AttendanceStatus, { color: string; bg: string }> = {
 };
 
 export default function AttendancePage() {
+    const { t } = useLang();
     const [classes, setClasses] = useState<ClassInfo[]>([]);
     const [students, setStudents] = useState<StudentRecord[]>([]);
     const [selectedClass, setSelectedClass] = useState('');
@@ -104,12 +106,12 @@ export default function AttendancePage() {
 
     return (
         <div className="p-4 md:p-8 max-w-5xl mx-auto pb-32">
-            <h1 className="text-3xl font-black text-gray-800 mb-2">Mark Attendance</h1>
-            <p className="text-gray-500 mb-8">Record daily attendance for your classes</p>
+            <h1 className="text-3xl font-black text-gray-800 mb-2">{t('auto_214')}</h1>
+            <p className="text-gray-500 mb-8">{t('auto_301')}</p>
 
             {/* Class Selector */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-                <label className="block text-sm font-bold text-gray-700 mb-2">Select Class</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_329')}</label>
                 <select
                     className="w-full md:w-1/2 rounded-xl border-gray-200 bg-gray-50/50 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 font-medium text-gray-700"
                     value={selectedClass}
@@ -121,7 +123,7 @@ export default function AttendancePage() {
                         <option key={cls.id} value={cls.id}>{cls.name}</option>
                     ))}
                 </select>
-                {loadingClasses && <p className="text-xs text-gray-400 mt-2">Loading classes...</p>}
+                {loadingClasses && <p className="text-xs text-gray-400 mt-2">{t('auto_190')}</p>}
             </div>
 
             {/* Students List */}
@@ -129,29 +131,29 @@ export default function AttendancePage() {
                 loadingStudents ? (
                     <div className="text-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                        <p className="text-gray-500">Loading students...</p>
+                        <p className="text-gray-500">{t('auto_198')}</p>
                     </div>
                 ) : students.length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm max-w-2xl mx-auto">
                         <div className="text-5xl mb-4">🪑</div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">No Students Enrolled</h3>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{t('auto_231')}</h3>
                         <p className="text-gray-500 text-sm max-w-sm mx-auto">
-                            There are currently no students assigned to this class. Students must be enrolled by an administrator before attendance can be taken.
-                        </p>
+                            {t('auto_376')}
+                                                        </p>
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* Stats Bar */}
                         <div className="flex flex-wrap gap-3 items-center">
                             <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-bold">
-                                {students.length} Students
-                            </span>
+                                {students.length} {t('auto_363')}
+                                                                    </span>
                             <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
-                                ✓ {presentCount} Present
-                            </span>
+                                ✓ {presentCount} {t('auto_291')}
+                                                                    </span>
                             <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
-                                ✗ {absentCount} Absent
-                            </span>
+                                ✗ {absentCount} {t('auto_015')}
+                                                                    </span>
                         </div>
 
                         {/* Attendance Cards */}
@@ -167,7 +169,7 @@ export default function AttendancePage() {
                                             <div>
                                                 {/* fullName is the field returned by backend contract */}
                                                 <p className="font-bold text-gray-900">{student.fullName}</p>
-                                                <p className="text-xs text-gray-400">ID: {student.id.substring(0, 8)}...</p>
+                                                <p className="text-xs text-gray-400">{t('auto_176')} {student.id.substring(0, 8)}...</p>
                                             </div>
                                         </div>
 
@@ -199,9 +201,9 @@ export default function AttendancePage() {
                                 className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-3"
                             >
                                 {isSubmitting ? (
-                                    <><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Saving...</>
+                                    <><div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>{t('auto_313')}</>
                                 ) : (
-                                    <>✅ Save {students.length} Records</>
+                                    <>{t('auto_441')} {students.length} {t('auto_302')}</>
                                 )}
                             </button>
                         </div>

@@ -1238,3 +1238,8 @@ export const parentApi = {
 };
 
 export default api;
+
+export const communicationApi = {
+  getAnnouncements: (limit = 20) => request(() => api.get('/communication/announcements', { params: { limit } })),
+  sendBroadcast: (data: any) => request(() => api.post('/communication/broadcast', data))
+};

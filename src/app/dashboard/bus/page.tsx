@@ -7,8 +7,10 @@ import BusTripView from '@/components/dashboard/BusTripView';
 import { busApi } from '@/lib/api';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
+import { useLang } from '@/lib/LangProvider';
 
 export default function BusDashboardPage() {
+    const { t } = useLang();
     const [selectedTrip, setSelectedTrip] = useState<BusTrip | null>(null);
     const [routes, setRoutes] = useState<BusRoute[]>([]);
     const [loading, setLoading] = useState(true);
@@ -22,7 +24,7 @@ export default function BusDashboardPage() {
                 setRoutes(response.data);
             } catch (error) {
                 console.error("Failed to fetch routes", error);
-                setError("No assigned routes found or server error.");
+                setError(t('auto_236'));
             } finally {
                 setLoading(false);
             }
@@ -39,7 +41,7 @@ export default function BusDashboardPage() {
         } catch (error) {
             console.error("Failed to fetch active trip for route", error);
             // Optional: Show a toast or specific error for this action
-            alert("Could not load active trip for this route.");
+            alert(t('auto_089'));
         } finally {
             setLoading(false);
         }
@@ -75,8 +77,8 @@ export default function BusDashboardPage() {
                         onClick={() => window.location.reload()}
                         className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
                     >
-                        Retry
-                    </button>
+                        {t('auto_307')}
+                                            </button>
                 </div>
             );
         }
@@ -87,17 +89,17 @@ export default function BusDashboardPage() {
                 <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-8 pb-12 text-white shadow-lg rounded-b-[2.5rem]">
                     <div className="flex items-center gap-3 mb-2 opacity-80">
                         <Bus size={24} />
-                        <span className="text-sm font-bold uppercase tracking-widest">Bus Supervisor</span>
+                        <span className="text-sm font-bold uppercase tracking-widest">{t('auto_062')}</span>
                     </div>
-                    <h1 className="text-3xl font-black tracking-tight">Assigned Routes</h1>
-                    <p className="opacity-75 mt-1">Select a route to start the trip.</p>
+                    <h1 className="text-3xl font-black tracking-tight">{t('auto_050')}</h1>
+                    <p className="opacity-75 mt-1">{t('auto_338')}</p>
                 </div>
 
                 {/* Route List */}
                 <div className="p-4 -mt-8 space-y-4">
                     {routes.length === 0 ? (
                         <div className="bg-white p-8 rounded-3xl text-center text-gray-400 border border-gray-100 shadow-lg">
-                            <p>No routes assigned to you.</p>
+                            <p>{t('auto_253')}</p>
                         </div>
                     ) : (
                         routes.map((route) => (
@@ -125,8 +127,8 @@ export default function BusDashboardPage() {
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                            View Active Trip
-                                        </span>
+                                            {t('auto_394')}
+                                                                                    </span>
                                     </div>
                                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-violet-600 group-hover:text-white transition-all">
                                         <ChevronRight size={18} />

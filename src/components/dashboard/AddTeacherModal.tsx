@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { Plus, Trash2, X } from 'lucide-react';
+import { useLang } from '@/lib/LangProvider';
 
 type Teacher = {
     id: string;
@@ -33,6 +34,7 @@ type AddTeacherModalProps = {
 };
 
 export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToEdit }: AddTeacherModalProps) {
+    const { t } = useLang();
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -189,7 +191,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                         <h2 className="text-2xl font-black tracking-tight">
                             {teacherToEdit ? 'Edit Teacher' : 'Add New Teacher'}
                         </h2>
-                        <p className="text-white/80 text-sm">Manage faculty assignments</p>
+                        <p className="text-white/80 text-sm">{t('auto_212')}</p>
                     </div>
                     <button onClick={onClose} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
                         <X size={20} />
@@ -201,14 +203,14 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Full Name <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_165')} <span className="text-red-500">*</span></label>
                             <input
                                 type="text"
                                 required
                                 value={formData.fullName}
                                 onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                                 className="w-full border-2 border-gray-100 rounded-xl p-3 focus:outline-none focus:border-violet-500 transition-all font-medium"
-                                placeholder="e.g. John Doe"
+                                placeholder={t('auto_420')}
                             />
                         </div>
                         <div>
@@ -223,7 +225,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Phone</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_284')}</label>
                             <input
                                 type="text"
                                 value={formData.phone}
@@ -234,18 +236,18 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                         </div>
                         {/* NFC Tag Input */}
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">NFC Tag ID</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_224')}</label>
                             <input
                                 type="text"
                                 value={formData.nfcTagId}
                                 onChange={e => setFormData({ ...formData, nfcTagId: e.target.value })}
                                 className="w-full border-2 border-gray-100 rounded-xl p-3 focus:outline-none focus:border-violet-500 transition-all font-medium"
-                                placeholder="Scan card..."
+                                placeholder={t('auto_316')}
                             />
                         </div>
                         <div className="col-span-1 md:col-span-2">
                             <label className="block text-sm font-bold text-gray-700 mb-2">
-                                Password {teacherToEdit ? <span className="text-gray-400 font-normal">(Leave blank to keep current)</span> : <span className="text-red-500">*</span>}
+                                Password {teacherToEdit ? <span className="text-gray-400 font-normal">{t('auto_002')}</span> : <span className="text-red-500">*</span>}
                             </label>
                             <input
                                 type="password"
@@ -260,14 +262,14 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
 
                     <div className="pt-4 border-t border-gray-100">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-gray-800">Class & Subject Assignments</h3>
+                            <h3 className="text-lg font-bold text-gray-800">{t('auto_071')}</h3>
                             <button
                                 type="button"
                                 onClick={addAssignmentRow}
                                 className="text-sm bg-violet-50 text-violet-600 px-3 py-1.5 rounded-lg font-bold hover:bg-violet-100 transition-colors flex items-center gap-1"
                             >
-                                <Plus size={16} /> Add Class
-                            </button>
+                                <Plus size={16} /> {t('auto_026')}
+                                                            </button>
                         </div>
 
                         <div className="space-y-4">
@@ -282,13 +284,13 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                                     </button>
 
                                     <div className="mb-3 pr-8">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Class</label>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{t('auto_070')}</label>
                                         <select
                                             value={assignment.classId}
                                             onChange={(e) => updateAssignmentClass(index, e.target.value)}
                                             className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-violet-500/20 outline-none"
                                         >
-                                            <option value="">Select Class...</option>
+                                            <option value="">{t('auto_331')}</option>
                                             {classes.map(c => (
                                                 <option key={c.id} value={c.id}>{c.name}</option>
                                             ))}
@@ -297,7 +299,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
 
                                     {assignment.classId && (
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Subjects</label>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{t('auto_367')}</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {subjects.map(sub => {
                                                     const isSelected = assignment.subjectIds.includes(sub.id);
@@ -323,8 +325,8 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
 
                             {assignments.length === 0 && (
                                 <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-xl">
-                                    No classes assigned. Click "Add Class" to start.
-                                </div>
+                                    {t('auto_241')}
+                                                                    </div>
                             )}
                         </div>
                     </div>
@@ -335,8 +337,8 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                             onClick={onClose}
                             className="px-6 py-3 text-gray-600 font-bold hover:bg-gray-50 rounded-xl transition-colors"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={submitting}

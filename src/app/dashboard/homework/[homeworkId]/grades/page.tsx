@@ -11,6 +11,7 @@ import {
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
 import { TableSkeleton } from '@/components/ui/Skeletons';
+import { useLang } from '@/lib/LangProvider';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ function formatDate(iso: string) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HomeworkGradesPage() {
+    const { t } = useLang();
     const params = useParams();
     const router = useRouter();
     const homeworkId = params.homeworkId as string;
@@ -135,13 +137,13 @@ export default function HomeworkGradesPage() {
         <ProtectedRoute allowed={permissions.canGrade}>
             <div className="p-8 text-center">
                 <div className="bg-red-50 text-red-600 p-6 rounded-2xl border border-red-100 inline-block max-w-md">
-                    <p className="font-bold text-lg mb-2">⚠️ {loadError}</p>
+                    <p className="font-bold text-lg mb-2">{t('auto_436')} {loadError}</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
                     >
-                        Retry
-                    </button>
+                        {t('auto_307')}
+                                            </button>
                 </div>
             </div>
         </ProtectedRoute>
@@ -158,14 +160,14 @@ export default function HomeworkGradesPage() {
                         onClick={() => router.back()}
                         className="text-sm text-gray-400 hover:text-gray-600 mb-3 flex items-center gap-1 transition-colors"
                     >
-                        ← Back to Homework
-                    </button>
+                        {t('auto_433')}
+                                            </button>
                     <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
-                        <h1 className="text-2xl font-black tracking-tight mb-1">📝 Grading: {title}</h1>
+                        <h1 className="text-2xl font-black tracking-tight mb-1">{t('auto_450')} {title}</h1>
                         <div className="flex flex-wrap gap-4 text-purple-100 text-sm mt-2">
-                            <span>📅 Due: {formatDate(dueDate)}</span>
-                            <span>⭐ Max Points: {maxPoints}</span>
-                            <span>👥 {students.length} Student{students.length !== 1 ? 's' : ''}</span>
+                            <span>{t('auto_448')} {formatDate(dueDate)}</span>
+                            <span>{t('auto_445')} {maxPoints}</span>
+                            <span>👥 {students.length} {t('auto_355')}{students.length !== 1 ? 's' : ''}</span>
                         </div>
                     </div>
                 </div>
@@ -173,7 +175,7 @@ export default function HomeworkGradesPage() {
                 {/* Submit error banner */}
                 {submitError && (
                     <div className="mb-5 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm flex items-start gap-2">
-                        <span>⚠️</span><span>{submitError}</span>
+                        <span>{t('auto_436')}</span><span>{submitError}</span>
                     </div>
                 )}
 
@@ -181,8 +183,8 @@ export default function HomeworkGradesPage() {
                 {students.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
                         <div className="text-4xl mb-3">🎓</div>
-                        <h3 className="text-xl font-bold text-gray-700 mb-1">No Students Found</h3>
-                        <p className="text-gray-400 text-sm">This class appears to have no enrolled students.</p>
+                        <h3 className="text-xl font-bold text-gray-700 mb-1">{t('auto_232')}</h3>
+                        <p className="text-gray-400 text-sm">{t('auto_377')}</p>
                     </div>
                 ) : (
                     <>
@@ -191,11 +193,11 @@ export default function HomeworkGradesPage() {
                             <table className="min-w-full divide-y divide-gray-100">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">Student</th>
+                                        <th className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider w-1/3">{t('auto_355')}</th>
                                         <th className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider w-32">
-                                            Grade <span className="font-normal text-gray-400">(0–{maxPoints})</span>
+                                            {t('auto_169')} <span className="font-normal text-gray-400">(0–{maxPoints})</span>
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Comment <span className="font-normal text-gray-400">(optional)</span></th>
+                                        <th className="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">{t('auto_084')} <span className="font-normal text-gray-400">{t('auto_003')}</span></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
@@ -243,7 +245,7 @@ export default function HomeworkGradesPage() {
                                                         type="text"
                                                         value={g.comment}
                                                         onChange={e => setGradeField(student.studentId, 'comment', e.target.value)}
-                                                        placeholder="Good effort…"
+                                                        placeholder={t('auto_168')}
                                                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none bg-gray-50 focus:bg-white transition-all"
                                                     />
                                                 </td>
@@ -260,8 +262,8 @@ export default function HomeworkGradesPage() {
                                 const graded = students.filter(s => grades[s.studentId]?.grade !== '').length;
                                 return (
                                     <>
-                                        <span>✅ Graded: <strong className="text-gray-700">{graded}</strong></span>
-                                        <span>⏳ Pending: <strong className="text-gray-700">{students.length - graded}</strong></span>
+                                        <span>{t('auto_440')} <strong className="text-gray-700">{graded}</strong></span>
+                                        <span>{t('auto_435')} <strong className="text-gray-700">{students.length - graded}</strong></span>
                                     </>
                                 );
                             })()}

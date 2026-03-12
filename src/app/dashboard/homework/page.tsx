@@ -12,6 +12,7 @@ import {
 } from '@/lib/api';
 import { permissions, Role } from '@/lib/permissions';
 import { CardsSkeleton } from '@/components/ui/Skeletons';
+import { useLang } from '@/lib/LangProvider';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +51,7 @@ type ModalProps = {
 };
 
 function HomeworkModal({ editing, classes, onClose, onSaved }: ModalProps) {
+    const { t } = useLang();
     const [form, setForm] = useState<CreateHomeworkPayload>(
         editing
             ? {
@@ -103,44 +105,44 @@ function HomeworkModal({ editing, classes, onClose, onSaved }: ModalProps) {
                 <form onSubmit={handleSubmit} className="p-5 space-y-4">
                     {error && (
                         <div className="p-3 text-sm text-red-700 bg-red-50 rounded-lg border border-red-100 flex items-start gap-2">
-                            <span>⚠️</span><span>{error}</span>
+                            <span>{t('auto_436')}</span><span>{error}</span>
                         </div>
                     )}
 
                     <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Title</label>
-                        <input type="text" required value={form.title} onChange={set('title')} className={inp} placeholder="e.g., Algebra Worksheet 3" />
+                        <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">{t('auto_379')}</label>
+                        <input type="text" required value={form.title} onChange={set('title')} className={inp} placeholder={t('auto_424')} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Subject</label>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">{t('auto_364')}</label>
                             <select required value={form.subject} onChange={set('subject')} className={inp}>
-                                <option value="">Select…</option>
+                                <option value="">{t('auto_343')}</option>
                                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Class</label>
+                            <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">{t('auto_070')}</label>
                             <select required value={form.classId} onChange={set('classId')} className={inp}>
-                                <option value="">Select…</option>
+                                <option value="">{t('auto_343')}</option>
                                 {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Due Date</label>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">{t('auto_113')}</label>
                         <input type="date" required value={form.dueDate} onChange={set('dueDate')} className={inp} />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">Description</label>
-                        <textarea required rows={3} value={form.description} onChange={set('description')} className={inp} placeholder="Instructions for students…" />
+                        <label className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">{t('auto_109')}</label>
+                        <textarea required rows={3} value={form.description} onChange={set('description')} className={inp} placeholder={t('auto_181')} />
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">Cancel</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">{t('auto_065')}</button>
                         <button
                             type="submit"
                             disabled={saving}
@@ -158,6 +160,7 @@ function HomeworkModal({ editing, classes, onClose, onSaved }: ModalProps) {
 // ── Homework Page ─────────────────────────────────────────────────────────────
 
 export default function HomeworkPage() {
+    const { t } = useLang();
     const [role, setRole] = useState<Role>(null);
     const [classes, setClasses] = useState<SchoolClass[]>([]);
     const [filterClassId, setFilterClassId] = useState<string>('');
@@ -228,30 +231,30 @@ export default function HomeworkPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-                        Homework Diary
-                    </h1>
-                    <p className="text-gray-500 mt-1 text-sm">Assignments &amp; Tasks</p>
+                        {t('auto_175')}
+                                            </h1>
+                    <p className="text-gray-500 mt-1 text-sm">{t('auto_054')}</p>
                 </div>
                 {canEdit && (
                     <button
                         onClick={() => { setEditing(null); setModalOpen(true); }}
                         className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:shadow-lg transition-all hover:-translate-y-0.5"
                     >
-                        <span className="text-lg font-black">+</span> Assign Homework
-                    </button>
+                        <span className="text-lg font-black">+</span> {t('auto_048')}
+                                            </button>
                 )}
             </div>
 
             {/* Class filter */}
             {classes.length > 0 && (
                 <div className="flex items-center gap-3">
-                    <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Filter by Class:</label>
+                    <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">{t('auto_162')}</label>
                     <select
                         value={filterClassId}
                         onChange={e => setFilterClassId(e.target.value)}
                         className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-purple-400 outline-none"
                     >
-                        <option value="">All Classes</option>
+                        <option value="">{t('auto_037')}</option>
                         {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                 </div>
@@ -260,7 +263,7 @@ export default function HomeworkPage() {
             {/* Error banner */}
             {error && (
                 <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
-                    <span className="text-lg">⚠️</span><span className="font-medium">{error}</span>
+                    <span className="text-lg">{t('auto_436')}</span><span className="font-medium">{error}</span>
                 </div>
             )}
 
@@ -270,15 +273,15 @@ export default function HomeworkPage() {
             ) : list.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
                     <div className="text-5xl mb-4">📚</div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-1">No Assignments Yet</h3>
-                    <p className="text-gray-400 text-sm">Your homework list is empty.</p>
+                    <h3 className="text-xl font-bold text-gray-800 mb-1">{t('auto_228')}</h3>
+                    <p className="text-gray-400 text-sm">{t('auto_414')}</p>
                     {canEdit && (
                         <button
                             onClick={() => { setEditing(null); setModalOpen(true); }}
                             className="mt-5 text-purple-600 hover:text-purple-800 font-semibold text-sm underline"
                         >
-                            Create one now
-                        </button>
+                            {t('auto_096')}
+                                                        </button>
                     )}
                 </div>
             ) : (
@@ -323,24 +326,24 @@ export default function HomeworkPage() {
                                             <Link
                                                 href={`/dashboard/homework/${hw.id}/grades`}
                                                 className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                title="Grade"
+                                                title={t('auto_169')}
                                             >
                                                 🎓
                                             </Link>
                                             <button
                                                 onClick={() => { setEditing(hw); setModalOpen(true); }}
                                                 className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="Edit"
+                                                title={t('auto_118')}
                                             >
-                                                ✏️
-                                            </button>
+                                                {t('auto_442')}
+                                                                                            </button>
                                             <button
                                                 onClick={() => handleDelete(hw)}
                                                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Delete"
+                                                title={t('auto_105')}
                                             >
-                                                🗑️
-                                            </button>
+                                                {t('auto_452')}
+                                                                                            </button>
                                         </div>
                                     )}
                                 </div>

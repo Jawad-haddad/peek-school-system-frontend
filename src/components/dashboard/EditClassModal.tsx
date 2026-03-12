@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { mvpApi, AcademicYear, SchoolClass } from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type EditClassModalProps = {
     isOpen: boolean;
@@ -11,6 +12,7 @@ type EditClassModalProps = {
 };
 
 export default function EditClassModal({ isOpen, onClose, onSuccess, classData }: EditClassModalProps) {
+    const { t } = useLang();
     const [name, setName] = useState('');
     const [selectedYearId, setSelectedYearId] = useState('');
     const [defaultFee, setDefaultFee] = useState<number | ''>('');
@@ -51,7 +53,7 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name || !selectedYearId) {
-            setError('Class name and academic year are required.');
+            setError(t('auto_080'));
             return;
         }
         setIsSubmitting(true);
@@ -86,7 +88,7 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                    <h2 className="text-xl font-black text-gray-800 tracking-tight">Edit Class</h2>
+                    <h2 className="text-xl font-black text-gray-800 tracking-tight">{t('auto_119')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
                 </div>
 
@@ -98,7 +100,7 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
                     )}
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Class Name</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_075')}</label>
                         <input
                             type="text"
                             required
@@ -109,7 +111,7 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Academic Year</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_016')}</label>
                         <select
                             value={selectedYearId}
                             onChange={(e) => setSelectedYearId(e.target.value)}
@@ -117,7 +119,7 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
                             disabled={loadingYears}
                             required
                         >
-                            <option value="">Select Year</option>
+                            <option value="">{t('auto_335')}</option>
                             {academicYears.map(year => (
                                 <option key={year.id} value={year.id}>
                                     {year.name} {year.isActive && '(Active)'}
@@ -127,7 +129,7 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Annual Fee (JOD)</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_043')}</label>
                         <input
                             type="number"
                             value={defaultFee}
@@ -142,8 +144,8 @@ export default function EditClassModal({ isOpen, onClose, onSuccess, classData }
                             onClick={onClose}
                             className="px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-bold mr-3"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={isSubmitting || loadingYears}

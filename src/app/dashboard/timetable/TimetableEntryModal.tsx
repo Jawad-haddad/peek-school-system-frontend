@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLang } from '@/lib/LangProvider';
 
 type Props = {
   classId: string;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function TimetableEntryModal({ classId, day, period, currentSubjectId, currentTeacherId, onClose, onSuccess }: Props) {
+    const { t } = useLang();
   const [subjects, setSubjects] = useState<{ id: string, name: string }[]>([]);
   const [teachers, setTeachers] = useState<{ id: string, fullName: string }[]>([]);
 
@@ -67,7 +69,7 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
       }, { headers: { Authorization: `Bearer ${token}` } });
       onSuccess();
     } catch (err) {
-      alert('Failed to save entry');
+      alert(t('auto_153'));
       console.error(err);
     } finally { setLoading(false); }
   };
@@ -75,31 +77,31 @@ export default function TimetableEntryModal({ classId, day, period, currentSubje
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-96 shadow-xl">
-        <h2 className="text-xl font-bold mb-4">Edit {day} - Period {period}</h2>
+        <h2 className="text-xl font-bold mb-4">{t('auto_118')} {day} {t('auto_009')} {period}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Subject</label>
+            <label className="block text-sm font-medium text-gray-700">{t('auto_364')}</label>
             {subjects.length === 0 ? (
               <div className="text-sm font-medium text-amber-600 bg-amber-50 p-2 rounded border border-amber-200 mt-1">
-                No subjects yet. <a href="/dashboard/subjects" className="underline font-bold">Create subjects first.</a>
+                {t('auto_260')} <a href="/dashboard/subjects" className="underline font-bold">{t('auto_098')}</a>
               </div>
             ) : (
               <select required value={subjectId} onChange={e => setSubjectId(e.target.value)} className="w-full border p-2 rounded mt-1">
-                <option value="">Select Subject</option>
+                <option value="">{t('auto_333')}</option>
                 {subjects.map(s => <option key={s.id} value={s.id}>{s.name || (s as any).subjectName}</option>)}
               </select>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Teacher</label>
+            <label className="block text-sm font-medium text-gray-700">{t('auto_371')}</label>
             <select required value={teacherId} onChange={e => setTeacherId(e.target.value)} className="w-full border p-2 rounded">
-              <option value="">Select Teacher</option>
+              <option value="">{t('auto_334')}</option>
               {teachers.map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
             </select>
           </div>
           <div className="flex justify-end gap-2 mt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600">Cancel</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600">{t('auto_065')}</button>
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-indigo-600 text-white rounded">{t('auto_311')}</button>
           </div>
         </form>
       </div>

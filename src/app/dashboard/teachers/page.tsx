@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
 import AddTeacherModal from '@/components/dashboard/AddTeacherModal';
+import { useLang } from '@/lib/LangProvider';
 
 type Teacher = {
     id: string;
@@ -30,6 +31,7 @@ interface GroupedAssignment {
 type SubjectMap = Record<string, string>; // id -> name
 
 export default function TeachersPage() {
+    const { t } = useLang();
     const router = useRouter();
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [loading, setLoading] = useState(true);
@@ -151,7 +153,7 @@ export default function TeachersPage() {
     }, [JSON.stringify(subjectMap)]);
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this teacher?")) return;
+        if (!confirm(t('auto_045'))) return;
 
         try {
             await api.delete(`/school/teachers/${id}`);
@@ -177,43 +179,43 @@ export default function TeachersPage() {
             <div className="p-4 md:p-8 space-y-8">
                 <div className="glass-panel p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-gray-800 tracking-tight">Manage Teachers</h1>
-                        <p className="text-gray-500 font-medium">Faculty and staff directory</p>
+                        <h1 className="text-3xl font-black text-gray-800 tracking-tight">{t('auto_209')}</h1>
+                        <p className="text-gray-500 font-medium">{t('auto_144')}</p>
                     </div>
                     <button
                         onClick={() => handleOpenModal()}
                         className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-6 py-3 rounded-2xl hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-0.5 transition-all flex items-center gap-2 font-bold"
                     >
-                        <span className="text-xl">+</span> Add Teacher
-                    </button>
+                        <span className="text-xl">+</span> {t('auto_032')}
+                                            </button>
                 </div>
 
                 {error && (
                     <div className="bg-red-50 text-red-600 p-4 rounded-2xl border border-red-100 font-bold text-sm">
-                        ⚠️ {error}
+                        {t('auto_436')} {error}
                     </div>
                 )}
 
                 {loading && teachers.length === 0 ? (
                     <div className="text-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-violet-600 mx-auto mb-4"></div>
-                        <p className="text-violet-500 font-bold animate-pulse">Loading teachers...</p>
+                        <p className="text-violet-500 font-bold animate-pulse">{t('auto_200')}</p>
                     </div>
                 ) : teachers.length === 0 ? (
                     <div className="glass-card text-center py-20 rounded-3xl">
-                        <div className="text-6xl mb-6">👨‍🏫</div>
-                        <p className="text-gray-400 font-medium text-xl">No teachers found.</p>
+                        <div className="text-6xl mb-6">{t('auto_446')}</div>
+                        <p className="text-gray-400 font-medium text-xl">{t('auto_261')}</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {/* Header Row */}
                         <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                            <div className="col-span-3">Teacher</div>
-                            <div className="col-span-2">Contact</div>
-                            <div className="col-span-2">Phone</div>
+                            <div className="col-span-3">{t('auto_371')}</div>
+                            <div className="col-span-2">{t('auto_087')}</div>
+                            <div className="col-span-2">{t('auto_284')}</div>
                             <div className="col-span-2">NFC</div>
-                            <div className="col-span-2">Assignments (Class & Subjects)</div>
-                            <div className="col-span-1 text-right">Actions</div>
+                            <div className="col-span-2">{t('auto_055')}</div>
+                            <div className="col-span-1 text-right">{t('auto_023')}</div>
                         </div>
 
                         {/* Teacher Rows */}
@@ -225,7 +227,7 @@ export default function TeachersPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-gray-800 group-hover:text-violet-700 transition-colors">{teacher.fullName}</h3>
-                                        <span className="text-xs text-violet-500 font-bold bg-violet-50 px-2 py-0.5 rounded-md border border-violet-100">Faculty</span>
+                                        <span className="text-xs text-violet-500 font-bold bg-violet-50 px-2 py-0.5 rounded-md border border-violet-100">{t('auto_143')}</span>
                                     </div>
                                 </div>
 
@@ -239,7 +241,7 @@ export default function TeachersPage() {
                                             {teacher.phone || teacher.phoneNumber}
                                         </a>
                                     ) : (
-                                        <span className="text-gray-400 italic">No phone</span>
+                                        <span className="text-gray-400 italic">{t('auto_250')}</span>
                                     )}
                                 </div>
 
@@ -270,14 +272,14 @@ export default function TeachersPage() {
                                                                 </span>
                                                             ))
                                                         ) : (
-                                                            <span className="text-[10px] text-gray-400 italic px-1">All Subjects / General</span>
+                                                            <span className="text-[10px] text-gray-400 italic px-1">{t('auto_038')}</span>
                                                         )}
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <span className="text-xs text-gray-400 italic">No active assignments</span>
+                                        <span className="text-xs text-gray-400 italic">{t('auto_234')}</span>
                                     )}
                                 </div>
 
@@ -285,17 +287,17 @@ export default function TeachersPage() {
                                     <button
                                         onClick={() => handleOpenModal(teacher)}
                                         className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                        title="Edit"
+                                        title={t('auto_118')}
                                     >
-                                        ✏️
-                                    </button>
+                                        {t('auto_442')}
+                                                                            </button>
                                     <button
                                         onClick={() => handleDelete(teacher.id)}
                                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Delete"
+                                        title={t('auto_105')}
                                     >
-                                        🗑️
-                                    </button>
+                                        {t('auto_452')}
+                                                                            </button>
                                 </div>
                             </div>
                         ))}

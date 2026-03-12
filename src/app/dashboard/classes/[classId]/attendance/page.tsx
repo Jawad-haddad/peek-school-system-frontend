@@ -14,6 +14,7 @@ import {
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
 import { TableSkeleton } from '@/components/ui/Skeletons';
+import { useLang } from '@/lib/LangProvider';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ function formatShortDate(iso: string) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ClassAttendancePage() {
+    const { t } = useLang();
     const params = useParams();
     const router = useRouter();
     const classId = params.classId as string;
@@ -171,8 +173,8 @@ export default function ClassAttendancePage() {
                         onClick={() => window.location.reload()}
                         className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
                     >
-                        Retry
-                    </button>
+                        {t('auto_307')}
+                                            </button>
                 </div>
             </div>
         </ProtectedRoute>
@@ -187,11 +189,11 @@ export default function ClassAttendancePage() {
                 {/* Header row */}
                 <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Take Attendance</h1>
-                        <p className="text-gray-500 text-sm mt-0.5">Class ID: {classId}</p>
+                        <h1 className="text-2xl font-bold text-gray-800">{t('auto_370')}</h1>
+                        <p className="text-gray-500 text-sm mt-0.5">{t('auto_074')} {classId}</p>
                     </div>
                     <div>
-                        <label htmlFor="attendance-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <label htmlFor="attendance-date" className="block text-sm font-medium text-gray-700 mb-1">{t('auto_101')}</label>
                         <input
                             id="attendance-date"
                             type="date"
@@ -210,7 +212,7 @@ export default function ClassAttendancePage() {
                         {/* Validation error */}
                         {submitError && (
                             <div className="mb-4 bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-medium text-sm flex items-start gap-2">
-                                <span>⚠️</span><span>{submitError}</span>
+                                <span>{t('auto_436')}</span><span>{submitError}</span>
                             </div>
                         )}
 
@@ -218,7 +220,7 @@ export default function ClassAttendancePage() {
                         {statusLoading && (
                             <div className="mb-3 text-xs text-indigo-500 font-semibold animate-pulse flex items-center gap-1.5">
                                 <span className="inline-block w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
-                                Loading saved statuses for {formatShortDate(date)}…
+                                {t('auto_194')} {formatShortDate(date)}…
                             </div>
                         )}
 
@@ -253,8 +255,8 @@ export default function ClassAttendancePage() {
 
                             {students.length === 0 && (
                                 <div className="text-center py-10 text-gray-400 bg-white rounded-xl border-2 border-dashed border-gray-100">
-                                    No students found in this class.
-                                </div>
+                                    {t('auto_257')}
+                                                                    </div>
                             )}
                         </div>
                     </div>
@@ -262,7 +264,7 @@ export default function ClassAttendancePage() {
                     {/* ── Right: History panel ────────────────────────────── */}
                     {history.length > 0 && (
                         <aside className="lg:w-64 shrink-0">
-                            <h2 className="text-sm font-black text-gray-600 uppercase tracking-wider mb-3">Last 14 Days</h2>
+                            <h2 className="text-sm font-black text-gray-600 uppercase tracking-wider mb-3">{t('auto_185')}</h2>
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50 overflow-hidden">
                                 {history.map((day) => (
                                     <button

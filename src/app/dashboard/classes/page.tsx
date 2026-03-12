@@ -5,8 +5,10 @@ import { mvpApi, SchoolClass } from '@/lib/api';
 import AddClassModal from '@/components/dashboard/AddClassModal';
 import EditClassModal from '@/components/dashboard/EditClassModal';
 import { CardsSkeleton } from '@/components/ui/Skeletons';
+import { useLang } from '@/lib/LangProvider';
 
 export default function ClassesPage() {
+    const { t } = useLang();
     const [classes, setClasses] = useState<SchoolClass[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -46,7 +48,7 @@ export default function ClassesPage() {
     }, []);
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure? This will affect all students in this class.")) return;
+        if (!confirm(t('auto_046'))) return;
         try {
             await mvpApi.deleteClass(id);
             setClasses(prev => prev.filter(c => c.id !== id));
@@ -70,8 +72,8 @@ export default function ClassesPage() {
         <div className="p-4 md:p-8 space-y-8">
             <div className="glass-panel p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-800 tracking-tight">Manage Classes</h1>
-                    <p className="text-gray-500 font-medium">Overview of all academic classes</p>
+                    <h1 className="text-3xl font-black text-gray-800 tracking-tight">{t('auto_207')}</h1>
+                    <p className="text-gray-500 font-medium">{t('auto_273')}</p>
                 </div>
                 {/* Only ADMIN can create classes */}
                 {isAdmin && (
@@ -79,8 +81,8 @@ export default function ClassesPage() {
                         onClick={() => setIsModalOpen(true)}
                         className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-6 py-3 rounded-2xl hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-0.5 transition-all flex items-center gap-2 font-bold"
                     >
-                        <span className="text-xl">+</span> New Class
-                    </button>
+                        <span className="text-xl">+</span> {t('auto_227')}
+                                            </button>
                 )}
             </div>
 
@@ -88,22 +90,22 @@ export default function ClassesPage() {
                 <CardsSkeleton count={6} />
             ) : error ? (
                 <div className="bg-red-50 text-red-600 p-6 rounded-3xl border border-red-100 flex items-center gap-4">
-                    <span className="text-2xl">⚠️</span>
+                    <span className="text-2xl">{t('auto_436')}</span>
                     <span className="font-bold">{error}</span>
                 </div>
             ) : classes.length === 0 ? (
                 <div className="glass-card text-center py-24 rounded-3xl mx-auto max-w-2xl border-2 border-dashed border-violet-200 bg-white/50 backdrop-blur-sm">
                     <div className="text-6xl mb-6">🏫</div>
-                    <h3 className="text-2xl font-black text-gray-800 mb-2">No Classes Found</h3>
+                    <h3 className="text-2xl font-black text-gray-800 mb-2">{t('auto_229')}</h3>
                     <p className="text-gray-500 font-medium text-lg mb-8 max-w-sm mx-auto">
-                        Your school currently has no classes configured in the system.
-                    </p>
+                        {t('auto_415')}
+                                                    </p>
                     {isAdmin && (
                         <button
                             onClick={() => setIsModalOpen(true)}
                             className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-8 py-4 rounded-2xl hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-1 transition-all inline-flex items-center gap-2 font-bold text-lg"
                         >
-                            <span>+ Create Your First Class</span>
+                            <span>{t('auto_006')}</span>
                         </button>
                     )}
                 </div>
@@ -118,8 +120,8 @@ export default function ClassesPage() {
                                         🏫
                                     </div>
                                     <span className="bg-violet-50 text-violet-600 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-violet-100 group-hover:bg-violet-600 group-hover:text-white transition-colors">
-                                        {cls._count?.students || 0} Students
-                                    </span>
+                                        {cls._count?.students || 0} {t('auto_363')}
+                                                                            </span>
                                 </div>
                                 <h3 className="text-2xl font-black text-gray-800 mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-violet-600 group-hover:to-fuchsia-600 transition-all">{cls.name}</h3>
                                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
@@ -133,10 +135,10 @@ export default function ClassesPage() {
                                     <button
                                         onClick={(e) => handleEditClick(e, cls)}
                                         className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                                        title="Edit Class"
+                                        title={t('auto_119')}
                                     >
-                                        ✏️
-                                    </button>
+                                        {t('auto_442')}
+                                                                            </button>
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -144,10 +146,10 @@ export default function ClassesPage() {
                                             handleDelete(cls.id);
                                         }}
                                         className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                                        title="Delete Class"
+                                        title={t('auto_106')}
                                     >
-                                        🗑️
-                                    </button>
+                                        {t('auto_452')}
+                                                                            </button>
                                 </div>
                             )}
                         </div>
@@ -162,7 +164,7 @@ export default function ClassesPage() {
                             <div className="w-16 h-16 rounded-full bg-violet-100/50 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform">
                                 +
                             </div>
-                            <span className="font-bold text-lg">Create New Class</span>
+                            <span className="font-bold text-lg">{t('auto_094')}</span>
                         </button>
                     )}
                 </div>

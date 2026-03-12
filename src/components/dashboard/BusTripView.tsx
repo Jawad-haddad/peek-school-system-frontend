@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { BusTrip, BusTripEntry, BusTripEntryStatus } from '@/lib/types/bus';
 import { User, CheckCircle, MapPin, XCircle, LogOut, Navigation, Bus, Clock, Loader2, AlertCircle } from 'lucide-react';
 import { busApi } from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 interface BusTripViewProps {
     trip: BusTrip;
@@ -11,6 +12,7 @@ interface BusTripViewProps {
 }
 
 export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewProps) {
+    const { t } = useLang();
     const [trip, setTrip] = useState<BusTrip>(initialTrip);
     const [isMutating, setIsMutating] = useState(false); // Global mutation lock
     const [tripLoading, setTripLoading] = useState(false); // For trip start/end actions
@@ -43,7 +45,7 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
 
         } catch (error) {
             console.error("Failed to update status", error);
-            alert("Failed to update student status. Please try again.");
+            alert(t('auto_158'));
         } finally {
             setIsMutating(false);
         }
@@ -85,7 +87,7 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
             setTrip(response.data);
         } catch (error) {
             console.error("Start Trip Failed", error);
-            alert("Failed to start trip.");
+            alert(t('auto_156'));
         } finally {
             setTripLoading(false);
         }
@@ -100,7 +102,7 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
             onBack();
         } catch (error) {
             console.error("End Trip Failed", error);
-            alert("Failed to end trip.");
+            alert(t('auto_147'));
         } finally {
             setTripLoading(false);
         }
@@ -112,8 +114,8 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
             <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                     <button onClick={onBack} className="text-sm font-medium text-gray-500 hover:text-gray-800">
-                        &larr; Routes
-                    </button>
+                        {t('auto_001')}
+                                            </button>
                     <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${trip.status === 'IN_PROGRESS' ? 'bg-green-100 text-green-700 animate-pulse' : 'bg-gray-100 text-gray-600'}`}>
                             {trip.status.replace('_', ' ')}
@@ -129,8 +131,8 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
                             className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-green-200 flex items-center justify-center gap-2 transition-all active:scale-95"
                         >
                             {tripLoading ? <Loader2 className="animate-spin" /> : <Navigation size={18} />}
-                            Start Trip
-                        </button>
+                            {t('auto_350')}
+                                                    </button>
                     )}
                     {trip.status === 'IN_PROGRESS' && (
                         <button
@@ -139,8 +141,8 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
                             className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-red-200 flex items-center justify-center gap-2 transition-all active:scale-95"
                         >
                             {tripLoading ? <Loader2 className="animate-spin" /> : <LogOut size={18} />}
-                            End Trip
-                        </button>
+                            {t('auto_129')}
+                                                    </button>
                     )}
                 </div>
             </div>
@@ -152,14 +154,14 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
                         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500">
                             <AlertCircle size={24} />
                         </div>
-                        <h3 className="font-bold text-red-800 mb-1">Connection Lost</h3>
-                        <p className="text-sm text-red-600 mb-4">Could not sync with the server.</p>
+                        <h3 className="font-bold text-red-800 mb-1">{t('auto_086')}</h3>
+                        <p className="text-sm text-red-600 mb-4">{t('auto_092')}</p>
                         <button
                             onClick={refreshTrip}
                             className="bg-red-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-lg shadow-red-200 active:scale-95 transition-all"
                         >
-                            Retry Connection
-                        </button>
+                            {t('auto_308')}
+                                                    </button>
                     </div>
                 )}
 
@@ -177,7 +179,7 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
                                 <h3 className={`text-gray-800 ${entry.status === 'BOARDED' ? 'font-black text-green-800' : 'font-bold'}`}>
                                     {entry.studentName}
                                 </h3>
-                                <p className="text-xs text-gray-400 font-mono">ID: {entry.studentId.slice(0, 6)}</p>
+                                <p className="text-xs text-gray-400 font-mono">{t('auto_176')} {entry.studentId.slice(0, 6)}</p>
                             </div>
                         </div>
 
@@ -222,16 +224,16 @@ export default function BusTripView({ trip: initialTrip, onBack }: BusTripViewPr
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-6 flex justify-around text-center text-xs font-bold text-gray-400 uppercase tracking-wider z-10">
                 <div>
                     <span className="block text-xl text-gray-800 font-black">{trip.entries.length}</span>
-                    Total
-                </div>
+                    {t('auto_381')}
+                                    </div>
                 <div>
                     <span className="block text-xl text-green-600 font-black">{trip.entries.filter(e => e.status === 'BOARDED').length}</span>
-                    On Bus
-                </div>
+                    {t('auto_264')}
+                                    </div>
                 <div>
                     <span className="block text-xl text-blue-600 font-black">{trip.entries.filter(e => e.status === 'DROPPED_OFF').length}</span>
-                    Dropped
-                </div>
+                    {t('auto_111')}
+                                    </div>
             </div>
         </div>
     );

@@ -6,6 +6,7 @@ import api, { statsApi } from '@/lib/api';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { permissions } from '@/lib/permissions';
 import { DashboardSkeleton } from '@/components/ui/Skeletons';
+import { useLang } from '@/lib/LangProvider';
 
 type FeeClassBreakdown = {
     id: string;
@@ -22,6 +23,7 @@ type FeeStats = {
 };
 
 export default function ReportsPage() {
+    const { t } = useLang();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -93,8 +95,8 @@ export default function ReportsPage() {
                             onClick={() => window.location.reload()}
                             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-colors"
                         >
-                            Retry
-                        </button>
+                            {t('auto_307')}
+                                                    </button>
                     </div>
                 </div>
             );
@@ -121,8 +123,8 @@ export default function ReportsPage() {
     return (
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl font-black text-gray-800 tracking-tight">Executive Reports</h1>
-                <p className="text-gray-500 font-medium">Overview of school performance and metrics</p>
+                <h1 className="text-3xl font-black text-gray-800 tracking-tight">{t('auto_141')}</h1>
+                <p className="text-gray-500 font-medium">{t('auto_274')}</p>
             </div>
 
             {/* Stats Grid */}
@@ -147,18 +149,18 @@ export default function ReportsPage() {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                             <TrendingUp className="text-gray-400" size={20} />
-                            Financial Overview
-                        </h2>
+                            {t('auto_163')}
+                                                    </h2>
                     </div>
                     {feeStats ? (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-green-50 rounded-2xl border border-green-100">
-                                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider">Total Collected</p>
+                                    <p className="text-xs text-green-600 font-bold uppercase tracking-wider">{t('auto_382')}</p>
                                     <p className="text-2xl font-black text-green-700 mt-1">${feeStats.totalPaid.toLocaleString()}</p>
                                 </div>
                                 <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                                    <p className="text-xs text-amber-600 font-bold uppercase tracking-wider">Outstanding</p>
+                                    <p className="text-xs text-amber-600 font-bold uppercase tracking-wider">{t('auto_269')}</p>
                                     <p className="text-2xl font-black text-amber-700 mt-1">${feeStats.totalOutstanding.toLocaleString()}</p>
                                 </div>
                             </div>
@@ -166,7 +168,7 @@ export default function ReportsPage() {
                             {/* Collection Progress Bar */}
                             <div className="p-4 bg-gray-50 rounded-2xl">
                                 <div className="flex justify-between mb-2">
-                                    <span className="text-xs font-bold text-gray-500 uppercase">Collection Rate</span>
+                                    <span className="text-xs font-bold text-gray-500 uppercase">{t('auto_083')}</span>
                                     <span className="text-xs font-black text-gray-700">{collectionRate}%</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -179,7 +181,7 @@ export default function ReportsPage() {
 
                             {feeStats.classes && feeStats.classes.length > 0 && (
                                 <div className="space-y-2">
-                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider px-1">By Class</p>
+                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider px-1">{t('auto_064')}</p>
                                     {feeStats.classes.slice(0, 5).map((cls) => (
                                         <div key={cls.id} className="flex justify-between items-center p-3 rounded-xl bg-gray-50 border border-gray-100">
                                             <span className="font-bold text-gray-700 text-sm">{cls.name}</span>
@@ -191,7 +193,7 @@ export default function ReportsPage() {
                         </div>
                     ) : (
                         <div className="h-48 flex items-center justify-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                            <p className="text-gray-400 font-medium">No financial data available</p>
+                            <p className="text-gray-400 font-medium">{t('auto_246')}</p>
                         </div>
                     )}
                 </div>
@@ -200,34 +202,34 @@ export default function ReportsPage() {
                 <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                     <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                         <AlertCircle className="text-violet-500" size={20} />
-                        Quick Summary
-                    </h2>
+                        {t('auto_298')}
+                                            </h2>
                     <div className="space-y-4">
                         <div className="flex items-center gap-4 p-4 rounded-xl bg-blue-50 border border-blue-100">
                             <div className="w-2 h-2 rounded-full bg-blue-500" />
                             <p className="text-sm font-bold text-gray-700">
-                                {feeStats?.totalStudents ?? 0} students enrolled across {classCount} classes
-                            </p>
+                                {feeStats?.totalStudents ?? 0} {t('auto_431')} {classCount} {t('auto_418')}
+                                                            </p>
                         </div>
                         <div className="flex items-center gap-4 p-4 rounded-xl bg-violet-50 border border-violet-100">
                             <div className="w-2 h-2 rounded-full bg-violet-500" />
                             <p className="text-sm font-bold text-gray-700">
-                                {teacherCount} active teacher{teacherCount !== 1 ? 's' : ''} on staff
-                            </p>
+                                {teacherCount} {t('auto_417')}{teacherCount !== 1 ? 's' : ''} {t('auto_429')}
+                                                            </p>
                         </div>
                         {feeStats && feeStats.totalOutstanding > 0 && (
                             <div className="flex items-center gap-4 p-4 rounded-xl bg-amber-50 border border-amber-100">
                                 <div className="w-2 h-2 rounded-full bg-amber-500" />
                                 <p className="text-sm font-bold text-gray-700">
-                                    ${feeStats.totalOutstanding.toLocaleString()} in outstanding fees
-                                </p>
+                                    ${feeStats.totalOutstanding.toLocaleString()} {t('auto_428')}
+                                                                    </p>
                             </div>
                         )}
                         {collectionRate >= 90 && (
                             <div className="flex items-center gap-4 p-4 rounded-xl bg-green-50 border border-green-100">
                                 <div className="w-2 h-2 rounded-full bg-green-500" />
                                 <p className="text-sm font-bold text-gray-700">
-                                    ✨ Fee collection rate is excellent at {collectionRate}%
+                                    {t('auto_444')} {collectionRate}%
                                 </p>
                             </div>
                         )}

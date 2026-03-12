@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { permissions, Role } from '@/lib/permissions';
+import { useLang } from '@/lib/LangProvider';
 
 type Schedule = {
   id: string;
@@ -25,6 +26,7 @@ const calculateEndTime = (start: string, durationMinutes: number) => {
 
 // --- Component for adding a new schedule ---
 const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () => void }) => {
+    const { t } = useLang();
   const [classes, setClasses] = useState<{ id: string, name: string }[]>([]);
   const [subjects, setSubjects] = useState<{ id: string, name: string }[]>([]);
 
@@ -75,39 +77,39 @@ const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () 
       onSuccess();
       setSubjectId(''); // Reset subject for faster entry
     } catch (err) {
-      alert('Failed to add schedule. Check for conflicts.');
+      alert(t('auto_145'));
     } finally { setLoading(false); }
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 p-6 rounded-lg mb-8 border border-gray-200 shadow-sm">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Schedule Exam Subject</h3>
+      <h3 className="text-lg font-semibold text-gray-700 mb-4">{t('auto_318')}</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
         <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_070')}</label>
           <select required value={classId} onChange={e => setClassId(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm p-2 border">
-            <option value="">Select Class</option>
+            <option value="">{t('auto_329')}</option>
             {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
         <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_364')}</label>
           <select required value={subjectId} onChange={e => setSubjectId(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm p-2 border">
-            <option value="">Select Subject</option>
+            <option value="">{t('auto_333')}</option>
             {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
         <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_101')}</label>
           <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm p-2 border" />
         </div>
 
         <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_349')}</label>
           <input type="time" required value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm p-2 border" />
         </div>
         <div className="lg:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_114')}</label>
           <input type="number" min="15" step="15" required value={durationMinutes} onChange={e => setDurationMinutes(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm p-2 border" />
         </div>
 
@@ -123,6 +125,7 @@ const AddScheduleForm = ({ examId, onSuccess }: { examId: string, onSuccess: () 
 
 // --- Main Page Component ---
 export default function ExamDetailsPage() {
+    const { t } = useLang();
   const params = useParams();
   const examId = params.examId as string;
   const router = useRouter();
@@ -141,27 +144,27 @@ export default function ExamDetailsPage() {
         setSchedules(data);
       } catch (err: any) {
         setError(err.response?.data?.message || err.message || 'Failed to load schedule');
-        if (err.response?.status === 403) setError('Access denied to this exam schedule.');
+        if (err.response?.status === 403) setError(t('auto_022'));
       }
     };
     fetchSchedules();
   }, [examId, refresh]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remove this entry from schedule?')) return;
+    if (!confirm(t('auto_306'))) return;
     try {
       await api.delete(`/school/exam-schedules/${id}`);
       setRefresh(r => r + 1);
-    } catch (e) { alert('Failed to delete'); }
+    } catch (e) { alert(t('auto_146')); }
   };
 
   return (
     <div className="p-8">
       <div className="flex items-center mb-6">
         <button onClick={() => router.back()} className="mr-4 text-gray-500 hover:text-gray-900 flex items-center font-medium transition-colors">
-          <span className="text-xl mr-1">←</span> Back
-        </button>
-        <h1 className="text-3xl font-bold text-gray-800">Exam Schedule Management</h1>
+          <span className="text-xl mr-1">←</span> {t('auto_058')}
+                          </button>
+        <h1 className="text-3xl font-bold text-gray-800">{t('auto_138')}</h1>
       </div>
 
       {error && (
@@ -179,11 +182,11 @@ export default function ExamDetailsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('auto_070')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('auto_364')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('auto_102')}</th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('auto_354')}</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('auto_023')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
@@ -206,22 +209,22 @@ export default function ExamDetailsPage() {
                       onClick={() => router.push(`/dashboard/exams/${examId}/grades/${sch.id}`)}
                       className="text-indigo-600 hover:text-indigo-900 mr-4 font-medium"
                     >
-                      Enter Grades
-                    </button>
+                      {t('auto_130')}
+                                                    </button>
                   )}
                   {permissions.canEditExam(role) && (
                     <button
                       onClick={() => handleDelete(sch.id)}
                       className="text-red-600 hover:text-red-900 font-medium"
                     >
-                      Remove
-                    </button>
+                      {t('auto_304')}
+                                                    </button>
                   )}
                 </td>
               </tr>
             ))}
             {schedules.length === 0 && (
-              <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">No exams scheduled yet. Use the form above to add one.</td></tr>
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">{t('auto_245')}</td></tr>
             )}
           </tbody>
         </table>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLang } from '@/lib/LangProvider';
 
 interface SwitchProps {
     checked: boolean;
@@ -8,6 +9,7 @@ interface SwitchProps {
 }
 
 export function Switch({ checked, onChange, disabled = false, className = '' }: SwitchProps) {
+    const { t } = useLang();
     return (
         <button
             type="button"
@@ -24,7 +26,7 @@ export function Switch({ checked, onChange, disabled = false, className = '' }: 
                 ${className}
             `}
         >
-            <span className="sr-only">Use setting</span>
+            <span className="sr-only">{t('auto_392')}</span>
             <span
                 aria-hidden="true"
                 className={`

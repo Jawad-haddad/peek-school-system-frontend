@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { financeApi } from '@/lib/api';
 import { X } from 'lucide-react';
+import { useLang } from '@/lib/LangProvider';
 
 type TopUpModalProps = {
     isOpen: boolean;
@@ -16,6 +17,7 @@ const MAX_AMOUNT = 10_000;
 const MIN_AMOUNT = 1;
 
 export default function TopUpModal({ isOpen, onClose, studentId, onSuccess }: TopUpModalProps) {
+    const { t } = useLang();
     const [amount, setAmount] = useState<number | ''>('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -119,8 +121,8 @@ export default function TopUpModal({ isOpen, onClose, studentId, onSuccess }: To
             >
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                     <h2 id="topup-modal-title" className="text-xl font-black text-gray-800">
-                        Top Up Wallet
-                    </h2>
+                        {t('auto_380')}
+                                            </h2>
                     <button
                         onClick={onClose}
                         disabled={loading}
@@ -142,8 +144,8 @@ export default function TopUpModal({ isOpen, onClose, studentId, onSuccess }: To
                     )}
                     <div>
                         <label htmlFor="topup-amount" className="block text-sm font-bold text-gray-700 mb-2">
-                            Amount to Add ($)
-                        </label>
+                            {t('auto_041')}
+                                                    </label>
                         <div className="relative">
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold" aria-hidden="true">
                                 $

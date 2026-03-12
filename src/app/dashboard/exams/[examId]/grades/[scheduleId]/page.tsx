@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useLang } from '@/lib/LangProvider';
 
 type Student = {
     id: string;
@@ -17,6 +18,7 @@ type MarkEntry = {
 };
 
 export default function EnterGradesPage() {
+    const { t } = useLang();
     const params = useParams();
     const router = useRouter();
     const scheduleId = params.scheduleId as string;
@@ -63,7 +65,7 @@ export default function EnterGradesPage() {
 
             } catch (err) {
                 console.error(err);
-                alert('Failed to load data');
+                alert(t('auto_152'));
             } finally {
                 setLoading(false);
             }
@@ -102,25 +104,25 @@ export default function EnterGradesPage() {
                 marks: payload
             }, { headers: { Authorization: `Bearer ${token}` } });
 
-            alert('Grades saved successfully!');
+            alert(t('auto_171'));
             router.back();
         } catch (err) {
-            alert('Failed to save grades');
+            alert(t('auto_155'));
             console.error(err);
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) return <div className="p-8">Loading students...</div>;
+    if (loading) return <div className="p-8">{t('auto_198')}</div>;
 
     return (
         <div className="p-8">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
-                    <button onClick={() => router.back()} className="mr-4 text-gray-500 hover:text-gray-900">← Back</button>
+                    <button onClick={() => router.back()} className="mr-4 text-gray-500 hover:text-gray-900">{t('auto_432')}</button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Enter Grades</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">{t('auto_130')}</h1>
                         {examInfo && (
                             <p className="text-gray-600">
                                 {examInfo.class.name} - {examInfo.subject.name} ({new Date(examInfo.date).toLocaleDateString()})
@@ -141,9 +143,9 @@ export default function EnterGradesPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/4">Student Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/4">Mark (Out of 100)</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/2">Comments</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/4">{t('auto_359')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/4">{t('auto_213')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/2">{t('auto_085')}</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -165,7 +167,7 @@ export default function EnterGradesPage() {
                                     <input
                                         type="text"
                                         className="border rounded p-2 w-full focus:ring-indigo-500 focus:border-indigo-500"
-                                        placeholder="Optional comments..."
+                                        placeholder={t('auto_266')}
                                         value={entry.comments}
                                         onChange={(e) => handleCommentChange(index, e.target.value)}
                                     />
@@ -173,7 +175,7 @@ export default function EnterGradesPage() {
                             </tr>
                         ))}
                         {marksData.length === 0 && (
-                            <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-500">No students found in this class.</td></tr>
+                            <tr><td colSpan={3} className="px-6 py-8 text-center text-gray-500">{t('auto_257')}</td></tr>
                         )}
                     </tbody>
                 </table>

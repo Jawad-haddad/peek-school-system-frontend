@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import api from '@/lib/api'; // Fixed import
 import TimetableEntryModal from '../../../../components/TimetableEntryModal';
+import { useLang } from '@/lib/LangProvider';
 
 // 1. تعريف Type لبيانات الجدول القادمة من الـ API
 type TimetableEntry = {
@@ -27,6 +28,7 @@ const DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "SUNDAY"]; // (أي�
 const PERIODS = [1, 2, 3, 4, 5, 6]; // (عدد الحصص)
 
 export default function TimetableGridPage() {
+    const { t } = useLang();
   const params = useParams();
   const classId = params.classId as string;
 
@@ -46,7 +48,7 @@ export default function TimetableGridPage() {
       const response = await api.get(`/school/classes/${classId}/timetable`);
       setTimetable(response.data);
     } catch (error) {
-      setError("Failed to fetch timetable.");
+      setError(t('auto_149'));
       console.error("Error fetching timetable:", error);
     } finally {
       setLoading(false);
@@ -88,10 +90,10 @@ export default function TimetableGridPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-800">Class Timetable</h1>
-      <p className="mt-2 text-gray-600">Click on any slot to add or edit an entry.</p>
+      <h1 className="text-3xl font-bold text-gray-800">{t('auto_077')}</h1>
+      <p className="mt-2 text-gray-600">{t('auto_082')}</p>
 
-      {loading && <p className="mt-8 text-center">Loading...</p>}
+      {loading && <p className="mt-8 text-center">{t('auto_202')}</p>}
       {error && <p className="mt-8 text-center text-red-500">{error}</p>}
 
       {!loading && !error && (
@@ -99,10 +101,10 @@ export default function TimetableGridPage() {
           <table className="min-w-full divide-y divide-gray-200 border">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Day</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">{t('auto_104')}</th>
                 {PERIODS.map(period => (
                   <th key={period} className="px-6 py-3 text-center text-xs font-medium uppercase text-gray-500">
-                    Period {period}
+                    {t('auto_283')} {period}
                   </th>
                 ))}
               </tr>

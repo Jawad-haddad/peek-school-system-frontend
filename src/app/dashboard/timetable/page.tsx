@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { academicApi } from '@/lib/api';
 import Link from 'next/link';
+import { useLang } from '@/lib/LangProvider';
 
 type Class = {
     id: string;
@@ -12,6 +13,7 @@ type Class = {
 
 // This page is a simple class selector
 export default function SelectTimetablePage() {
+    const { t } = useLang();
     const [classes, setClasses] = useState<Class[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -34,11 +36,11 @@ export default function SelectTimetablePage() {
 
     return (
         <div className="p-8">
-            <h1 className="text-3xl font-bold text-gray-800">Manage Timetables</h1>
-            <p className="mt-2 text-gray-600">Please select a class to view or edit its weekly timetable.</p>
+            <h1 className="text-3xl font-bold text-gray-800">{t('auto_210')}</h1>
+            <p className="mt-2 text-gray-600">{t('auto_288')}</p>
 
             {loading ? (
-                <p className="mt-8">Loading classes...</p>
+                <p className="mt-8">{t('auto_190')}</p>
             ) : (
                 <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     {classes.map((c) => (

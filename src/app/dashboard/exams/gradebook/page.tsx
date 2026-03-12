@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { examApi, schoolApi } from '@/lib/api';
 import { toast } from '@/lib/toast-events';
+import { useLang } from '@/lib/LangProvider';
 
 type Exam = {
     id: string;
@@ -35,6 +36,7 @@ type GradeEntry = {
 };
 
 export default function GradebookPage() {
+    const { t } = useLang();
     const [exams, setExams] = useState<Exam[]>([]);
     const [schedules, setSchedules] = useState<Schedule[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
@@ -166,7 +168,7 @@ export default function GradebookPage() {
                 }));
 
             if (marksToSubmit.length === 0) {
-                toast.error("No marks to save");
+                toast.error(t('auto_248'));
                 setIsSubmitting(false);
                 return;
             }
@@ -184,12 +186,12 @@ export default function GradebookPage() {
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto pb-32">
-            <h1 className="text-3xl font-black text-gray-800 mb-2">Gradebook</h1>
-            <p className="text-gray-500 mb-8">Enter and manage exam marks for your classes.</p>
+            <h1 className="text-3xl font-black text-gray-800 mb-2">{t('auto_170')}</h1>
+            <p className="text-gray-500 mb-8">{t('auto_131')}</p>
 
             {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-700">
-                    <span className="font-bold">⚠️ Error:</span>
+                    <span className="font-bold">{t('auto_437')}</span>
                     {error}
                 </div>
             )}
@@ -197,7 +199,7 @@ export default function GradebookPage() {
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Select Exam</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_332')}</label>
                     <div className="relative">
                         <select
                             className="w-full rounded-xl border-gray-200 bg-gray-50/50 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none font-medium text-gray-700"
@@ -205,7 +207,7 @@ export default function GradebookPage() {
                             onChange={(e) => setSelectedExam(e.target.value)}
                             disabled={loadingExams}
                         >
-                            <option value="">-- Choose Exam --</option>
+                            <option value="">{t('auto_011')}</option>
                             {exams.map(exam => (
                                 <option key={exam.id} value={exam.id}>{exam.title || exam.id}</option> // Fallback if title is missing
                             ))}
@@ -219,7 +221,7 @@ export default function GradebookPage() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Select Class / Subject</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_330')}</label>
                     <div className="relative">
                         <select
                             className="w-full rounded-xl border-gray-200 bg-gray-50/50 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none font-medium text-gray-700"
@@ -227,7 +229,7 @@ export default function GradebookPage() {
                             onChange={(e) => setSelectedSchedule(e.target.value)}
                             disabled={!selectedExam || loadingSchedules}
                         >
-                            <option value="">-- Choose Class --</option>
+                            <option value="">{t('auto_010')}</option>
                             {schedules.map(schedule => (
                                 <option key={schedule.id} value={schedule.id}>
                                     {schedule.class?.name || 'Unknown Class'} - {schedule.subject?.name || 'Subject'}
@@ -247,15 +249,15 @@ export default function GradebookPage() {
                 loadingStudents ? (
                     <div className="text-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                        <p className="text-gray-500">Loading students...</p>
+                        <p className="text-gray-500">{t('auto_198')}</p>
                     </div>
                 ) : (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="flex justify-between items-center px-2">
-                            <h3 className="text-xl font-bold text-gray-800">Student List</h3>
+                            <h3 className="text-xl font-bold text-gray-800">{t('auto_358')}</h3>
                             <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-bold">
-                                {students.length} Students
-                            </span>
+                                {students.length} {t('auto_363')}
+                                                                </span>
                         </div>
 
                         {/* Responsive Table Container */}
@@ -264,9 +266,9 @@ export default function GradebookPage() {
                                 <table className="w-full min-w-[600px]">
                                     <thead className="bg-gray-50 border-b border-gray-100">
                                         <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Student</th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32 min-w-[120px]">Marks</th>
-                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Comments</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('auto_355')}</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32 min-w-[120px]">{t('auto_215')}</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('auto_085')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 bg-white">
@@ -281,7 +283,7 @@ export default function GradebookPage() {
                                                             </div>
                                                             <div>
                                                                 <div className="font-bold text-gray-900">{student.firstName} {student.lastName}</div>
-                                                                <div className="text-xs text-gray-400">ID: {student.id.substring(0, 8)}...</div>
+                                                                <div className="text-xs text-gray-400">{t('auto_176')} {student.id.substring(0, 8)}...</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -299,7 +301,7 @@ export default function GradebookPage() {
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <input
                                                             type="text"
-                                                            placeholder="Add a comment..."
+                                                            placeholder={t('auto_033')}
                                                             className="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm h-10"
                                                             value={studentGrade.comment}
                                                             onChange={(e) => handleGradeChange(student.id, 'comment', e.target.value)}
@@ -314,8 +316,8 @@ export default function GradebookPage() {
 
                             {students.length === 0 && (
                                 <div className="text-center py-12 text-gray-400">
-                                    No students found in this class.
-                                </div>
+                                    {t('auto_257')}
+                                                                        </div>
                             )}
                         </div>
 
@@ -329,12 +331,12 @@ export default function GradebookPage() {
                                 {isSubmitting ? (
                                     <>
                                         <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        Saving...
-                                    </>
+                                        {t('auto_313')}
+                                                                                </>
                                 ) : (
                                     <>
-                                        <span>💾</span> Save All Grades
-                                    </>
+                                        <span>💾</span> {t('auto_312')}
+                                                                                    </>
                                 )}
                             </button>
                         </div>
@@ -359,7 +361,7 @@ export default function GradebookPage() {
             ) : (
                 <div className="text-center py-24 text-gray-400 bg-gray-50 rounded-3xl border-dashed border-2 border-gray-200">
                     <div className="text-6xl mb-4 opacity-20">📊</div>
-                    <p className="font-medium">Select an Exam and Class to start grading.</p>
+                    <p className="font-medium">{t('auto_341')}</p>
                 </div>
             )}
         </div>

@@ -6,10 +6,12 @@ import TeacherDashboard from '@/components/dashboard/TeacherDashboard';
 import AdminStats from '@/components/dashboard/AdminStats';
 import { getSafeUser, logout } from '@/lib/auth';
 import { DashboardSkeleton } from '@/components/ui/Skeletons';
+import { useLang } from '@/lib/LangProvider';
 
 export default function DashboardPage() {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useLang();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -28,7 +30,7 @@ export default function DashboardPage() {
   if (role === 'ADMIN') {
     return (
       <div className="p-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">Admin Dashboard</h1>
+        <h1 className="text-4xl font-bold text-gray-800 mb-6">{t('dash.admin')}</h1>
         <AdminStats />
       </div>
     );
@@ -47,17 +49,17 @@ export default function DashboardPage() {
     <div className="flex h-[80vh] items-center justify-center p-6">
       <div className="text-center bg-red-50 p-8 rounded-3xl border border-red-100 max-w-lg shadow-sm">
         <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-          ⚠️
-        </div>
-        <h2 className="text-2xl font-bold text-red-900 mb-2">Invalid Access Role</h2>
+          {t('auto_436')}
+                          </div>
+        <h2 className="text-2xl font-bold text-red-900 mb-2">{t('dash.invalidRole')}</h2>
         <p className="text-red-700 mb-6">
-          Your account does not have a recognized role assigned to it, or your session data is incomplete.
+          {t('dash.noRoleDesc')}
         </p>
         <button
           onClick={logout}
           className="bg-red-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-red-700 transition"
         >
-          Return to Login
+          {t('dash.returnLogin')}
         </button>
       </div>
     </div>

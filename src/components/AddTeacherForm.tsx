@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import api from '@/lib/api'; // Use centralized api
+import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type AddTeacherFormProps = {
     onClose: () => void;
     onSuccess: () => void;
 };
 
-export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormProps) { // Renamed to "AddTeacherPage" to match user request artifact even though it's a modal form
+export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormProps) {
+    const { t } = useLang(); // Renamed to "AddTeacherPage" to match user request artifact even though it's a modal form
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -46,7 +48,7 @@ export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormPro
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
             <div className="w-full max-w-2xl mx-4 bg-white p-8 rounded-xl shadow-2xl transform transition-all"> {/* Updated styling: max-w-2xl, p-8, rounded-xl */}
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Add New Teacher</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">{t('auto_030')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
                 </div>
 
@@ -55,7 +57,7 @@ export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormPro
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Full Name */}
                         <div>
-                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">{t('auto_165')}</label>
                             <input
                                 type="text"
                                 id="fullName"
@@ -63,13 +65,13 @@ export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormPro
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                                placeholder="John Doe"
+                                placeholder={t('auto_184')}
                             />
                         </div>
 
                         {/* Email */}
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">{t('auto_125')}</label>
                             <input
                                 type="email"
                                 id="email"
@@ -85,7 +87,7 @@ export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormPro
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Password */}
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Initial Password</label>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">{t('auto_179')}</label>
                             <input
                                 type="password"
                                 id="password"
@@ -98,7 +100,7 @@ export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormPro
 
                         {/* Phone Number */}
                         <div>
-                            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
+                            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">{t('auto_285')}</label>
                             <input
                                 type="text"
                                 id="phoneNumber"
@@ -124,8 +126,8 @@ export default function AddTeacherPage({ onClose, onSuccess }: AddTeacherFormPro
                             disabled={isSubmitting}
                             className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}

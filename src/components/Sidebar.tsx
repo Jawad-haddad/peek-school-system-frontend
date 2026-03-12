@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logout } from '@/lib/auth';
+import { useLang } from '@/lib/LangProvider';
 
 // Define all possible menu items
 const ALL_MENU_ITEMS = [
@@ -38,6 +39,7 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+    const { t } = useLang();
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
   const [menuItems, setMenuItems] = useState<any[]>([]);
@@ -73,7 +75,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           }`}
       >
         <div className="p-6 text-center border-b border-white/20">
-          <h2 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">Peek</h2>
+          <h2 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">{t('auto_281')}</h2>
           {role && <span className="inline-block mt-2 px-3 py-1 rounded-full text-[10px] font-bold bg-violet-100 text-violet-600 tracking-wider shadow-sm border border-violet-200">{role}</span>}
         </div>
 
@@ -97,7 +99,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             className="group flex w-full items-center justify-center rounded-xl px-4 py-3 text-white bg-gradient-to-r from-red-400 to-red-500 shadow-lg hover:shadow-xl hover:from-red-500 hover:to-red-600 transition-all transform hover:-translate-y-1"
           >
             <span className="mr-2 text-lg">🚪</span>
-            <span className="font-bold">Logout</span>
+            <span className="font-bold">{t('auto_204')}</span>
           </button>
         </div>
       </aside>

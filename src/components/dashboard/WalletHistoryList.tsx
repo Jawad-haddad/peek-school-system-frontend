@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { financeApi } from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 interface Transaction {
     id: string;
@@ -16,6 +17,7 @@ interface WalletHistoryListProps {
 }
 
 export default function WalletHistoryList({ studentId }: WalletHistoryListProps) {
+    const { t } = useLang();
     const [history, setHistory] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -46,8 +48,8 @@ export default function WalletHistoryList({ studentId }: WalletHistoryListProps)
     if (!studentId) {
         return (
             <div className="p-4 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                Select a student to view wallet history.
-            </div>
+                {t('auto_339')}
+                            </div>
         );
     }
 
@@ -62,8 +64,8 @@ export default function WalletHistoryList({ studentId }: WalletHistoryListProps)
     if (history.length === 0) {
         return (
             <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-xl border border-gray-100">
-                <p className="font-medium">No transactions found.</p>
-                <p className="text-sm text-gray-400 mt-1">Recent wallet activity will appear here.</p>
+                <p className="font-medium">{t('auto_262')}</p>
+                <p className="text-sm text-gray-400 mt-1">{t('auto_300')}</p>
             </div>
         );
     }
@@ -71,8 +73,8 @@ export default function WalletHistoryList({ studentId }: WalletHistoryListProps)
     return (
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                <h3 className="font-bold text-gray-800 text-lg">Wallet History</h3>
-                <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">{history.length} Transactions</span>
+                <h3 className="font-bold text-gray-800 text-lg">{t('auto_406')}</h3>
+                <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">{history.length} {t('auto_384')}</span>
             </div>
 
             <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto custom-scrollbar">

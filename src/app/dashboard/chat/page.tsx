@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import api, { chatApi, academicApi, schoolApi } from '@/lib/api';
 import { getSafeUser } from '@/lib/auth';
+import { useLang } from '@/lib/LangProvider';
 
 type Contact = {
     id: string;
@@ -26,6 +28,7 @@ type Message = {
 };
 
 export default function ChatPage() {
+    const { t } = useLang();
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -53,7 +56,7 @@ export default function ChatPage() {
     // Polling Logic
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (selectedContact && selectedContact.id !== 'broadcast') {
+        if (selectedContact) {
             // Initial fetch
             fetchMessages(selectedContact.id, true);
 
@@ -61,8 +64,6 @@ export default function ChatPage() {
             interval = setInterval(() => {
                 fetchMessages(selectedContact.id, false);
             }, 3000);
-        } else if (selectedContact?.id === 'broadcast') {
-            setMessages([]);
         }
 
         return () => {
@@ -123,12 +124,12 @@ export default function ChatPage() {
         setNewMessage('');
 
         try {
-            await api.post('/chat/send', {
-                receiverId: selectedContact.id,
-                content: msgToSend
-            });
-        } catch (error) {
+            await chatApi.sendMessage(selectedContact.id, msgToSend);
+        } catch (error: any) {
             console.error("Failed to send message", error);
+            if (error?.response?.status === 404) {
+                alert(t('auto_069'));
+            }
         }
     };
 
@@ -283,7 +284,7 @@ export default function ChatPage() {
                 {contact.studentName && showRelation && (
                     <div className="mb-1">
                         <span className="text-xs font-bold text-violet-600 truncate block">
-                            Student: {contact.studentName}
+                            {t('auto_362')} {contact.studentName}
                         </span>
                     </div>
                 )}
@@ -304,25 +305,25 @@ export default function ChatPage() {
             {/* Contacts Sidebar */}
             <div className={`flex-col h-full glass-panel rounded-3xl overflow-hidden ${selectedContact ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 border-0 shadow-xl`}>
                 <div className="p-6 border-b border-white/20 bg-gradient-to-r from-violet-600/10 to-fuchsia-600/10 backdrop-blur-md flex justify-between items-center">
-                    <h1 className="text-2xl font-black text-gray-800 tracking-tight">Messages</h1>
+                    <h1 className="text-2xl font-black text-gray-800 tracking-tight">{t('auto_218')}</h1>
                     {isAdmin && (
-                        <button
-                            onClick={() => setSelectedContact({ id: 'broadcast', name: 'Broadcast', role: 'SYSTEM' })}
-                            className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-full hover:bg-black transition-colors font-bold shadow-lg"
+                        <Link
+                            href="/dashboard/broadcast"
+                            className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-full hover:bg-black transition-colors font-bold shadow-lg flex items-center gap-1"
                         >
-                            📢 All
-                        </button>
+                            <span>📢</span> {t('auto_060')}
+                                                    </Link>
                     )}
                 </div>
                 <div className="overflow-y-auto flex-1 custom-scrollbar space-y-2 p-2">
                     {loadingContacts ? (
-                        <div className="p-8 text-center text-gray-400 font-medium animate-pulse">Loading contacts...</div>
+                        <div className="p-8 text-center text-gray-400 font-medium animate-pulse">{t('auto_191')}</div>
                     ) : contacts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 text-gray-400 px-6 text-center">
                             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-3xl mb-4 shadow-sm border border-gray-100">
                                 📭
                             </div>
-                            <p className="font-bold text-gray-600 text-lg mb-1">No contacts yet</p>
+                            <p className="font-bold text-gray-600 text-lg mb-1">{t('auto_242')}</p>
                             <p className="text-xs text-gray-400 max-w-[200px] leading-relaxed">
                                 {userRole === 'PARENT'
                                     ? "No teachers found. Your child might not be enrolled in any classes yet."
@@ -335,8 +336,8 @@ export default function ChatPage() {
                             {Object.entries(groupedContacts).filter(([role]) => role !== 'PARENT').map(([role, list]) => (
                                 <div key={role} className="mb-4">
                                     <div className="px-4 py-2 text-[10px] font-black text-violet-400 uppercase tracking-widest sticky top-0 bg-white/50 backdrop-blur-md z-10 rounded-lg mx-2 mb-1">
-                                        {role}s
-                                    </div>
+                                        {role}{t('auto_430')}
+                                                                            </div>
                                     {list.map(contact => (
                                         <ContactItem
                                             key={contact.id}
@@ -352,8 +353,8 @@ export default function ChatPage() {
                             {Object.keys(groupedParents).length > 0 && (
                                 <div className="mb-4">
                                     <div className="px-4 py-2 text-[10px] font-black text-violet-400 uppercase tracking-widest sticky top-0 bg-white/50 backdrop-blur-md z-10 rounded-lg mx-2 mb-1">
-                                        PARENTS & STUDENTS
-                                    </div>
+                                        {t('auto_276')}
+                                                                                    </div>
                                     {Object.entries(groupedParents).map(([className, list]) => (
                                         <div key={className} className="mb-2 mx-2">
                                             {/* Folder Header */}
@@ -404,8 +405,8 @@ export default function ChatPage() {
                     <div className="w-24 h-24 bg-gradient-to-br from-violet-100 to-fuchsia-100 rounded-[2rem] flex items-center justify-center text-5xl mb-6 shadow-inner">
                         💬
                     </div>
-                    <p className="font-bold text-xl text-gray-800">Select a conversation</p>
-                    <p className="text-sm mt-2 opacity-60">Start chatting with teachers, students, or parents</p>
+                    <p className="font-bold text-xl text-gray-800">{t('auto_337')}</p>
+                    <p className="text-sm mt-2 opacity-60">{t('auto_352')}</p>
                 </div>
             ) : (
                 <div className={`flex flex-col h-full glass-panel rounded-3xl w-full md:w-2/3 border-0 shadow-xl overflow-hidden ${selectedContact ? 'flex' : 'hidden md:flex'}`}>
@@ -429,11 +430,11 @@ export default function ChatPage() {
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-transparent custom-scrollbar">
                         {loadingMessages ? (
-                            <div className="text-center text-gray-400 text-sm mt-8 font-medium animate-pulse">Loading conversation...</div>
+                            <div className="text-center text-gray-400 text-sm mt-8 font-medium animate-pulse">{t('auto_192')}</div>
                         ) : messages.length === 0 ? (
                             <div className="text-center mt-12 opacity-50">
                                 <div className="text-4xl mb-2">👋</div>
-                                <p className="text-sm font-bold text-gray-400">No messages yet. Say hi!</p>
+                                <p className="text-sm font-bold text-gray-400">{t('auto_249')}</p>
                             </div>
                         ) : (
                             messages.map(msg => (
@@ -461,7 +462,7 @@ export default function ChatPage() {
                                 type="text"
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder={selectedContact.id === 'broadcast' ? "Type broadcast message..." : "Type your message..."}
+                                placeholder={t('auto_388')}
                                 className="flex-1 pl-6 pr-14 py-4 bg-white border-0 rounded-2xl focus:ring-2 focus:ring-violet-400 shadow-sm text-gray-700 placeholder-gray-400 font-medium transition-all"
                             />
                             <button

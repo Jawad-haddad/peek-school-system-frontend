@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type Student = {
     id: string;
@@ -22,6 +23,7 @@ type EditStudentModalProps = {
 };
 
 export default function EditStudentModal({ isOpen, onClose, onSuccess, student }: EditStudentModalProps) {
+    const { t } = useLang();
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -47,12 +49,12 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
 
         try {
             await api.put(`/school/students/${student.id}`, formData);
-            alert("Student updated!");
+            alert(t('auto_361'));
             onSuccess();
             onClose();
         } catch (err) {
             console.error("Failed to update student", err);
-            alert("Failed to update student");
+            alert(t('auto_157'));
         } finally {
             setLoading(false);
         }
@@ -64,13 +66,13 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={e => e.stopPropagation()}>
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
                 <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-800">Edit Student</h2>
+                    <h2 className="text-xl font-bold text-gray-800">{t('auto_121')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_165')}</label>
                         <input
                             type="text"
                             required
@@ -81,7 +83,7 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email / Parent Email</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_124')}</label>
                         <input
                             type="email"
                             required
@@ -93,7 +95,7 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">NFC Tag ID</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_224')}</label>
                             <input
                                 type="text"
                                 value={formData.nfcTagId}
@@ -102,7 +104,7 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Wallet Balance</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_405')}</label>
                             <input
                                 type="number"
                                 value={formData.walletBalance}
@@ -118,8 +120,8 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
                             onClick={onClose}
                             className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={loading}

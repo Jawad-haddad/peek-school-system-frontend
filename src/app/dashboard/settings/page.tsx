@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 export default function SettingsPage() {
+    const { t } = useLang();
     const currentYear = new Date().getFullYear();
     const [startYear, setStartYear] = useState(currentYear);
     const [loading, setLoading] = useState(false);
@@ -77,15 +79,15 @@ export default function SettingsPage() {
 
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-8">
-            <h1 className="text-3xl font-bold text-gray-800">System Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-800">{t('auto_369')}</h1>
 
             {/* Create Section */}
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Create Academic Year</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">{t('auto_093')}</h2>
                 <form onSubmit={handleCreateYear} className="space-y-6">
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Year</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_351')}</label>
                         <select
                             value={startYear}
                             onChange={(e) => setStartYear(Number(e.target.value))}
@@ -98,10 +100,10 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-500 uppercase tracking-wide font-semibold">Preview</p>
+                        <p className="text-sm text-gray-500 uppercase tracking-wide font-semibold">{t('auto_292')}</p>
                         <div className="mt-2 text-gray-900">
-                            <p className="text-lg font-medium">Academic Year: <span className="text-indigo-600">{yearName}</span></p>
-                            <p className="text-sm text-gray-600 mt-1">Duration: {startYear}-09-01 to {endYear}-06-30</p>
+                            <p className="text-lg font-medium">{t('auto_018')} <span className="text-indigo-600">{yearName}</span></p>
+                            <p className="text-sm text-gray-600 mt-1">{t('auto_115')} {startYear}{t('auto_012')} {endYear}-06-30</p>
                         </div>
                     </div>
 
@@ -119,23 +121,23 @@ export default function SettingsPage() {
 
             {/* List Section */}
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Existing Academic Years</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">{t('auto_142')}</h2>
                 {academicYears.length === 0 ? (
-                    <p className="text-gray-500">No academic years found.</p>
+                    <p className="text-gray-500">{t('auto_233')}</p>
                 ) : (
                     <div className="space-y-3">
                         {academicYears.map(year => (
                             <div key={year.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
                                 <div>
-                                    <p className="font-bold text-gray-800">{year.name} {year.isActive && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">ACTIVE</span>}</p>
+                                    <p className="font-bold text-gray-800">{year.name} {year.isActive && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">{t('auto_013')}</span>}</p>
                                 </div>
                                 <button
                                     onClick={() => handleDeleteYear(year.id, year.name)}
                                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Delete Year"
+                                    title={t('auto_107')}
                                 >
-                                    🗑️
-                                </button>
+                                    {t('auto_452')}
+                                                                    </button>
                             </div>
                         ))}
                     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type CreateExamModalProps = {
     isOpen: boolean;
@@ -18,6 +19,7 @@ type AcademicYear = {
 };
 
 export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateExamModalProps) {
+    const { t } = useLang();
     const [name, setName] = useState('');
     const [date, setDate] = useState('');
     const [startTime, setStartTime] = useState('');
@@ -62,7 +64,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
         setError('');
 
         if (!academicYearId) {
-            setError("Academic Year is required.");
+            setError(t('auto_017'));
             setLoading(false);
             return;
         }
@@ -103,7 +105,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h2 className="text-xl font-bold text-gray-800">Create New Exam</h2>
+                    <h2 className="text-xl font-bold text-gray-800">{t('auto_095')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         ✕
                     </button>
@@ -118,14 +120,14 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
 
                     {/* Row 1: Exam Name */}
                     <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Exam Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_135')}</label>
                         <input
                             type="text"
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className={inputClasses}
-                            placeholder="e.g., Final Mathematics Exam"
+                            placeholder={t('auto_425')}
                         />
                     </div>
 
@@ -133,7 +135,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
                     <div className="grid grid-cols-3 gap-4">
                         {/* Date */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_101')}</label>
                             <input
                                 type="date"
                                 required
@@ -145,7 +147,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
 
                         {/* Start Time */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_349')}</label>
                             <input
                                 type="time"
                                 required
@@ -157,7 +159,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
 
                         {/* End Time */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_128')}</label>
                             <input
                                 type="time"
                                 required
@@ -170,7 +172,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
 
                     {/* Row 3: Academic Year */}
                     <div className="w-full">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_016')}</label>
                         <select
                             required
                             value={academicYearId}
@@ -178,7 +180,7 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
                             className={inputClasses}
                             disabled={loadingYears}
                         >
-                            {loadingYears ? <option>Loading years...</option> : <option value="">Select Academic Year</option>}
+                            {loadingYears ? <option>{t('auto_201')}</option> : <option value="">{t('auto_328')}</option>}
                             {academicYears.map(y => (
                                 <option key={y.id} value={y.id}>
                                     {y.startYear && y.endYear ? `${y.startYear} - ${y.endYear}` : y.name} {y.isActive ? '(Active)' : ''}
@@ -193,8 +195,8 @@ export default function CreateExamModal({ isOpen, onClose, onSuccess }: CreateEx
                             onClick={onClose}
                             className="px-4 py-2 mr-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={loading}

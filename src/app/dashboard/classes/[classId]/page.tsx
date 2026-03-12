@@ -10,6 +10,7 @@ import ResponsiveTable from '@/components/ui/ResponsiveTable';
 import { TableSkeleton } from '@/components/ui/Skeletons';
 import { Eye, Edit } from 'lucide-react'; // Icons
 import { permissions, Role } from '@/lib/permissions';
+import { useLang } from '@/lib/LangProvider';
 
 type Student = {
     id: string;
@@ -29,6 +30,7 @@ type Params = {
 };
 
 export default function ClassDetailsPage() {
+    const { t } = useLang();
     const params = useParams<Params>();
     const classId = params.classId;
 
@@ -91,14 +93,14 @@ export default function ClassDetailsPage() {
     return (
         <div className="p-8 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">Class Details</h1>
+                <h1 className="text-3xl font-bold text-gray-800">{t('auto_073')}</h1>
                 {permissions.canManageStudents(role) && (
                     <button
                         onClick={() => setIsAddStudentOpen(true)}
                         className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-bold"
                     >
-                        + Add New Student
-                    </button>
+                        {t('auto_004')}
+                                            </button>
                 )}
             </div>
 
@@ -106,21 +108,21 @@ export default function ClassDetailsPage() {
                 <TableSkeleton rows={5} cols={3} />
             ) : error ? (
                 <div className="bg-red-50 text-red-600 p-6 rounded-xl border border-red-100 flex items-center gap-3">
-                    <span className="text-xl">⚠️</span>
+                    <span className="text-xl">{t('auto_436')}</span>
                     <span className="font-bold">{error}</span>
                 </div>
             ) : students.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-xl shadow border border-gray-100">
-                    <p className="text-gray-500 font-medium">No students found in this class.</p>
+                    <p className="text-gray-500 font-medium">{t('auto_257')}</p>
                 </div>
             ) : (
                 <ResponsiveTable>
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Email/Parent</th>
-                                <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">{t('auto_226')}</th>
+                                <th className="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-wider">{t('auto_126')}</th>
+                                <th className="px-6 py-4 text-right text-xs font-black text-gray-500 uppercase tracking-wider">{t('auto_023')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -134,7 +136,7 @@ export default function ClassDetailsPage() {
                                                 <button
                                                     onClick={(e) => handleEditClick(e, student)}
                                                     className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                    title="Edit Student"
+                                                    title={t('auto_121')}
                                                 >
                                                     <Edit size={16} />
                                                 </button>
@@ -142,7 +144,7 @@ export default function ClassDetailsPage() {
                                             <button
                                                 onClick={(e) => handleViewClick(e, student)}
                                                 className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                title="View Profile"
+                                                title={t('auto_400')}
                                             >
                                                 <Eye size={18} />
                                             </button>

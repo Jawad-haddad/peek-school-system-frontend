@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type AcademicYear = {
     id: string;
@@ -19,6 +20,7 @@ type AddClassFormProps = {
 // User asked to "Fix 'Add Class' Modal", file listing shows AddClassForm.tsx. 
 // I will keep the content as a Modal logic.
 export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps) {
+    const { t } = useLang();
     const [name, setName] = useState('');
     const [selectedYearId, setSelectedYearId] = useState('');
 
@@ -44,7 +46,7 @@ export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps)
                 }
             } catch (err) {
                 console.error("Failed to load academic years", err);
-                setError("Failed to load academic years. Please check settings.");
+                setError(t('auto_151'));
             } finally {
                 setLoadingYears(false);
             }
@@ -56,7 +58,7 @@ export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps)
         event.preventDefault();
 
         if (!selectedYearId) {
-            setError("Please select an academic year.");
+            setError(t('auto_290'));
             return;
         }
 
@@ -84,7 +86,7 @@ export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps)
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
             <div className="w-full max-w-lg bg-white p-8 rounded-xl shadow-2xl">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Add New Class</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">{t('auto_027')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
                 </div>
 
@@ -92,7 +94,7 @@ export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps)
 
                     {/* Academic Year Dropdown */}
                     <div>
-                        <label htmlFor="academicYear" className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                        <label htmlFor="academicYear" className="block text-sm font-medium text-gray-700 mb-1">{t('auto_016')}</label>
                         <select
                             id="academicYear"
                             value={selectedYearId}
@@ -102,10 +104,10 @@ export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps)
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white"
                         >
                             {loadingYears ? (
-                                <option>Loading years...</option>
+                                <option>{t('auto_201')}</option>
                             ) : (
                                 <>
-                                    <option value="">Select a year</option>
+                                    <option value="">{t('auto_340')}</option>
                                     {academicYears.map((year) => (
                                         <option key={year.id} value={year.id}>
                                             {year.name} {year.isActive && '(Active)'}
@@ -118,14 +120,14 @@ export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps)
 
                     {/* Class Name */}
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Class Name</label>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">{t('auto_075')}</label>
                         <input
                             type="text"
                             id="name"
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g., Grade 1 - Section A"
+                            placeholder={t('auto_426')}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         />
                     </div>
@@ -135,8 +137,8 @@ export default function AddClassModal({ onClose, onSuccess }: AddClassFormProps)
                     {/* Action Buttons */}
                     <div className="flex justify-end space-x-4 pt-4 border-t border-gray-100">
                         <button type="button" onClick={onClose} disabled={isSubmitting} className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium">
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button type="submit" disabled={isSubmitting || loadingYears} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
                             {isSubmitting ? 'Adding...' : 'Add Class'}
                         </button>

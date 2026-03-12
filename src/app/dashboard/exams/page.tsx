@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { permissions, Role } from '@/lib/permissions';
 import CreateExamModal from '@/components/dashboard/CreateExamModal';
 import EditExamForm from '../../../components/EditExamForm';
+import { useLang } from '@/lib/LangProvider';
 
 type Exam = {
   id: string;
@@ -17,6 +18,7 @@ type Exam = {
 };
 
 export default function ExamsPage() {
+    const { t } = useLang();
   const [exams, setExams] = useState<Exam[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editExam, setEditExam] = useState<Exam | null>(null);
@@ -51,12 +53,12 @@ export default function ExamsPage() {
   }, [refresh]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this exam?')) return;
+    if (!confirm(t('auto_108'))) return;
     try {
       // Backend exam CRUD is under /exams, not /school/exams
       await api.delete(`/exams/${id}`);
       setRefresh(p => p + 1);
-    } catch (err) { alert('Failed to delete'); }
+    } catch (err) { alert(t('auto_146')); }
   };
 
   if (loading) {
@@ -71,14 +73,14 @@ export default function ExamsPage() {
     return (
       <div className="p-8">
         <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
-          <h3 className="text-red-800 font-semibold mb-2">Error</h3>
+          <h3 className="text-red-800 font-semibold mb-2">{t('auto_132')}</h3>
           <p className="text-red-600">{error}</p>
           <button
             onClick={() => setRefresh(p => p + 1)}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
-            Retry
-          </button>
+            {t('auto_307')}
+                              </button>
         </div>
       </div>
     );
@@ -88,22 +90,22 @@ export default function ExamsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-black text-gray-800 tracking-tight">Exam Schedule</h1>
-          <p className="text-gray-500 font-medium">Manage exams coverage and timing</p>
+          <h1 className="text-3xl font-black text-gray-800 tracking-tight">{t('auto_137')}</h1>
+          <p className="text-gray-500 font-medium">{t('auto_211')}</p>
         </div>
         {permissions.canCreateExam(role) && (
           <button
             onClick={() => setIsAddOpen(true)}
             className="bg-purple-600 text-white px-6 py-2.5 rounded-xl hover:bg-purple-700 transition-all font-bold shadow-lg shadow-purple-200 flex items-center gap-2 hover:-translate-y-0.5"
           >
-            + Schedule Exam
-          </button>
+            {t('auto_007')}
+                                </button>
         )}
       </div>
 
       {exams.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <p className="text-gray-400 font-medium text-lg">No exams scheduled yet.</p>
+          <p className="text-gray-400 font-medium text-lg">{t('auto_244')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -137,9 +139,9 @@ export default function ExamsPage() {
                 <div className="mb-4">
                   <h3 className="text-xl font-black text-gray-800 mb-2 truncate">{exam.name}</h3>
                   <div className="flex items-center gap-2 text-sm font-bold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
-                    🗓️ {startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    {t('auto_454')} {startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </div>
-                  <p className="text-xs text-purple-600 font-bold mt-3 uppercase tracking-wider">Year: {exam.academicYear?.name || 'N/A'}</p>
+                  <p className="text-xs text-purple-600 font-bold mt-3 uppercase tracking-wider">{t('auto_410')} {exam.academicYear?.name || 'N/A'}</p>
                 </div>
 
                 <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
@@ -147,8 +149,8 @@ export default function ExamsPage() {
                     href={`/dashboard/exams/${exam.id}`}
                     className="text-sm font-bold text-gray-600 hover:text-purple-600 transition-colors"
                   >
-                    View Schedule
-                  </Link>
+                    {t('auto_401')}
+                                              </Link>
                   {permissions.canEditExam(role) && (
                     <div className="flex gap-2">
                       <button
@@ -161,8 +163,8 @@ export default function ExamsPage() {
                         onClick={() => handleDelete(exam.id)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
-                        🗑️
-                      </button>
+                        {t('auto_452')}
+                                                          </button>
                     </div>
                   )}
                 </div>

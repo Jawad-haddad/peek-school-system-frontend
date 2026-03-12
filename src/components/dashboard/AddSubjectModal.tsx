@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useLang } from '@/lib/LangProvider';
 
 type AddSubjectModalProps = {
     isOpen: boolean;
@@ -15,6 +16,7 @@ type Option = {
 };
 
 export default function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubjectModalProps) {
+    const { t } = useLang();
     const [name, setName] = useState('');
     const [classId, setClassId] = useState('');
     const [teacherId, setTeacherId] = useState('');
@@ -91,7 +93,7 @@ export default function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubje
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
             <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Add New Subject</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-4">{t('auto_029')}</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {error && (
                         <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100 font-bold">
@@ -101,41 +103,41 @@ export default function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubje
 
                     {/* Subject Name */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Subject Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_365')}</label>
                         <input
                             type="text"
                             required
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="e.g. Mathematics"
+                            placeholder={t('auto_422')}
                         />
                     </div>
 
                     {/* Class Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Assign Class (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_047')}</label>
                         <select
                             value={classId}
                             onChange={(e) => setClassId(e.target.value)}
                             className="w-full rounded-lg border border-gray-300 p-2 bg-white outline-none"
                             disabled={loadingData}
                         >
-                            <option value="">Select Class</option>
+                            <option value="">{t('auto_329')}</option>
                             {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
 
                     {/* Teacher Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Assign Teacher (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_049')}</label>
                         <select
                             value={teacherId}
                             onChange={(e) => setTeacherId(e.target.value)}
                             className="w-full rounded-lg border border-gray-300 p-2 bg-white outline-none"
                             disabled={loadingData}
                         >
-                            <option value="">Select Teacher</option>
+                            <option value="">{t('auto_334')}</option>
                             {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     </div>
@@ -146,8 +148,8 @@ export default function AddSubjectModal({ isOpen, onClose, onSuccess }: AddSubje
                             onClick={onClose}
                             className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                         >
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button
                             type="submit"
                             disabled={submitting}

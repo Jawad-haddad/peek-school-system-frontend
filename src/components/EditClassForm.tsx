@@ -2,6 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLang } from '@/lib/LangProvider';
 
 // Type للسنوات الأكاديمية
 type AcademicYear = {
@@ -24,6 +25,7 @@ type EditClassFormProps = {
 };
 
 export default function EditClassForm({ classData, onClose, onSuccess }: EditClassFormProps) {
+    const { t } = useLang();
     // تعبئة الحالات بالبيانات الحالية
     const [name, setName] = useState(classData.name);
     const [selectedYearId, setSelectedYearId] = useState(classData.academicYearId);
@@ -43,7 +45,7 @@ export default function EditClassForm({ classData, onClose, onSuccess }: EditCla
                 });
                 setAcademicYears(response.data);
             } catch (err) {
-                setError("Failed to load academic years.");
+                setError(t('auto_150'));
             } finally {
                 setLoadingYears(false);
             }
@@ -60,7 +62,7 @@ export default function EditClassForm({ classData, onClose, onSuccess }: EditCla
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!selectedYearId) {
-            setError("Please select an academic year.");
+            setError(t('auto_290'));
             return;
         }
         setError('');
@@ -91,12 +93,12 @@ export default function EditClassForm({ classData, onClose, onSuccess }: EditCla
     return (
         <div className="fixed inset-0 z-10 flex items-center justify-center bg-black bg-opacity-50">
             <div className="w-full max-w-lg rounded-lg bg-white p-8 shadow-2xl">
-                <h2 className="text-2xl font-bold text-gray-800">Edit Class</h2>
+                <h2 className="text-2xl font-bold text-gray-800">{t('auto_119')}</h2>
                 <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
 
                     {/* Academic Year Dropdown */}
                     <div>
-                        <label htmlFor="academicYear" className="block text-sm font-medium text-gray-700">Academic Year</label>
+                        <label htmlFor="academicYear" className="block text-sm font-medium text-gray-700">{t('auto_016')}</label>
                         <select
                             id="academicYear"
                             value={selectedYearId}
@@ -106,10 +108,10 @@ export default function EditClassForm({ classData, onClose, onSuccess }: EditCla
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                         >
                             {loadingYears ? (
-                                <option>Loading years...</option>
+                                <option>{t('auto_201')}</option>
                             ) : (
                                 <>
-                                    <option value="">Select a year</option>
+                                    <option value="">{t('auto_340')}</option>
                                     {academicYears.map((year) => (
                                         <option key={year.id} value={year.id}>
                                             {year.name} {year.isActive && '(Active)'}
@@ -122,7 +124,7 @@ export default function EditClassForm({ classData, onClose, onSuccess }: EditCla
 
                     {/* Class Name */}
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Class Name</label>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('auto_075')}</label>
                         <input type="text" id="name" required value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                     </div>
 
@@ -131,8 +133,8 @@ export default function EditClassForm({ classData, onClose, onSuccess }: EditCla
                     {/* Action Buttons */}
                     <div className="flex justify-end space-x-4 pt-4">
                         <button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300">
-                            Cancel
-                        </button>
+                            {t('auto_065')}
+                                                    </button>
                         <button type="submit" disabled={isSubmitting || loadingYears} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
                             {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </button>

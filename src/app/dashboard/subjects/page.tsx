@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import AddSubjectModal from '@/components/dashboard/AddSubjectModal';
 import EditSubjectModal from '@/components/dashboard/EditSubjectModal';
+import { useLang } from '@/lib/LangProvider';
 
 type Subject = {
     id: string;
@@ -11,6 +12,7 @@ type Subject = {
 };
 
 export default function SubjectsPage() {
+    const { t } = useLang();
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -26,7 +28,7 @@ export default function SubjectsPage() {
             setSubjects(data);
         } catch (err) {
             console.error("Error fetching subjects:", err);
-            setError("Failed to fetch subjects.");
+            setError(t('auto_148'));
         } finally {
             setLoading(false);
         }
@@ -37,7 +39,7 @@ export default function SubjectsPage() {
     }, []);
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this subject?")) return;
+        if (!confirm(t('auto_044'))) return;
         try {
             // Try school route first, fall back to academics route
             try {
@@ -59,16 +61,16 @@ export default function SubjectsPage() {
     return (
         <div className="p-8">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-gray-800">Manage Subjects</h1>
+                <h1 className="text-3xl font-bold text-gray-800">{t('auto_208')}</h1>
                 <button
                     onClick={() => setIsAddModalOpen(true)}
                     className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-purple-700 transition"
                 >
-                    + Add Subject
-                </button>
+                    {t('auto_005')}
+                                    </button>
             </div>
 
-            {loading && <p className="text-center text-gray-500">Loading subjects...</p>}
+            {loading && <p className="text-center text-gray-500">{t('auto_199')}</p>}
             {error && <p className="text-center text-red-500">{error}</p>}
 
             {!loading && !error && (
@@ -76,8 +78,8 @@ export default function SubjectsPage() {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 tracking-wider">Subject Name</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500 tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 tracking-wider">{t('auto_365')}</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500 tracking-wider">{t('auto_023')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
@@ -88,25 +90,25 @@ export default function SubjectsPage() {
                                         <button
                                             onClick={() => setEditingSubject(subject)}
                                             className="text-indigo-600 hover:text-indigo-900 mr-4"
-                                            title="Edit"
+                                            title={t('auto_118')}
                                         >
-                                            ✏️ Edit
-                                        </button>
+                                            {t('auto_443')}
+                                                                                    </button>
                                         <button
                                             onClick={() => handleDelete(subject.id)}
                                             className="text-red-600 hover:text-red-900"
-                                            title="Delete"
+                                            title={t('auto_105')}
                                         >
-                                            🗑️ Delete
-                                        </button>
+                                            {t('auto_453')}
+                                                                                    </button>
                                     </td>
                                 </tr>
                             ))}
                             {subjects.length === 0 && (
                                 <tr>
                                     <td colSpan={2} className="px-6 py-8 text-center text-gray-500">
-                                        No subjects found.
-                                    </td>
+                                        {t('auto_259')}
+                                                                            </td>
                                 </tr>
                             )}
                         </tbody>
