@@ -1,0 +1,20 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: peek_frontend_prod
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      # Expose Next.js in production to listen on all interfaces
+      - NODE_ENV=production
+      # Tell the frontend to securely target the backend container within the docker network
+      - NEXT_PUBLIC_API_BASE_URL=http://backend:3000
+    # networks:
+    #   - peek_network # Uncomment and match your existing backend network
+
+# networks:
+#   peek_network:
+#     external: true # Or define it here together with the backend

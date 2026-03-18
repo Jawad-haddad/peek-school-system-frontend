@@ -1,0 +1,171 @@
+{
+  "loginParent": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "status": 200,
+    "request": {
+      "email": "parent@peek.com",
+      "password": "password123"
+    },
+    "response": {
+      "message": "Logged in successfully!",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyOTQzNjA5My02YTlhLTQ1ODgtODEzYi02MDA1ZDNiMDJkNDYiLCJlbWFpbCI6InBhcmVudEBwZWVrLmNvbSIsInJvbGUiOiJQQVJFTlQiLCJzY2hvb2xJZCI6bnVsbCwiaWF0IjoxNzcxOTIyODU2LCJleHAiOjE3NzIwMDkyNTZ9.mxBS85Tm-9-B9v56VV2o0pIiBmGXjXiUM45Z_Ll4Ido",
+      "user": {
+        "id": "29436093-6a9a-4588-813b-6005d3b02d46",
+        "fullName": "Jorge Parent",
+        "email": "parent@peek.com",
+        "role": "PARENT",
+        "schoolId": null
+      }
+    }
+  },
+  "dashboardParent": "http://localhost:3001/dashboard",
+  "classCreate": {
+    "url": "/api/school/classes",
+    "method": "POST",
+    "status": 201,
+    "request": {
+      "name": "Verification Class",
+      "academicYearId": "477492d4-cb47-4f4c-8a6f-d6111e2c61a5",
+      "defaultFee": 500
+    },
+    "response": {
+      "id": "f029f018-9ee0-4668-be02-65903150992f",
+      "name": "Verification Class",
+      "academicYearId": "477492d4-cb47-4f4c-8a6f-d6111e2c61a5",
+      "academicYear": {
+        "id": "477492d4-cb47-4f4c-8a6f-d6111e2c61a5",
+        "name": "2025-2026"
+      },
+      "defaultFee": "500",
+      "_count": {
+        "students": 0
+      }
+    }
+  },
+  "forbiddenMutation": {
+    "url": "/api/school/classes",
+    "method": "POST",
+    "status": 403,
+    "request": {
+      "name": "Hacked Class",
+      "academicYearId": "1"
+    },
+    "response": {
+      "message": "Forbidden: Access is restricted to the following roles: school_admin"
+    }
+  },
+  "loginTeacher": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "status": 200,
+    "request": {
+      "email": "teacher@peek.com",
+      "password": "password123"
+    },
+    "response": {
+      "message": "Logged in successfully!",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlNGQxOGEzMy0wZDc5LTRiYjYtOTQzZC03MjVjYTdkYmU0M2QiLCJlbWFpbCI6InRlYWNoZXJAcGVlay5jb20iLCJyb2xlIjoiVEVBQ0hFUiIsInNjaG9vbElkIjoiYWZmYzFjZTgtZjA2MC00NDcwLWEyM2UtMjMzNTBmYWMzMDUyIiwiaWF0IjoxNzcxOTIyODU5LCJleHAiOjE3NzIwMDkyNTl9.hOJ06WfO14Sd8QzLdiO9G2_dcnzYiZD21JC_QEhZQEU",
+      "user": {
+        "id": "e4d18a33-0d79-4bb6-943d-725ca7dbe43d",
+        "fullName": "Ms. Sarah Teacher",
+        "email": "teacher@peek.com",
+        "role": "TEACHER",
+        "schoolId": "affc1ce8-f060-4470-a23e-23350fac3052"
+      }
+    }
+  },
+  "dashboardTeacher": "http://localhost:3001/dashboard",
+  "attendanceStudents": {
+    "url": "/api/academics/classes/1ec67d86-169b-44fb-8e5c-0882d4fb99f3/students",
+    "method": "GET",
+    "status": 200,
+    "request": null,
+    "response": [
+      {
+        "id": "a6d64d97-7b42-4440-ab6f-99151e57ab45",
+        "fullName": "Leo Messi",
+        "gender": null,
+        "dob": null,
+        "nfc_card_id": "A1B2C3D4E5",
+        "is_nfc_active": true,
+        "wallet_balance": "50",
+        "parent": {
+          "id": "29436093-6a9a-4588-813b-6005d3b02d46",
+          "fullName": "Jorge Parent",
+          "email": "parent@peek.com"
+        }
+      }
+    ]
+  },
+  "attendanceSubmit": {
+    "url": "/api/attendance/bulk",
+    "method": "POST",
+    "status": 200,
+    "request": {
+      "classId": "1ec67d86-169b-44fb-8e5c-0882d4fb99f3",
+      "date": "2026-02-24",
+      "records": [
+        {
+          "studentId": "a6d64d97-7b42-4440-ab6f-99151e57ab45",
+          "status": "present"
+        }
+      ]
+    },
+    "response": {
+      "savedCount": 1,
+      "date": "2026-02-24",
+      "classId": "1ec67d86-169b-44fb-8e5c-0882d4fb99f3"
+    }
+  },
+  "loginAdmin": {
+    "url": "/api/auth/login",
+    "method": "POST",
+    "status": 200,
+    "request": {
+      "email": "admin@peek.com",
+      "password": "password123"
+    },
+    "response": {
+      "message": "Logged in successfully!",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIwOWNmZmQyOS00ZDRiLTQ1OWYtOTI5MS03NjMwOTEyMWU2ZGEiLCJlbWFpbCI6ImFkbWluQHBlZWsuY29tIiwicm9sZSI6IkFETUlOIiwic2Nob29sSWQiOiJhZmZjMWNlOC1mMDYwLTQ0NzAtYTIzZS0yMzM1MGZhYzMwNTIiLCJpYXQiOjE3NzE5MjI4NjQsImV4cCI6MTc3MjAwOTI2NH0.u91R61WtVkDTNSA6jWm-6pujBidEW5_TSJxoP_oj5p8",
+      "user": {
+        "id": "09cffd29-4d4b-459f-9291-76309121e6da",
+        "fullName": "School Admin",
+        "email": "admin@peek.com",
+        "role": "ADMIN",
+        "schoolId": "affc1ce8-f060-4470-a23e-23350fac3052"
+      }
+    }
+  },
+  "dashboardAdmin": "http://localhost:3001/dashboard",
+  "classDelete": {
+    "url": "/api/school/classes/f029f018-9ee0-4668-be02-65903150992f",
+    "method": "DELETE",
+    "status": 204,
+    "request": null,
+    "response": null
+  },
+  "classUpdate": {
+    "url": "/api/school/classes/f029f018-9ee0-4668-be02-65903150992f",
+    "method": "PUT",
+    "status": 200,
+    "request": {
+      "name": "Verification Class Updated",
+      "academicYearId": "477492d4-cb47-4f4c-8a6f-d6111e2c61a5"
+    },
+    "response": {
+      "id": "f029f018-9ee0-4668-be02-65903150992f",
+      "name": "Verification Class Updated",
+      "academicYearId": "477492d4-cb47-4f4c-8a6f-d6111e2c61a5",
+      "academicYear": {
+        "id": "477492d4-cb47-4f4c-8a6f-d6111e2c61a5",
+        "name": "2025-2026"
+      },
+      "defaultFee": "500",
+      "_count": {
+        "students": 0
+      }
+    }
+  }
+}
