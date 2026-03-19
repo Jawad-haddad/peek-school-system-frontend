@@ -268,6 +268,8 @@ export function formatApiError(prefix: string, error: any, defaultMsg: string = 
         if (error.code === 'VALIDATION_ERROR' && Array.isArray(error.details) && error.details.length > 0) {
             msg = error.details[0].message || error.details[0].string || Object.values(error.details[0])[0] || msg;
         }
+    } else if (error?.response?.data?.error?.message) {
+        msg = error.response.data.error.message;
     } else if (error?.response?.data?.message) {
         msg = error.response.data.message;
     } else if (!error?.response && error?.message?.includes('Network Error')) {
@@ -512,7 +514,16 @@ export const schoolApi = {
             toast.error(formatApiError("Update failed", error));
             throw error;
         }
-    }
+    },
+    /** GET /school/students (no classId filter) — used by the NFC assign form student selector */
+    fetchAllStudents: async (): Promise<StudentRecord[]> => {
+        try {
+            return await request<StudentRecord[]>(() => api.get('/school/students'));
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to fetch students", error));
+            throw error;
+        }
+    },
 };
 
 export const academicApi = {
@@ -1242,4 +1253,167 @@ export default api;
 export const communicationApi = {
   getAnnouncements: (limit = 20) => request(() => api.get('/communication/announcements', { params: { limit } })),
   sendBroadcast: (data: any) => request(() => api.post('/communication/broadcast', data))
+};
+
+// ── NFC Card Management ───────────────────────────────────────────────────────
+// Admin-only endpoints for assigning / managing NFC cards (ESP32 + RC522).
+
+export type NfcCard = {
+    id: string;
+    uid: string;
+    label?: string;
+    status: 'ACTIVE' | 'BLOCKED';
+    lastScannedAt?: string | null;
+    student?: {
+        id: string;
+        fullName: string;
+        class?: { name: string };
+    };
+};
+
+export type AssignCardPayload = {
+    uid: string;
+    studentId: string;
+    label?: string;
+};
+
+export type NfcDevice = {
+    id: string;
+    deviceId: string;
+    name: string;
+    apiKey: string;
+    status: 'ACTIVE' | 'DISABLED';
+    lastActiveAt?: string | null;
+};
+
+export const nfcApi = {
+    /**
+     * GET /nfc/cards
+     * Returns all assigned NFC cards for the school.
+     */
+    getCards: async (): Promise<NfcCard[]> => {
+        try {
+            return await request<NfcCard[]>(() => api.get('/nfc/cards'));
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to load NFC cards", error));
+            throw error;
+        }
+    },
+
+    /**
+     * POST /nfc/cards/assign
+     * Assigns a card UID to a student.
+     */
+    assignCard: async (data: AssignCardPayload): Promise<NfcCard> => {
+        try {
+            const result = await request<NfcCard>(() => api.post('/nfc/cards/assign', data));
+            toast.success(`Card ${data.uid} assigned successfully`);
+            return result;
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to assign card", error));
+            throw error;
+        }
+    },
+
+    /**
+     * PATCH /nfc/cards/:id/block
+     * Blocks a card.
+     */
+    blockCard: async (id: string): Promise<NfcCard> => {
+        try {
+            const result = await request<NfcCard>(() => api.patch(`/nfc/cards/${id}/block`));
+            toast.success("Card blocked");
+            return result;
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to block card", error));
+            throw error;
+        }
+    },
+
+    /**
+     * PATCH /nfc/cards/:id/unblock
+     * Unblocks a card.
+     */
+    unblockCard: async (id: string): Promise<NfcCard> => {
+        try {
+            const result = await request<NfcCard>(() => api.patch(`/nfc/cards/${id}/unblock`));
+            toast.success("Card unblocked");
+            return result;
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to unblock card", error));
+            throw error;
+        }
+    },
+
+    /**
+     * DELETE /nfc/cards/:id/unassign
+     * Removes card assignment.
+     */
+    unassignCard: async (id: string): Promise<void> => {
+        try {
+            await request<void>(() => api.delete(`/nfc/cards/${id}/unassign`));
+            toast.success("Card unassigned");
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to unassign card", error));
+            throw error;
+        }
+    },
+
+    // ── Devices ──────────────────────────────────────────────
+
+    getDevices: async (): Promise<NfcDevice[]> => {
+        try {
+            return await request<NfcDevice[]>(() => api.get('/nfc/devices'));
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to load NFC devices", error));
+            throw error;
+        }
+    },
+
+    createDevice: async (name: string): Promise<NfcDevice> => {
+        try {
+            const result = await request<NfcDevice>(() => api.post('/nfc/devices', { name }));
+            toast.success(`Device "${name}" registered successfully`);
+            return result;
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to register device", error));
+            throw error;
+        }
+    },
+
+    updateDeviceStatus: async (id: string, status: 'ACTIVE' | 'DISABLED'): Promise<NfcDevice> => {
+        try {
+            const endpoint = status === 'ACTIVE' ? 'enable' : 'disable';
+            const result = await request<NfcDevice>(() => api.patch(`/nfc/devices/${id}/${endpoint}`));
+            toast.success(`Device ${status === 'ACTIVE' ? 'enabled' : 'disabled'}`);
+            return result;
+        } catch (error: any) {
+            const action = status === 'ACTIVE' ? 'enable' : 'disable';
+            toast.error(formatApiError(`Failed to ${action} device`, error));
+            throw error;
+        }
+    },
+
+    deleteDevice: async (id: string): Promise<void> => {
+        try {
+            await request<void>(() => api.delete(`/nfc/devices/${id}`));
+            toast.success("Device deleted");
+        } catch (error: any) {
+            toast.error(formatApiError("Failed to delete device", error));
+            throw error;
+        }
+    },
+
+    /**
+     * POST /nfc/scan
+     * Simulates or records a card scan from a device.
+     */
+    scanCard: async (deviceId: string, uid: string): Promise<any> => {
+        try {
+            return await request<any>(() => api.post('/nfc/scan', { deviceId, uid }));
+        } catch (error: any) {
+            toast.error(formatApiError("Scan failed", error));
+            throw error;
+        }
+    },
 };

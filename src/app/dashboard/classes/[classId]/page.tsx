@@ -19,7 +19,6 @@ type Student = {
     email?: string;
     parentEmail?: string;
     walletBalance?: number;
-    nfcTagId?: string;
     dob?: string;
     parentName?: string;
     parentPhone?: string;

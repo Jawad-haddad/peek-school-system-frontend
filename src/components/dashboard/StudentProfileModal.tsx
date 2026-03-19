@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Phone, User, CreditCard, Calendar, GraduationCap, ShieldCheck, ShieldAlert, AlertTriangle, History } from 'lucide-react';
-import { Switch } from '@/components/ui/Switch';
+import { X, Phone, User, CreditCard, Calendar, GraduationCap, AlertTriangle } from 'lucide-react';
 import WalletHistoryList from './WalletHistoryList';
-import api from '@/lib/api';
 import { useLang } from '@/lib/LangProvider';
 
 type Student = {
@@ -17,9 +15,7 @@ type Student = {
     parentPhone?: string;
     walletBalance?: number;
     className?: string;
-    nfcTagId?: string;
     dailySpendingLimit?: number;
-    isNfcActive?: boolean;
 };
 
 type StudentProfileModalProps = {
@@ -31,8 +27,6 @@ type StudentProfileModalProps = {
 
 export default function StudentProfileModal({ isOpen, onClose, student, className }: StudentProfileModalProps) {
     const { t } = useLang();
-    // Initialize state with prop value, default to true if undefined
-    const [isNfcEnabled, setIsNfcEnabled] = useState(student.isNfcActive ?? true);
 
     if (!isOpen) return null;
 
@@ -55,17 +49,6 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
     const isLowBalance = balance < 5;
     const isDebt = balance < 0;
     const dailyLimit = student.dailySpendingLimit || 0;
-
-    const handleNfcToggle = async (checked: boolean) => {
-        setIsNfcEnabled(checked);
-        try {
-            await api.patch(`/school/students/${student.id}`, { isNfcActive: checked });
-        } catch (err) {
-            console.error('NFC toggle failed:', err);
-            // Revert on failure
-            setIsNfcEnabled(!checked);
-        }
-    };
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
@@ -97,7 +80,6 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                 <div className="p-6 pt-16 flex-1 space-y-6">
                     <div className="text-center">
                         <h1 className="text-2xl font-black text-gray-800 tracking-tight leading-tight">{displayName}</h1>
-                        <p className="text-xs text-gray-400 font-mono mt-1">{t('auto_176')} {(student.nfcTagId || student.id).slice(0, 8).toUpperCase()}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -127,18 +109,18 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
                                         <CreditCard size={16} /> {t('auto_110')}
-                                                                            </h3>
+                                    </h3>
                                     <p className="text-[10px] text-gray-400 mt-1">{t('auto_100')} {dailyLimit} {t('auto_183')}</p>
                                 </div>
                                 {isLowBalance && !isDebt && (
                                     <span className="px-2 py-1 rounded-lg bg-yellow-500/20 text-yellow-300 text-[10px] font-bold border border-yellow-500/30 flex items-center gap-1">
                                         <AlertTriangle size={10} /> {t('auto_205')}
-                                                                            </span>
+                                    </span>
                                 )}
                                 {isDebt && (
                                     <span className="px-2 py-1 rounded-lg bg-red-500/20 text-red-300 text-[10px] font-bold border border-red-500/30 flex items-center gap-1">
                                         <AlertTriangle size={10} /> {t('auto_269')}
-                                                                            </span>
+                                    </span>
                                 )}
                             </div>
 
@@ -148,26 +130,6 @@ export default function StudentProfileModal({ isOpen, onClose, student, classNam
                                 </span>
                                 <span className="text-sm font-medium text-gray-400">{t('auto_183')}</span>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* 🛡️ Security Control */}
-                    <div className={`p-4 rounded-2xl border transition-colors ${isNfcEnabled ? 'bg-green-50/50 border-green-100' : 'bg-red-50/50 border-red-100'}`}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-full ${isNfcEnabled ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                    {isNfcEnabled ? <ShieldCheck size={20} /> : <ShieldAlert size={20} />}
-                                </div>
-                                <div>
-                                    <h4 className={`font-bold text-sm ${isNfcEnabled ? 'text-green-800' : 'text-red-800'}`}>
-                                        {isNfcEnabled ? 'Canteen Card Active' : 'Canteen Card Frozen'}
-                                    </h4>
-                                    <p className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                                        {isNfcEnabled ? 'Student can make purchases' : 'Purchases are disabled'}
-                                    </p>
-                                </div>
-                            </div>
-                            <Switch checked={isNfcEnabled} onChange={handleNfcToggle} />
                         </div>
                     </div>
 

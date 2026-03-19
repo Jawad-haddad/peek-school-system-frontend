@@ -14,7 +14,6 @@ export default function AddStudentForm({ classId, onClose, onSuccess }: AddStude
     const { t } = useLang();
   const [fullName, setFullName] = useState('');
   const [parentId, setParentId] = useState('');
-  const [nfcId, setNfcId] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -30,7 +29,6 @@ export default function AddStudentForm({ classId, onClose, onSuccess }: AddStude
         {
           fullName,
           parentId,
-          nfc_card_id: nfcId || null,
           classId: classId, // Ensure classId is being sent
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -61,11 +59,7 @@ export default function AddStudentForm({ classId, onClose, onSuccess }: AddStude
             <label htmlFor="parentId" className="block text-sm font-medium text-gray-700">{t('auto_278')}</label>
             <input type="text" id="parentId" required value={parentId} onChange={(e) => setParentId(e.target.value)} placeholder={t('auto_167')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
           </div>
-          {/* NFC Card ID */}
-          <div>
-            <label htmlFor="nfcId" className="block text-sm font-medium text-gray-700">{t('auto_223')}</label>
-            <input type="text" id="nfcId" value={nfcId} onChange={(e) => setNfcId(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          </div>
+
           {error && <p className="text-sm text-red-600">{error}</p>}
           {/* Action Buttons */}
           <div className="flex justify-end space-x-4 pt-4">

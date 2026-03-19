@@ -8,7 +8,6 @@ import { useLang } from '@/lib/LangProvider';
 type Student = {
     id: string;
     fullName: string;
-    nfc_card_id: string | null;
 };
 
 type EditStudentFormProps = {
@@ -21,7 +20,6 @@ export default function EditStudentForm({ student, onClose, onSuccess }: EditStu
     const { t } = useLang();
     // Initialize state with the existing student's data
     const [fullName, setFullName] = useState(student.fullName);
-    const [nfcId, setNfcId] = useState(student.nfc_card_id || '');
 
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +28,6 @@ export default function EditStudentForm({ student, onClose, onSuccess }: EditStu
     // the form state updates to the new student's data.
     useEffect(() => {
         setFullName(student.fullName);
-        setNfcId(student.nfc_card_id || '');
     }, [student]);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -45,7 +42,6 @@ export default function EditStudentForm({ student, onClose, onSuccess }: EditStu
                 `/api/schools/students/${student.id}`,
                 {
                     fullName,
-                    nfc_card_id: nfcId || null,
                     // Note: We are not editing parentId or classId here for simplicity
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -72,44 +68,7 @@ export default function EditStudentForm({ student, onClose, onSuccess }: EditStu
                         <input type="text" id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
                     </div>
 
-                    {/* NFC Card ID with Scan Button */}
-                    <div>
-                        <label htmlFor="nfcId" className="block text-sm font-medium text-gray-700">{t('auto_223')}</label>
-                        <div className="mt-1 flex gap-2">
-                            <input
-                                type="text"
-                                id="nfcId"
-                                value={nfcId}
-                                onChange={(e) => setNfcId(e.target.value)}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                placeholder={t('auto_315')}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    const btn = document.getElementById('scanBtn') as HTMLButtonElement;
-                                    if (btn) {
-                                        btn.disabled = true;
-                                        btn.innerText = 'Scanning...';
-                                    }
 
-                                    // Simulate 1s delay then generate random hex
-                                    setTimeout(() => {
-                                        const randomHex = Math.floor(Math.random() * 0xFFFFFFFFFF).toString(16).toUpperCase().padStart(10, '0');
-                                        setNfcId(randomHex);
-                                        if (btn) {
-                                            btn.disabled = false;
-                                            btn.innerText = 'Scan Card';
-                                        }
-                                    }, 1000);
-                                }}
-                                id="scanBtn"
-                                className="whitespace-nowrap rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                {t('auto_314')}
-                                                            </button>
-                        </div>
-                    </div>
 
                     {error && <p className="text-sm text-red-600">{error}</p>}
 

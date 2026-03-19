@@ -11,7 +11,6 @@ type Student = {
     email?: string;
     parentEmail?: string;
     phone?: string;
-    nfcTagId?: string;
     walletBalance?: number;
 };
 
@@ -27,7 +26,6 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
-        nfcTagId: '',
         walletBalance: 0
     });
     const [loading, setLoading] = useState(false);
@@ -37,7 +35,6 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
             setFormData({
                 fullName: student.fullName || student.name || '',
                 email: student.email || student.parentEmail || '', // Assuming email might be parentEmail if student email is missing
-                nfcTagId: student.nfcTagId || '',
                 walletBalance: student.walletBalance || 0
             });
         }
@@ -93,16 +90,7 @@ export default function EditStudentModal({ isOpen, onClose, onSuccess, student }
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_224')}</label>
-                            <input
-                                type="text"
-                                value={formData.nfcTagId}
-                                onChange={(e) => setFormData({ ...formData, nfcTagId: e.target.value })}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
-                            />
-                        </div>
+                    <div className="grid grid-cols-1 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">{t('auto_405')}</label>
                             <input

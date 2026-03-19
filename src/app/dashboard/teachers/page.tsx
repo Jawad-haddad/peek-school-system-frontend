@@ -14,7 +14,6 @@ type Teacher = {
     email: string;
     phone?: string;
     phoneNumber?: string;
-    nfcTagId?: string; // Add NFC ID
     specialization?: string;
     classes: string[];
     subjects: string[];
@@ -106,7 +105,6 @@ export default function TeachersPage() {
             phone: t.phoneNumber || t.phone || '',
             phoneNumber: t.phoneNumber || t.phone || '',
             specialization: t.specialization,
-            nfcTagId: t.nfcTagId || t.nfc_card_id || '', // Map NFC
             classes: [], // Legacy unused
             subjects: [], // Legacy unused
             rawAssignments: assignments,
@@ -187,7 +185,7 @@ export default function TeachersPage() {
                         className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-6 py-3 rounded-2xl hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-0.5 transition-all flex items-center gap-2 font-bold"
                     >
                         <span className="text-xl">+</span> {t('auto_032')}
-                                            </button>
+                    </button>
                 </div>
 
                 {error && (
@@ -211,9 +209,8 @@ export default function TeachersPage() {
                         {/* Header Row */}
                         <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
                             <div className="col-span-3">{t('auto_371')}</div>
-                            <div className="col-span-2">{t('auto_087')}</div>
+                            <div className="col-span-4">{t('auto_087')}</div>
                             <div className="col-span-2">{t('auto_284')}</div>
-                            <div className="col-span-2">NFC</div>
                             <div className="col-span-2">{t('auto_055')}</div>
                             <div className="col-span-1 text-right">{t('auto_023')}</div>
                         </div>
@@ -231,7 +228,7 @@ export default function TeachersPage() {
                                     </div>
                                 </div>
 
-                                <div className="col-span-3 text-sm text-gray-500 font-medium break-all">
+                                <div className="col-span-4 text-sm text-gray-500 font-medium break-all">
                                     {teacher.email || 'No email'}
                                 </div>
 
@@ -245,18 +242,8 @@ export default function TeachersPage() {
                                     )}
                                 </div>
 
-                                <div className="col-span-2 text-sm text-gray-500 font-medium font-mono">
-                                    {teacher.nfcTagId ? (
-                                        <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs border border-blue-100">
-                                            {teacher.nfcTagId}
-                                        </span>
-                                    ) : (
-                                        <span className="text-gray-300 italic">-</span>
-                                    )}
-                                </div>
-
                                 {/* Redesigned Assignments Column */}
-                                <div className="col-span-3 text-sm">
+                                <div className="col-span-2 text-sm">
                                     {teacher.groupedAssignments && teacher.groupedAssignments.length > 0 ? (
                                         <div className="flex flex-col gap-2">
                                             {teacher.groupedAssignments.map((group: GroupedAssignment, idx: number) => (
@@ -290,14 +277,14 @@ export default function TeachersPage() {
                                         title={t('auto_118')}
                                     >
                                         {t('auto_442')}
-                                                                            </button>
+                                    </button>
                                     <button
                                         onClick={() => handleDelete(teacher.id)}
                                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                         title={t('auto_105')}
                                     >
                                         {t('auto_452')}
-                                                                            </button>
+                                    </button>
                                 </div>
                             </div>
                         ))}

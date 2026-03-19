@@ -24,7 +24,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
     const [gender, setGender] = useState('MALE');
     const [dob, setDob] = useState('');
     const [selectedClassId, setSelectedClassId] = useState(preSelectedClassId || '');
-    const [nfcTagId, setNfcTagId] = useState('');
     const [walletBalance, setWalletBalance] = useState('');
 
     // Data Loading
@@ -78,25 +77,20 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                 dob,
                 parentEmail,
                 parentPhone,
-                nfcTagId,
                 walletBalance: walletBalance ? parseFloat(walletBalance) : 0,
             });
             onSuccess();
             onClose();
-            // Reset Form via unmount/remount usually, but here manually:
+            // Reset Form
             setFullName('');
             setParentEmail('');
             setParentPhone('');
             setDob('');
             setGender('MALE');
-            setNfcTagId('');
             setWalletBalance('');
         } catch (err: any) {
             console.error("Failed to add student", err);
             let msg = err.message || err.response?.data?.message || 'Failed to add student.';
-            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
-                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
-            }
             setError(msg);
         } finally {
             setLoading(false);
@@ -130,7 +124,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                     )}
 
                     <div className="space-y-5">
-                        {/* Input 1: Full Name */}
                         <div>
                             <label className={labelClasses}>{t('auto_164')}</label>
                             <input
@@ -143,13 +136,12 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             />
                         </div>
 
-                        {/* Input 2: Class Dropdown */}
                         <div>
                             <label className={labelClasses}>{t('auto_072')}</label>
                             {preSelectedClassId ? (
                                 <div className="px-4 py-3 bg-violet-50 text-violet-700 font-bold rounded-xl border border-violet-100 flex items-center gap-2">
                                     {t('auto_451')}
-                                                                    </div>
+                                </div>
                             ) : (
                                 <select
                                     value={selectedClassId}
@@ -165,7 +157,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             )}
                         </div>
 
-                        {/* Input 3: Gender & DOB */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClasses}>{t('auto_166')}</label>
@@ -190,7 +181,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             </div>
                         </div>
 
-                        {/* Input 4: Parent Email */}
                         <div>
                             <label className={labelClasses}>{t('auto_279')}</label>
                             <input
@@ -203,31 +193,17 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             />
                         </div>
 
-                        {/* Input 5: Parent Phone */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClasses}>{t('auto_277')}</label>
-                                <input
-                                    type="tel"
-                                    value={parentPhone}
-                                    onChange={(e) => setParentPhone(e.target.value)}
-                                    className={inputClasses}
-                                    placeholder="+1 234..."
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClasses}>{t('auto_225')}</label>
-                                <input
-                                    type="text"
-                                    value={nfcTagId}
-                                    onChange={(e) => setNfcTagId(e.target.value)}
-                                    className={inputClasses}
-                                    placeholder={t('auto_316')}
-                                />
-                            </div>
+                        <div>
+                            <label className={labelClasses}>{t('auto_277')}</label>
+                            <input
+                                type="tel"
+                                value={parentPhone}
+                                onChange={(e) => setParentPhone(e.target.value)}
+                                className={inputClasses}
+                                placeholder="+1 234..."
+                            />
                         </div>
 
-                        {/* Input 6: Wallet */}
                         <div>
                             <label className={labelClasses}>{t('auto_180')}</label>
                             <input
@@ -248,20 +224,13 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, classId: p
                             className="px-6 py-3 text-gray-600 hover:bg-gray-50 rounded-xl transition-colors font-bold"
                         >
                             {t('auto_065')}
-                                                    </button>
+                        </button>
                         <button
                             type="submit"
                             disabled={loading}
                             className={`px-8 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl hover:shadow-lg hover:shadow-violet-200 transition-all font-bold flex items-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-0.5'}`}
                         >
-                            {loading ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    {t('auto_313')}
-                                                                    </>
-                            ) : (
-                                'Create Student'
-                            )}
+                            {loading ? t('auto_313') : 'Create Student'}
                         </button>
                     </div>
                 </form>

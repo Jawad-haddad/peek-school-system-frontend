@@ -7,7 +7,7 @@ import { useLang } from '@/lib/LangProvider';
 type Student = {
     id: string;
     fullName: string;
-    nfc_card_id: string;
+    parentPhone: string;
 };
 
 type MarkEntry = {

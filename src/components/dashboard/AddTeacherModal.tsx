@@ -12,7 +12,6 @@ type Teacher = {
     phone?: string;
     phoneNumber?: string;
     specialization?: string;
-    nfcTagId?: string; // New
     classId?: string;
     classes?: string[];
     assignments?: { classId: string, subjectIds: string[] }[];
@@ -40,7 +39,6 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
         email: '',
         password: '',
         phone: '',
-        nfcTagId: '', // New state
     });
 
     // Assignments State
@@ -80,10 +78,8 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                     email: teacherToEdit.email || '',
                     password: '',
                     phone: teacherToEdit.phone || teacherToEdit.phoneNumber || '',
-                    nfcTagId: teacherToEdit.nfcTagId || '',
                 });
 
-                // Load existing assignments if available, or try to reconstruct from legacy fields
                 if (teacherToEdit.assignments) {
                     setAssignments(teacherToEdit.assignments);
                 } else if (teacherToEdit.classId) {
@@ -92,7 +88,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                     setAssignments([]);
                 }
             } else {
-                setFormData({ fullName: '', email: '', password: '', phone: '', nfcTagId: '' });
+                setFormData({ fullName: '', email: '', password: '', phone: '' });
                 setAssignments([]);
             }
             setError('');
@@ -131,23 +127,15 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
         setSubmitting(true);
         setError('');
 
-        // Validate Assignments
-        const validAssignments = assignments.filter(a => a.classId); // Filter out empty class selections
-
-        // Derive unique 'classes' array for backward compatibility
+        const validAssignments = assignments.filter(a => a.classId);
         const classIds = [...new Set(validAssignments.map(a => a.classId))];
 
         const payload: any = {
             ...formData,
             assignments: validAssignments,
-            classIds: classIds, // Send flat array for backend that doesn't know 'assignments'
-            classes: classIds // Send alias just in case
+            classIds: classIds,
+            classes: classIds
         };
-
-        // If NFC empty, remove it to avoid empty string violation if backend checks
-        if (!payload.nfcTagId) delete payload.nfcTagId;
-
-        console.log("Submitting Teacher Payload:", payload); // DEBUG: Inspect Payload
 
         try {
             if (teacherToEdit) {
@@ -160,20 +148,9 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
             onSuccess();
             onClose();
         } catch (err: any) {
-            if (process.env.NODE_ENV !== 'production') {
-                console.error("Teacher form error:", err);
-                console.error("Error Response:", err.response); // DEBUG: Inspect detailed error
-            }
-
             let msg = err.message || err.response?.data?.message || "Operation failed.";
-
-            // Handle 409 Conflict (e.g. Email exists)
             if (err.response?.status === 409) {
                 msg = err.response?.data?.message || 'Email already exists. Please use a different email.';
-            }
-
-            if (err.code === 'VALIDATION_ERROR' && Array.isArray(err.details) && err.details.length > 0) {
-                msg = err.details[0].message || err.details[0].string || Object.values(err.details[0])[0] || msg;
             }
             setError(msg);
         } finally {
@@ -234,17 +211,6 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                                 placeholder="+962..."
                             />
                         </div>
-                        {/* NFC Tag Input */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">{t('auto_224')}</label>
-                            <input
-                                type="text"
-                                value={formData.nfcTagId}
-                                onChange={e => setFormData({ ...formData, nfcTagId: e.target.value })}
-                                className="w-full border-2 border-gray-100 rounded-xl p-3 focus:outline-none focus:border-violet-500 transition-all font-medium"
-                                placeholder={t('auto_316')}
-                            />
-                        </div>
                         <div className="col-span-1 md:col-span-2">
                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                 Password {teacherToEdit ? <span className="text-gray-400 font-normal">{t('auto_002')}</span> : <span className="text-red-500">*</span>}
@@ -269,7 +235,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                                 className="text-sm bg-violet-50 text-violet-600 px-3 py-1.5 rounded-lg font-bold hover:bg-violet-100 transition-colors flex items-center gap-1"
                             >
                                 <Plus size={16} /> {t('auto_026')}
-                                                            </button>
+                            </button>
                         </div>
 
                         <div className="space-y-4">
@@ -326,7 +292,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                             {assignments.length === 0 && (
                                 <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-xl">
                                     {t('auto_241')}
-                                                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -338,7 +304,7 @@ export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacherToE
                             className="px-6 py-3 text-gray-600 font-bold hover:bg-gray-50 rounded-xl transition-colors"
                         >
                             {t('auto_065')}
-                                                    </button>
+                        </button>
                         <button
                             type="submit"
                             disabled={submitting}
